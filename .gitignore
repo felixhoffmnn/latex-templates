@@ -1,0 +1,6 @@
+.venv/
+
+invoices/*
+!invoices/example.yml
+
+data/customers.yml

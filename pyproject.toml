@@ -1,0 +1,54 @@
+[tool.poetry]
+name = "selbststaendigkeit"
+version = "0.1.0"
+description = "LaTeX-Vorlagen für die Erstellung von Rechnungen und Angeboten"
+authors = ["Felix Hoffmann <post@felixemmanuel.de>"]
+readme = "README.md"
+packages = [{ include = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pydantic = "^2.5.2"
+typer = "^0.9.0"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.1.6"
+pre-commit = "^3.5.0"
+mypy = "^1.7.1"
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+extend-select = [
+    "B",   # flake8-bugbear
+    "C",   # flake8-comprehensions
+    "ERA", # flake8-eradicate/eradicate
+    "I",   # isort
+    "N",   # pep8-naming
+    "D",   # pydocstyle
+    "PL",  # Pylint
+    "PTH", # flake8-use-pathlib
+    "PIE", # flake8-pie
+    "PGH", # pygrep
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "TID", # flake8-tidy-imports
+    "UP",  # pyupgrade
+]
+ignore = [
+    "D100", # Missing docstring in public module
+    "D104", # Missing docstring in public package
+]
+
+[tool.ruff.pylint]
+max-args = 10
+
+[tool.ruff.pydocstyle]
+convention = "numpy"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
