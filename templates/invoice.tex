@@ -1,0 +1,163 @@
+\documentclass[a4paper, article, oneside, hidelinks, 10pt]{memoir}
+
+% Encoding and fonts
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{sfmath}
+\usepackage{amsmath}
+\usepackage[final]{microtype}
+\usepackage[sfdefault]{ClearSans}
+
+% Language
+\usepackage[ngerman]{babel}
+
+% Layout
+\usepackage[a4paper, left=2.5cm, right=2.5cm, top=2cm, bottom=3cm]{geometry}
+\usepackage{fancyhdr}
+
+% Colors and hyperlinks
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+% Graphics
+\usepackage{graphicx}
+
+% SI units
+\usepackage{siunitx}
+
+% Table-related packages
+\usepackage{tabularray}
+
+% QR code generation
+\usepackage[yyyymmdd]{datetime}
+\usepackage[qrscheme=epc,replace-umlauts=true,qrsize=20mm]{qrbill}
+
+% Euro symbol
+\usepackage{eurosym}
+\DeclareSIUnit{\EUR}{\text{\euro}}
+
+% SI units setup
+\sisetup{
+  locale = DE,
+  round-mode = places,
+  round-precision = 2,
+  group-minimum-digits=3,
+  detect-all = true,
+}
+\UseTblrLibrary{siunitx}
+
+% QR code setup
+\SetupQrBill{
+  QRType=BCD,
+  Version=002,
+  CodingType=1,
+  Trailer=SCT,
+}
+
+% Miscellanous styling
+\pagestyle{empty}
+
+
+% Set up the header and footer
+\pagestyle{fancy}
+\fancyhf{}
+
+% Header settings
+\renewcommand{\headrulewidth}{0pt}
+
+% Footer settings
+\renewcommand{\footrulewidth}{1pt}
+\lfoot{\footnotesize
+\begin{tblr}{width=\textwidth, colspec={X[l]X[l]X[l]}, leftsep=0pt, rightsep=0pt}
+	{(((company.name))) \\ (((address.street))) \\ (((address.zip))) (((address.city)))} & {(((company.phone))) \\ \href{mailto:(((company.email)))}{(((company.email)))} \\ \href{https://(((company.website)))}{(((company.website)))}} & {Finanzamt: (((company.tax_office))) \\ Steuernummer: (((company.tax_number)))} \\
+\end{tblr}
+}
+
+\setlength{\parindent}{0cm}
+
+\begin{document}
+
+% Issuer
+\begin{raggedleft}
+	\small
+	\textbf{(((company.name)))} \\
+	(((address.street))) \\
+	(((address.zip))) (((address.city))) \\
+	(((company.phone))) \\
+	\href{mailto:(((company.email)))}{(((company.email)))} \\
+	\href{https://(((company.website)))}{(((company.website)))} \\
+\end{raggedleft}
+
+\vspace{1cm}
+
+% Recipient and invoice information
+\begin{minipage}[t]{0.6\textwidth}
+	{\scriptsize \underline{(((company.name))), (((address.street))), (((address.zip))) (((address.city)))}}
+
+	\medskip
+
+	{\large \textbf{\dots}} \\
+	\dots \\
+	\dots \\
+	\dots
+\end{minipage}
+\begin{minipage}[t]{0.4\textwidth}
+	\small
+	\begin{tabbing}
+		\hspace{0.2\textwidth} \= \hspace{0.2\textwidth} \kill
+		Rechnungsnummer: \` \hfill (((invoice.number))) \\
+		Kundennummer: \` \hfill \dots \\
+		Datum: \` \hfill \dots \\
+		Zahlungsfrist: \` \hfill \dots \\
+	\end{tabbing}
+\end{minipage}
+
+\vspace{2cm}
+
+\chapter*{Rechnung (((invoice.number)))}
+
+Sehr geehrte Damen und Herren,
+
+\medskip
+
+meine Leistungen stelle ich Ihnen wie folgt in Rechnung.
+
+% Items
+\begin{longtblr}[entry = none, label = none, note{*} = {Umsatzsteuerfreie Leistungen gemäß §19 UStG.}]{width=\textwidth, colspec={cXrr*{2}{Q[si={table-format=4.2},r]}}, vlines, hlines, row{1}={guard,font=\bfseries}, row{Z}={guard,font=\bfseries,gray9}, rowhead=1, rowfoot=1, abovesep=4pt, belowsep=4pt}
+	Pos.                                               & Bezeichnung   & Menge                                                                            & Einheit & Einzel \texteuro & Gesamt \texteuro \\
+	((* for item in items *))
+	                                                   & (((item[0]))) & ((* if item[2] is not none and item[2]|length != 0 *))(((item[2])))((* endif *)) &         &                  & 0                \\
+	((* endfor *))
+	test                                               &               &                                                                                  &         & 0                & 0                \\
+	\SetCell[c=5]{l} \textbf{Gesamtbetrag}\TblrNote{*} &               &                                                                                  &         &                  & \num{10}         \\
+\end{longtblr}
+
+Bitte überweisen Sie den Betrag von \dots bis zum \dots an die folgende Bankverbindung. \textit{Der dargestellte QR-Code kann zur automatischen Übernahme der Daten in Ihr Online-Banking genutzt werden.}
+
+\bigskip
+
+% Bank information
+\begin{minipage}[c]{0.7\textwidth}
+	\small
+	\begin{tblr}{width=\textwidth, colspec={X[l]X[l]}, leftsep=0pt, rightsep=0pt}
+		Kontoinhaber:     & (((company.name)))   \\
+		IBAN:             & (((bank.iban)))      \\
+		Bank:             & (((bank.bank_name))) \\
+		Verwendungszweck: & (((invoice.number))) \\
+	\end{tblr}
+\end{minipage}
+\begin{minipage}[c]{0.3\textwidth}
+	\hfill
+	\QRbill*[
+		Account=(((bank.iban | replace(' ', '')))),
+		Name=(((company.name))),
+		Amount=EUR10.00,
+		Message={(((invoice.number)))},
+	]
+\end{minipage}
+
+\bigskip
+
+Vielen Dank für die gute Zusammenarbeit.
+
+\end{document}

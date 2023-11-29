@@ -1,0 +1,4 @@
+defaultIndent: "  "
+indentAfter: ['\begin{document}']
+indentBlock: ['\begin{', '\end{']
+lineLength: 120

@@ -1,6 +1,17 @@
 .venv/
+__pycache__/
+.ruff_cache/
+.mypy_cache/
+
+src/config.toml
 
 invoices/*
 !invoices/example.yml
 
 data/customers.yml
+
+out/
+tmp/
+
+templates/*
+!templates/*.tex
