@@ -8,6 +8,7 @@ config.toml
 
 invoices/*
 !invoices/example.yml
+!invoices/example.pdf
 
 data/*
 !data/customers.example.yml

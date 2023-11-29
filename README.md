@@ -18,7 +18,7 @@ This project is intended to be a **collection of templates** for invoices and le
 - [x] Using a `texlive/texlive:latest-full` container for building the templates
 - [x] Python dependency management using [poetry](https://python-poetry.org)
 
-_An example of the invoice template can be found [here](invoice/example.pdf)._
+_An example of the invoice template can be found [here](invoices/example.pdf)._
 
 ## License
 
