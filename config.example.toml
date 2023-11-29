@@ -1,0 +1,29 @@
+[company]
+name = "Musterfirma GmbH"
+name_long = "Musterfirma GmbH & Co. KG"
+email = "info@musterfirma.de"
+website = "musterfirma.de"
+phone = "+49 176 12345678"
+tax_number = "12 345 6789 0"
+tax_office = "Musterstadt"
+
+[address]
+street = "Musterstraße 100"
+zip = "12345"
+city = "Musterstadt"
+country = "Deutschland"
+
+[bank]
+iban = "DE01 2345 6789 0123 4567 89"
+bic = "AAAAAAA1BBB"
+bank_name = "Musterbank"
+
+[invoice]
+VAT = 0
+due_days = 14
+
+[style]
+serif_font = "Palatino"
+sans_font = "Helvetica"
+font_size = 10
+geometry = "a4paper, left=2cm, right=2cm, top=2cm, bottom=2cm"

@@ -1,0 +1,11 @@
+customer: 10000
+items:
+  - name: "Kleiner Kuchen"
+    quantity: 1
+    unit: Stück
+    price: 3.50
+  - name: "Beratung"
+    description: "Beratung für die Website"
+    quantity: 1
+    unit: Stunde
+    price: 50.00

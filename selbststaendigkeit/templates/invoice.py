@@ -1,3 +1,4 @@
+import datetime
 import os
 import sqlite3
 import subprocess
@@ -6,7 +7,10 @@ from pathlib import Path
 import jinja2
 from loguru import logger
 
-from selbststaendigkeit.utils.config import load_config
+from selbststaendigkeit.utils import models
+
+CUSTOMER_FILE = Path(os.environ.get("CUSTOMER_FILE", "data/customers.example.yml"))
+CONFIG_FILE = Path(os.environ.get("CONFIG_FILE", "config.example.toml"))
 
 
 def create_invoice_number() -> int:
@@ -49,9 +53,11 @@ def create_invoice_number() -> int:
     return new_invoice_number
 
 
-def create_invoice():
+def create_invoice(invoice_path: Path = Path("invoices/example.yml")):
     """Create invoice."""
-    config = load_config()
+    config = models.load_config(CONFIG_FILE)
+    invoice = models.load_invoice(invoice_path)
+    customer = models.load_customer(CUSTOMER_FILE, invoice.customer)
 
     # Create invoice number
     config.invoice.number = create_invoice_number()
@@ -72,11 +78,14 @@ def create_invoice():
 
     # Render the template
     rendered_template = template.render(
-        company=config.company,
-        address=config.address,
-        bank=config.bank,
-        invoice=config.invoice,
-        style=config.style,
+        config=config,
+        customer=customer,
+        invoice=invoice.model_copy(
+            update={
+                "date": invoice.date.strftime("%d.%m.%Y"),
+                "due_date": (invoice.date + datetime.timedelta(days=config.invoice.due_days)).strftime("%d.%m.%Y"),
+            }
+        ),
     )
 
     # Store tex file based on invoice number
@@ -97,7 +106,7 @@ def create_invoice():
         "/workdir",
         "--userns",
         f"keep-id:uid={os.getuid()},gid={os.getgid()}",
-        "custom-texlive:latest",
+        "texlive/texlive:latest-full",
         "latexmk",
         f"-output-directory={output_directory}",
         "-pdf",

@@ -1,4 +1,4 @@
-\documentclass[a4paper, article, oneside, hidelinks, 10pt]{memoir}
+\documentclass[a4paper, article, oneside, hidelinks, (((config.style.font_size)))pt]{memoir}
 
 % Encoding and fonts
 \usepackage[utf8]{inputenc}
@@ -29,7 +29,6 @@
 \usepackage{tabularray}
 
 % QR code generation
-\usepackage[yyyymmdd]{datetime}
 \usepackage[qrscheme=epc,replace-umlauts=true,qrsize=20mm]{qrbill}
 
 % Euro symbol
@@ -69,7 +68,7 @@
 \renewcommand{\footrulewidth}{1pt}
 \lfoot{\footnotesize
 \begin{tblr}{width=\textwidth, colspec={X[l]X[l]X[l]}, leftsep=0pt, rightsep=0pt}
-	{(((company.name))) \\ (((address.street))) \\ (((address.zip))) (((address.city)))} & {(((company.phone))) \\ \href{mailto:(((company.email)))}{(((company.email)))} \\ \href{https://(((company.website)))}{(((company.website)))}} & {Finanzamt: (((company.tax_office))) \\ Steuernummer: (((company.tax_number)))} \\
+	{(((config.company.name))) \\ (((config.address.street))) \\ (((config.address.zip))) (((config.address.city)))} & {(((config.company.phone))) \\ \href{mailto:(((config.company.email)))}{(((config.company.email)))} \\ \href{https://(((config.company.website)))}{(((config.company.website)))}} & {Finanzamt: (((config.company.tax_office))) \\ Steuernummer: (((config.company.tax_number)))} \\
 \end{tblr}
 }
 
@@ -80,41 +79,40 @@
 % Issuer
 \begin{raggedleft}
 	\small
-	\textbf{(((company.name)))} \\
-	(((address.street))) \\
-	(((address.zip))) (((address.city))) \\
-	(((company.phone))) \\
-	\href{mailto:(((company.email)))}{(((company.email)))} \\
-	\href{https://(((company.website)))}{(((company.website)))} \\
+	\textbf{(((config.company.name)))} \\
+	(((config.address.street))) \\
+	(((config.address.zip))) (((config.address.city))) \\
+	(((config.company.phone))) \\
+	\href{mailto:(((config.company.email)))}{(((config.company.email)))} \\
+	\href{https://(((config.company.website)))}{(((config.company.website)))} \\
 \end{raggedleft}
 
 \vspace{1cm}
 
 % Recipient and invoice information
 \begin{minipage}[t]{0.6\textwidth}
-	{\scriptsize \underline{(((company.name))), (((address.street))), (((address.zip))) (((address.city)))}}
+	{\scriptsize \underline{(((config.company.name))), (((config.address.street))), (((config.address.zip))) (((config.address.city)))}}
 
 	\medskip
 
-	{\large \textbf{\dots}} \\
-	\dots \\
-	\dots \\
-	\dots
+	{\large \textbf{(((customer.name)))}} \\
+	(((customer.address.street))) \\
+	(((customer.address.zip))) (((customer.address.city)))
 \end{minipage}
 \begin{minipage}[t]{0.4\textwidth}
 	\small
 	\begin{tabbing}
 		\hspace{0.2\textwidth} \= \hspace{0.2\textwidth} \kill
-		Rechnungsnummer: \` \hfill (((invoice.number))) \\
-		Kundennummer: \` \hfill \dots \\
-		Datum: \` \hfill \dots \\
-		Zahlungsfrist: \` \hfill \dots \\
+		Rechnungsnummer: \` \hfill (((config.invoice.number))) \\
+		Kundennummer: \` \hfill (((invoice.customer))) \\
+		Datum: \` \hfill (((invoice.date))) \\
+		Zahlungsfrist: \` \hfill (((invoice.due_date))) \\
 	\end{tabbing}
 \end{minipage}
 
 \vspace{2cm}
 
-\chapter*{Rechnung (((invoice.number)))}
+\chapter*{Rechnung (((config.invoice.number)))}
 
 Sehr geehrte Damen und Herren,
 
@@ -124,36 +122,37 @@ meine Leistungen stelle ich Ihnen wie folgt in Rechnung.
 
 % Items
 \begin{longtblr}[entry = none, label = none, note{*} = {Umsatzsteuerfreie Leistungen gemäß §19 UStG.}]{width=\textwidth, colspec={cXrr*{2}{Q[si={table-format=4.2},r]}}, vlines, hlines, row{1}={guard,font=\bfseries}, row{Z}={guard,font=\bfseries,gray9}, rowhead=1, rowfoot=1, abovesep=4pt, belowsep=4pt}
-	Pos.                                               & Bezeichnung   & Menge                                                                            & Einheit & Einzel \texteuro & Gesamt \texteuro \\
-	((* for item in items *))
-	                                                   & (((item[0]))) & ((* if item[2] is not none and item[2]|length != 0 *))(((item[2])))((* endif *)) &         &                  & 0                \\
+	Pos.                                               & Bezeichnung          & Menge                                                                                   & Einheit & Einzel \texteuro & Gesamt \texteuro \\
+	% Add a counter for the items
+	((* for item in invoice.items *))
+	(((loop.index)))                                   & {(((item.name))) ((* if item.description *))\\ \footnotesize (((item.description)))((* endif *))} & (((item.quantity))) & (((item.unit))) & (((item.price))) & (((item.total))) \\
 	((* endfor *))
-	test                                               &               &                                                                                  &         & 0                & 0                \\
-	\SetCell[c=5]{l} \textbf{Gesamtbetrag}\TblrNote{*} &               &                                                                                  &         &                  & \num{10}         \\
+	\SetCell[c=5]{l} \textbf{Gesamtbetrag}\TblrNote{*} &                      &                                                                                         &         &                  & \num{(((invoice.total)))}         \\
 \end{longtblr}
 
-Bitte überweisen Sie den Betrag von \dots bis zum \dots an die folgende Bankverbindung. \textit{Der dargestellte QR-Code kann zur automatischen Übernahme der Daten in Ihr Online-Banking genutzt werden.}
+Bitte überweisen Sie den Betrag von \textbf{\SI{(((invoice.total)))}{\euro}} bis zum \textbf{(((invoice.due_date)))} an die folgende Bankverbindung. \textit{Der dargestellte QR-Code kann zur automatischen Übernahme der Daten in Ihr Online-Banking genutzt werden.}
 
 \bigskip
 
 % Bank information
-\begin{minipage}[c]{0.7\textwidth}
+\begin{minipage}{0.7\textwidth}
 	\small
 	\begin{tblr}{width=\textwidth, colspec={X[l]X[l]}, leftsep=0pt, rightsep=0pt}
-		Kontoinhaber:     & (((company.name)))   \\
-		IBAN:             & (((bank.iban)))      \\
-		Bank:             & (((bank.bank_name))) \\
-		Verwendungszweck: & (((invoice.number))) \\
+		Kontoinhaber:     & (((config.company.name)))   \\
+		IBAN:             & (((config.bank.iban)))      \\
+		Bank:             & (((config.bank.bank_name))) \\
+		Verwendungszweck: & (((config.invoice.number))) \\
 	\end{tblr}
 \end{minipage}
-\begin{minipage}[c]{0.3\textwidth}
+\begin{minipage}{0.3\textwidth}
 	\hfill
 	\QRbill*[
-		Account=(((bank.iban | replace(' ', '')))),
-		Name=(((company.name))),
-		Amount=EUR10.00,
-		Message={(((invoice.number)))},
+		Account=(((config.bank.iban | replace(' ', '')))),
+		Name=(((config.company.name))),
+		Amount=EUR(((invoice.total))),
+		Message={(((config.invoice.number)))},
 	]
+	\hfill
 \end{minipage}
 
 \bigskip

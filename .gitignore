@@ -2,16 +2,15 @@
 __pycache__/
 .ruff_cache/
 .mypy_cache/
+.env
 
-src/config.toml
+config.toml
 
 invoices/*
 !invoices/example.yml
 
-data/customers.yml
-
-out/
-tmp/
+data/*
+!data/customers.example.yml
 
 templates/*
 !templates/*.tex

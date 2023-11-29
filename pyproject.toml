@@ -43,6 +43,7 @@ extend-select = [
 ]
 ignore = [
     "D100", # Missing docstring in public module
+    "D102", # Missing docstring in public method
     "D104", # Missing docstring in public package
 ]
 
