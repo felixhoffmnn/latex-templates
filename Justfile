@@ -13,20 +13,20 @@ gid := `id -g`
 
 # Lint python and tex files
 lint:
-    -poetry run ruff lint ./selbststaendigkeit
+    -poetry run ruff lint ./latex_templates
     -podman run --rm -it -v {{ justfile_directory() }}:/workdir:z -w /workdir --userns keep-id:uid={{ uid }},gid={{ gid }} custom-texlive:latest chktex ./templates/*.tex
 
 # Format python and tex files
 @format:
-    poetry run ruff format ./selbststaendigkeit
+    poetry run ruff format ./latex_templates
     podman run --rm -it -v {{ justfile_directory() }}:/workdir:z -w /workdir --userns keep-id:uid={{ uid }},gid={{ gid }} custom-texlive:latest latexindent -s -w ./templates/*.tex
 
-# Generate a new invoice (we first need to create tmp and out folders)
-@invoice: (_create-folder "invoices/{out,tmp}/")
-    poetry run python selbststaendigkeit/manage.py invoice
+# Generate a new invoice
+@invoice: (_create-folder "data/invoices/{out,tmp}/")
+    poetry run python latex_templates/manage.py invoice
 
 # Clean up the project
 clean:
     -rm templates/*.bak*
-    -rm -r invoices/out/
-    -rm -r invoices/tmp/
+    -rm -r data/invoices/out/
+    -rm -r data/invoices/tmp/

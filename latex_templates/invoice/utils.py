@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 
-from selbststaendigkeit.models import Config, Customer, Invoice
+from latex_templates.invoice.models import Config, Customer, Invoice
 
 
 def load_config(file: Path) -> Config:

@@ -7,7 +7,11 @@ from pathlib import Path
 import jinja2
 from loguru import logger
 
-from selbststaendigkeit.utils import models
+from latex_templates.invoice import utils
+
+DATA_DIR = Path("data")
+INVOICE_DIR = DATA_DIR / "invoices"
+OUTPUT_DIR = INVOICE_DIR / "out"
 
 CUSTOMER_FILE = Path(os.environ.get("CUSTOMER_FILE", "data/customers.example.yml"))
 CONFIG_FILE = Path(os.environ.get("CONFIG_FILE", "config.example.toml"))
@@ -19,10 +23,9 @@ def create_invoice_number() -> int:
     The invoice number format is: REXXXX.
     """
     # Create a sqlite database if it doesn't exist
-    db_path = Path("invoices/invoices.db")
+    db_path = INVOICE_DIR / "invoices.db"
     if not db_path.exists():
-        with db_path.open("w") as f:
-            pass
+        Path.touch(db_path)
 
     # Connect to the database
     conn = sqlite3.connect(db_path)
@@ -53,11 +56,11 @@ def create_invoice_number() -> int:
     return new_invoice_number
 
 
-def create_invoice(invoice_path: Path = Path("invoices/example.yml")):
+def create_invoice(invoice_path: Path = INVOICE_DIR / "example.yml"):
     """Create invoice."""
-    config = models.load_config(CONFIG_FILE)
-    invoice = models.load_invoice(invoice_path)
-    customer = models.load_customer(CUSTOMER_FILE, invoice.customer)
+    config = utils.load_config(CONFIG_FILE)
+    invoice = utils.load_invoice(invoice_path)
+    customer = utils.load_customer(CUSTOMER_FILE, invoice.customer)
 
     # Create invoice number
     config.invoice.number = create_invoice_number()
@@ -89,10 +92,8 @@ def create_invoice(invoice_path: Path = Path("invoices/example.yml")):
     )
 
     # Store tex file based on invoice number
-    with Path.open("invoices/tmp/invoice.tex", "w") as f:
+    with Path.open(INVOICE_DIR / "tmp" / "invoice.tex", "w") as f:
         f.write(rendered_template)
-
-    output_directory = Path("invoices/out")
 
     # Run the generate_pdf command within a Podman container
     podman_command = [
@@ -108,14 +109,14 @@ def create_invoice(invoice_path: Path = Path("invoices/example.yml")):
         f"keep-id:uid={os.getuid()},gid={os.getgid()}",
         "texlive/texlive:latest-full",
         "latexmk",
-        f"-output-directory={output_directory}",
+        f"-output-directory={OUTPUT_DIR}",
         "-pdf",
         "-quiet",
-        "invoices/tmp/invoice.tex",
+        INVOICE_DIR / "tmp" / "invoice.tex",
     ]
 
     try:
         subprocess.run(podman_command, check=True)
-        logger.success(f"PDF generated successfully at: {output_directory}")
+        logger.success(f"PDF generated successfully at: {OUTPUT_DIR / 'invoice.pdf'}")
     except subprocess.CalledProcessError as e:
         logger.error(f"PDF generation failed: {e}")

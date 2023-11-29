@@ -6,12 +6,12 @@ __pycache__/
 
 config.toml
 
-invoices/*
-!invoices/example.yml
-!invoices/example.pdf
-
 data/*
+data/invoices/*
+!data/invoices/
 !data/customers.example.yml
+!data/invoices/example.pdf
+!data/invoices/example.yml
 
 templates/*
 !templates/*.tex

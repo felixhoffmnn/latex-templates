@@ -122,12 +122,12 @@ meine Leistungen stelle ich Ihnen wie folgt in Rechnung.
 
 % Items
 \begin{longtblr}[entry = none, label = none, note{*} = {Umsatzsteuerfreie Leistungen gemäß §19 UStG.}]{width=\textwidth, colspec={cXrr*{2}{Q[si={table-format=4.2},r]}}, vlines, hlines, row{1}={guard,font=\bfseries}, row{Z}={guard,font=\bfseries,gray9}, rowhead=1, rowfoot=1, abovesep=4pt, belowsep=4pt}
-	Pos.                                               & Bezeichnung          & Menge                                                                                   & Einheit & Einzel \texteuro & Gesamt \texteuro \\
+	Pos.                                               & Bezeichnung                                  & Menge & Einheit & Einzel \texteuro & Gesamt \texteuro          \\
 	% Add a counter for the items
 	((* for item in invoice.items *))
-	(((loop.index)))                                   & {(((item.name))) ((* if item.description *))\\ \footnotesize (((item.description)))((* endif *))} & (((item.quantity))) & (((item.unit))) & (((item.price))) & (((item.total))) \\
+	(((loop.index)))                                   & {(((item.name))) ((* if item.description *))                                                                  \\ \footnotesize (((item.description)))((* endif *))} & (((item.quantity))) & (((item.unit))) & (((item.price))) & (((item.total))) \\
 	((* endfor *))
-	\SetCell[c=5]{l} \textbf{Gesamtbetrag}\TblrNote{*} &                      &                                                                                         &         &                  & \num{(((invoice.total)))}         \\
+	\SetCell[c=5]{l} \textbf{Gesamtbetrag}\TblrNote{*} &                                              &       &         &                  & \num{(((invoice.total)))} \\
 \end{longtblr}
 
 Bitte überweisen Sie den Betrag von \textbf{\SI{(((invoice.total)))}{\euro}} bis zum \textbf{(((invoice.due_date)))} an die folgende Bankverbindung. \textit{Der dargestellte QR-Code kann zur automatischen Übernahme der Daten in Ihr Online-Banking genutzt werden.}

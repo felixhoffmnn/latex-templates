@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "selbststaendigkeit"
+name = "latex_templates"
 version = "0.1.0"
-description = "LaTeX-Vorlagen für die Erstellung von Rechnungen und Angeboten"
-authors = ["Felix Hoffmann <post@felixemmanuel.de>"]
+description = "A collection of LaTeX templates."
+authors = ["Felix Hoffmann <felix.emmanuel.hoffmann@gmail.com>"]
 readme = "README.md"
-packages = [{ include = "selbststaendigkeit" }]
+packages = [{ include = "latex_templates" }]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.12"
 pydantic = "^2.5.2"
 jinja2 = "^3.1.2"
 pylatex = "^1.4.2"
