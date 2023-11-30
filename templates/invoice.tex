@@ -103,16 +103,19 @@
 	\small
 	\begin{tabbing}
 		\hspace{0.2\textwidth} \= \hspace{0.2\textwidth} \kill
-		Rechnungsnummer: \` \hfill (((config.invoice.number))) \\
-		Kundennummer: \` \hfill (((invoice.customer))) \\
+		Rechnungsnummer: \` \hfill (((invoice.number))) \\
+		Kundennummer: \` \hfill (((customer.id))) \\
 		Datum: \` \hfill (((invoice.date))) \\
-		Zahlungsfrist: \` \hfill (((invoice.due_date))) \\
+		((* if invoice.start_date and invoice.end_date *))
+		Leistungszeitraum: \` \hfill (((invoice.start_date))) \\
+		\` \hfill bis (((invoice.end_date))) \\
+		((* endif *))
 	\end{tabbing}
 \end{minipage}
 
-\vspace{2cm}
+\vspace{1cm}
 
-\chapter*{Rechnung (((config.invoice.number)))}
+\chapter*{Rechnung (((invoice.number)))}
 
 Sehr geehrte Damen und Herren,
 
@@ -125,7 +128,7 @@ meine Leistungen stelle ich Ihnen wie folgt in Rechnung.
 	Pos.                                               & Bezeichnung                                  & Menge & Einheit & Einzel \texteuro & Gesamt \texteuro          \\
 	% Add a counter for the items
 	((* for item in invoice.items *))
-	(((loop.index)))                                   & {(((item.name))) ((* if item.description *))                                                                  \\ \footnotesize (((item.description)))((* endif *))} & (((item.quantity))) & (((item.unit))) & (((item.price))) & (((item.total))) \\
+	(((loop.index)))                                   & {\textbf{(((item.name)))} ((* if item.description *))                                                                  \\ \footnotesize (((item.description)))((* endif *))} & (((item.quantity))) & (((item.unit))) & (((item.price))) & (((item.total))) \\
 	((* endfor *))
 	\SetCell[c=5]{l} \textbf{Gesamtbetrag}\TblrNote{*} &                                              &       &         &                  & \num{(((invoice.total)))} \\
 \end{longtblr}
@@ -141,7 +144,7 @@ Bitte überweisen Sie den Betrag von \textbf{\SI{(((invoice.total)))}{\euro}} bi
 		Kontoinhaber:     & (((config.company.name)))   \\
 		IBAN:             & (((config.bank.iban)))      \\
 		Bank:             & (((config.bank.bank_name))) \\
-		Verwendungszweck: & (((config.invoice.number))) \\
+		Verwendungszweck: & (((invoice.purpose)))        \\
 	\end{tblr}
 \end{minipage}
 \begin{minipage}{0.3\textwidth}
@@ -150,13 +153,13 @@ Bitte überweisen Sie den Betrag von \textbf{\SI{(((invoice.total)))}{\euro}} bi
 		Account=(((config.bank.iban | replace(' ', '')))),
 		Name=(((config.company.name))),
 		Amount=EUR(((invoice.total))),
-		Message={(((config.invoice.number)))},
+		Message={(((invoice.purpose)))},
 	]
 	\hfill
 \end{minipage}
 
 \bigskip
 
-Vielen Dank für die gute Zusammenarbeit.
+Vielen Dank für die nette Zusammenarbeit.
 
 \end{document}

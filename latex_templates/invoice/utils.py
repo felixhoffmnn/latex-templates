@@ -3,7 +3,39 @@ from pathlib import Path
 
 import yaml
 
-from latex_templates.invoice.models import Config, Customer, Invoice
+from latex_templates.invoice.models import Config, Customer, Invoices
+
+
+def confirm(prompt: str, default: bool = True) -> bool:
+    """Confirm prompt.
+
+    Parameters
+    ----------
+    prompt : str
+        Prompt to confirm.
+    default : bool, optional
+        Default value, by default True
+
+    Returns
+    -------
+    bool
+        True if confirmed, False otherwise.
+    """
+    valid = {"yes": True, "y": True, "no": False, "n": False}
+    if default is None:
+        prompt = f"{prompt} [y/n] "
+    elif default:
+        prompt = f"{prompt} [Y/n] "
+    else:
+        prompt = f"{prompt} [y/N] "
+    while True:
+        choice = input(prompt).lower()
+        if default is not None and choice == "":
+            return default
+        elif choice in valid:
+            return valid[choice]
+        else:
+            print("Please respond with 'yes' or 'no' (or 'y' or 'n').\n")
 
 
 def load_config(file: Path) -> Config:
@@ -20,8 +52,8 @@ def load_config(file: Path) -> Config:
         Config object.
     """
     with Path.open(file, "rb") as f:
-        file = tomllib.load(f)
-        config = Config(**file)
+        parsed_file = tomllib.load(f)
+        config = Config(**parsed_file)
     return config
 
 
@@ -43,8 +75,8 @@ def load_customer(file: Path, id: str | int) -> Customer:
         Customer object.
     """
     with Path.open(file, "rb") as f:
-        file = yaml.safe_load(f)
-        customers = [Customer(**c) for c in file["customers"]]
+        parsed_file = yaml.safe_load(f)
+        customers = [Customer(**c) for c in parsed_file["customers"]]
 
     # Validate that the customer ids are unique
     customer_ids = [c.id for c in customers]
@@ -56,7 +88,7 @@ def load_customer(file: Path, id: str | int) -> Customer:
     return customers[0]
 
 
-def load_invoice(file: Path) -> Invoice:
+def load_invoice(file: Path) -> Invoices:
     """Load invoice file.
 
     Parameters
@@ -67,9 +99,9 @@ def load_invoice(file: Path) -> Invoice:
     Returns
     -------
     dict
-        Invoice dictionary.
+        Invoices object.
     """
     with Path.open(file, "rb") as f:
-        file = yaml.safe_load(f)
-        invoice = Invoice(**file)
-    return invoice
+        parsed_file = yaml.safe_load(f)
+        invoices = Invoices(**parsed_file)
+    return invoices

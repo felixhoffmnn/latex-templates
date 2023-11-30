@@ -19,6 +19,10 @@ ruff = "^0.1.6"
 pre-commit = "^3.5.0"
 mypy = "^1.7.1"
 
+
+[tool.poetry.group.types.dependencies]
+types-pyyaml = "^6.0.12.12"
+
 [tool.mypy]
 ignore_missing_imports = true
 

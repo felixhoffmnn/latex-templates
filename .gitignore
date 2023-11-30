@@ -4,7 +4,6 @@ __pycache__/
 .mypy_cache/
 .env
 
-config.toml
 
 data/*
 data/invoices/*
@@ -12,6 +11,8 @@ data/invoices/*
 !data/customers.example.yml
 !data/invoices/example.pdf
 !data/invoices/example.yml
+!data/invoices/config.example.toml
 
 templates/*
 !templates/*.tex
+!templates/*.cls

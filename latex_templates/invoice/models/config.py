@@ -39,7 +39,6 @@ class Bank(BaseModel):
 class Invoice(BaseModel):
     """Invoice model for the config.toml file."""
 
-    number: int | None = None
     VAT: int
     due_days: int
 
