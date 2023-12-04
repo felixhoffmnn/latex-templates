@@ -1,4 +1,4 @@
-\documentclass[a4paper, article, oneside, hidelinks, (((config.style.font_size)))pt]{memoir}
+\documentclass[a4paper, article, oneside, hidelinks, (((config.invoice.style.font_size)))pt]{memoir}
 
 % Encoding and fonts
 \usepackage[utf8]{inputenc}
@@ -68,7 +68,7 @@
 \renewcommand{\footrulewidth}{1pt}
 \lfoot{\footnotesize
 \begin{tblr}{width=\textwidth, colspec={X[l]X[l]X[l]}, leftsep=0pt, rightsep=0pt}
-	{(((config.company.name))) \\ (((config.address.street))) \\ (((config.address.zip))) (((config.address.city)))} & {(((config.company.phone))) \\ \href{mailto:(((config.company.email)))}{(((config.company.email)))} \\ \href{https://(((config.company.website)))}{(((config.company.website)))}} & {Finanzamt: (((config.company.tax_office))) \\ Steuernummer: (((config.company.tax_number)))} \\
+	{(((config.company.name))) \\ (((config.company.address.street))) \\ (((config.company.address.zip))) (((config.company.address.city)))} & {(((config.company.phone))) \\ \href{mailto:(((config.company.email)))}{(((config.company.email)))} \\ \href{https://(((config.company.website)))}{(((config.company.website)))}} & {Finanzamt: (((config.company.tax.office))) \\ Steuernummer: (((config.company.tax.number)))} \\
 \end{tblr}
 }
 
@@ -80,8 +80,8 @@
 \begin{raggedleft}
 	\small
 	\textbf{(((config.company.name)))} \\
-	(((config.address.street))) \\
-	(((config.address.zip))) (((config.address.city))) \\
+	(((config.company.address.street))) \\
+	(((config.company.address.zip))) (((config.company.address.city))) \\
 	(((config.company.phone))) \\
 	\href{mailto:(((config.company.email)))}{(((config.company.email)))} \\
 	\href{https://(((config.company.website)))}{(((config.company.website)))} \\
@@ -91,7 +91,7 @@
 
 % Recipient and invoice information
 \begin{minipage}[t]{0.6\textwidth}
-	{\scriptsize \underline{(((config.company.name))), (((config.address.street))), (((config.address.zip))) (((config.address.city)))}}
+	{\scriptsize \underline{(((config.company.name))), (((config.company.address.street))), (((config.company.address.zip))) (((config.company.address.city)))}}
 
 	\medskip
 
@@ -103,8 +103,8 @@
 	\small
 	\begin{tabbing}
 		\hspace{0.2\textwidth} \= \hspace{0.2\textwidth} \kill
-		Rechnungsnummer: \` \hfill (((invoice.number))) \\
-		Kundennummer: \` \hfill (((customer.id))) \\
+		Rechnungsnummer: \` \hfill (((invoice.invoice_number))) \\
+		Kundennummer: \` \hfill (((customer.customer_id))) \\
 		Datum: \` \hfill (((invoice.date))) \\
 		((* if invoice.start_date and invoice.end_date *))
 		Leistungszeitraum: \` \hfill (((invoice.start_date))) \\
@@ -115,7 +115,7 @@
 
 \vspace{1cm}
 
-\chapter*{Rechnung (((invoice.number)))}
+\chapter*{Rechnung (((invoice.invoice_number)))}
 
 Sehr geehrte Damen und Herren,
 
@@ -142,18 +142,18 @@ Bitte überweisen Sie den Betrag von \textbf{\SI{(((invoice.total)))}{\euro}} bi
 	\small
 	\begin{tblr}{width=\textwidth, colspec={X[l]X[l]}, leftsep=0pt, rightsep=0pt}
 		Kontoinhaber:     & (((config.company.name)))   \\
-		IBAN:             & (((config.bank.iban)))      \\
-		Bank:             & (((config.bank.bank_name))) \\
-		Verwendungszweck: & (((invoice.purpose)))        \\
+		IBAN:             & (((config.company.bank.iban)))      \\
+		Bank:             & (((config.company.bank.bank_name))) \\
+		Verwendungszweck: & (((additional.purpose)))        \\
 	\end{tblr}
 \end{minipage}
 \begin{minipage}{0.3\textwidth}
 	\hfill
 	\QRbill*[
-		Account=(((config.bank.iban | replace(' ', '')))),
+		Account=(((config.company.bank.iban | replace(' ', '')))),
 		Name=(((config.company.name))),
 		Amount=EUR(((invoice.total))),
-		Message={(((invoice.purpose)))},
+		Message={(((additional.purpose)))},
 	]
 	\hfill
 \end{minipage}

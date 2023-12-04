@@ -34,6 +34,5 @@ check:
 
 # Clean up the project
 clean:
-    -rm templates/*.bak*
-    -rm data/invoices/out/*.{aux,log,fls,fdb_latexmk,log,nav,out,snm,synctex.gz,toc}
-    -rm -r data/invoices/tmp/
+    -rm templates/*.{bak*,log}
+    -rm -r {out,tmp}

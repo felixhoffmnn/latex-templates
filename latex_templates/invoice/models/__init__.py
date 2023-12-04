@@ -1,5 +1,5 @@
 from .config import Company, Config
 from .customer import Customer
-from .invoice import Invoice, Invoices
+from .invoice import Invoice
 
-__all__ = ["Config", "Customer", "Invoices", "Invoice", "Company"]
+__all__ = ["Config", "Customer", "Invoice", "Company"]

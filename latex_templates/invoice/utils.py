@@ -1,107 +1,61 @@
+import csv
 import tomllib
 from pathlib import Path
 
 import yaml
 
-from latex_templates.invoice.models import Config, Customer, Invoices
+from latex_templates.invoice.models import Config, Customer, Invoice
 
 
 def confirm(prompt: str, default: bool = True) -> bool:
-    """Confirm prompt.
+    """Confirm prompt."""
+    valid_responses = {"yes": True, "y": True, "no": False, "n": False}
+    response_prompt = f"{prompt} [Y/n] " if default else f"{prompt} [y/N] "
 
-    Parameters
-    ----------
-    prompt : str
-        Prompt to confirm.
-    default : bool, optional
-        Default value, by default True
-
-    Returns
-    -------
-    bool
-        True if confirmed, False otherwise.
-    """
-    valid = {"yes": True, "y": True, "no": False, "n": False}
-    if default is None:
-        prompt = f"{prompt} [y/n] "
-    elif default:
-        prompt = f"{prompt} [Y/n] "
-    else:
-        prompt = f"{prompt} [y/N] "
     while True:
-        choice = input(prompt).lower()
+        choice = input(response_prompt).lower()
         if default is not None and choice == "":
             return default
-        elif choice in valid:
-            return valid[choice]
+        elif choice in valid_responses:
+            return valid_responses[choice]
         else:
             print("Please respond with 'yes' or 'no' (or 'y' or 'n').\n")
 
 
 def load_config(file: Path) -> Config:
-    """Load config file.
-
-    Parameters
-    ----------
-    file : Path
-        Path to config file.
-
-    Returns
-    -------
-    Config
-        Config object.
-    """
-    with Path.open(file, "rb") as f:
+    """Load config file."""
+    with file.open("rb") as f:
         parsed_file = tomllib.load(f)
         config = Config(**parsed_file)
     return config
 
 
-def load_customer(file: Path, id: str | int) -> Customer:
-    """Load customer file.
-
-    This function loads the customer file, filters the customer by id and
-    returns the first customer object that matches the id.
-
-    Parameters
-    ----------
-    file : Path
-        Path to customer file.
-    id : str | int
-
-    Returns
-    -------
-    Customer
-        Customer object.
-    """
-    with Path.open(file, "rb") as f:
-        parsed_file = yaml.safe_load(f)
-        customers = [Customer(**c) for c in parsed_file["customers"]]
+def load_customer(file: Path, customer_id: str | int) -> Customer:
+    """Load customer file."""
+    with file.open("r", encoding="utf-8-sig") as f:
+        parsed_file = csv.DictReader(f)
+        customers = [Customer(**customer) for customer in parsed_file if customer]
 
     # Validate that the customer ids are unique
-    customer_ids = [c.id for c in customers]
+    customer_ids = [c.customer_id for c in customers]
     if len(customer_ids) != len(set(customer_ids)):
         raise ValueError("Customer ids must be unique.")
 
-    # Filter the customer by id
-    customers = [c for c in customers if c.id == id]
-    return customers[0]
+    # Filter the customers by id
+    matching_customers = [c for c in customers if c.customer_id == customer_id]
+
+    if not matching_customers:
+        raise ValueError(f"No customer found with id {customer_id}")
+
+    if len(matching_customers) > 1:
+        raise ValueError(f"Multiple customers found with id {customer_id}")
+
+    return matching_customers[0]
 
 
-def load_invoice(file: Path) -> Invoices:
-    """Load invoice file.
-
-    Parameters
-    ----------
-    file : Path
-        Path to invoice file.
-
-    Returns
-    -------
-    dict
-        Invoices object.
-    """
-    with Path.open(file, "rb") as f:
+def load_invoice(file: Path) -> list[Invoice]:
+    """Load invoice file."""
+    with file.open("rb") as f:
         parsed_file = yaml.safe_load(f)
-        invoices = Invoices(**parsed_file)
+        invoices = [Invoice(**invoice) for invoice in parsed_file]
     return invoices

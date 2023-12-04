@@ -1,9 +1,0 @@
-customers:
-  - id: 10000
-    name: Max Mustermann
-    email: max@mustermann.de
-    phone: +49 176 12345678
-    address:
-      street: Musterstraße 1
-      zip: 12345
-      city: Musterstadt

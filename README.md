@@ -33,7 +33,7 @@ _An example of the invoice template can be found [here](data/invoices/example.pd
 
 You can either just clone this repository or create a fork of it. First of all, you need to install the dependencies using **[poetry](https://python-poetry.org)** (if you haven't heard of it, you should google it, and follow a tutorial on how to use it). Additionally I suggest using **[just](https://just.systems/man/en/)**.
 
-After you have installed the dependencies, you will have to customize the configuration files. The first file contains your personal information, and some settings for the template (an example file is located at [data/invoice/config.example.toml](data/invoice/config.example.toml)). Please create a copy of the file and name it `data/invoice/config.toml`. The second file contains the information about you customers (an example file is located at [data/customers.example.yml](data/customers.example.toml)). Please create a copy of the file and name it `data/customers.yml`. Lastly, you will have to create a file for each invoice you want to create (an example file is located at [data/invoices/example.yml](data/invoices/example.toml)). Please create a copy of the file and name it `data/invoices/<invoice-name>.yml`.
+For initial testing, I created some example configuration files. If you want **to customize the templates** to your needs, I suggest **reading this [file](example/README.md)**.
 
 Following, you should be able to create your first invoice by running the following command:
 

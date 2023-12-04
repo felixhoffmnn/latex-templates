@@ -1,24 +1,26 @@
 from pydantic import BaseModel
 
+from latex_templates.invoice.models.shared import Address
+
 
 class Customer(BaseModel):
     """Customer model for the customer.yaml file."""
 
-    id: int
+    customer_id: int
     name: str
+    company: str | None = None
     email: str
     phone: str
     website: str | None = None
-    address: dict
+    address: Address
 
-    @property
-    def street(self):
-        return self.address["street"]
-
-    @property
-    def zip(self):
-        return self.address["zip"]
-
-    @property
-    def city(self):
-        return self.address["city"]
+    # address needs to be initialized manually
+    def __init__(self, **data):
+        """Initialize the customer model."""
+        data["address"] = {
+            "street": data.get("street"),
+            "zip": data.get("zip"),
+            "city": data.get("city"),
+            "country": data.get("country"),
+        }
+        super().__init__(**data)
