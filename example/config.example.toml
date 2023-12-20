@@ -2,7 +2,7 @@
 name = "Musterfirma GmbH"
 name_long = "Musterfirma GmbH & Co. KG"
 email = "info@musterfirma.de"
-website = "musterfirma.de"
+url = "https://musterfirma.de"
 phone = "+49 176 12345678"
 
 [company.address]

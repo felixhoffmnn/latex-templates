@@ -1,6 +1,16 @@
-from pydantic import BaseModel, Field, validator
+from datetime import date
 
-from latex_templates.invoice.models.shared import Address
+from pydantic import BaseModel, EmailStr, Field, HttpUrl, validator
+from pydantic_extra_types.phone_numbers import PhoneNumber
+
+
+class Address(BaseModel):
+    """Address model."""
+
+    street: str
+    zip: str
+    city: str
+    country: str | None = Field(None, pattern=r"^(DE|Germany|Deutschland)$")
 
 
 class Bank(BaseModel):
@@ -51,8 +61,11 @@ class Tax(BaseModel):
 class Person(BaseModel):
     """Person model for the config.toml file."""
 
-    name: str
+    first_name: str
+    last_name: str
     address: Address
+    birthday: date
+    email: EmailStr
 
 
 class Company(BaseModel):
@@ -61,9 +74,9 @@ class Company(BaseModel):
     name: str
     name_long: str | None = None
     address: Address
-    email: str = Field(pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
-    website: str = Field(pattern=r"^(http(s)?://)?[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
-    phone: str = Field(pattern=r"^\+?\d{1,3} ?\d{3} ?\d{6,8}$")
+    email: EmailStr
+    url: HttpUrl
+    phone: PhoneNumber
     tax: Tax
     bank: Bank
 

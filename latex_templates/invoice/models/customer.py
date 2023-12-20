@@ -1,6 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, HttpUrl
+from pydantic_extra_types.phone_numbers import PhoneNumber
 
-from latex_templates.invoice.models.shared import Address
+from latex_templates.models import Address
 
 
 class Customer(BaseModel):
@@ -9,9 +10,9 @@ class Customer(BaseModel):
     customer_id: int
     name: str
     company: str | None = None
-    email: str
-    phone: str
-    website: str | None = None
+    email: EmailStr
+    phone: PhoneNumber
+    url: HttpUrl | None = None
     address: Address
 
     # address needs to be initialized manually

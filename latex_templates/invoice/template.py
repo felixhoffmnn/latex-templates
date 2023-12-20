@@ -4,11 +4,13 @@ import os
 import subprocess
 from pathlib import Path
 
-import jinja2
 from loguru import logger
 
 from latex_templates.invoice import utils
+from latex_templates.invoice.models.customer import Customer
 from latex_templates.invoice.models.invoice import Invoice
+from latex_templates.models import Config
+from latex_templates.utils import compose_latex_command, latex_jinja_env, load_config
 
 DATA_DIR = Path("data")
 INVOICE_DIR = Path(os.getenv("INVOICE_PATH", DATA_DIR))
@@ -77,10 +79,10 @@ def archive_pdf(output_file: str, year: int):
     )
 
 
-def compose_mail(
+def compose_email(
     invoice: Invoice,
-    config: utils.Config,
-    customer: utils.Customer,
+    config: Config,
+    customer: Customer,
     output_file: str,
     dry_run: bool,
 ):
@@ -98,7 +100,7 @@ def compose_mail(
     message = f"Hallo {customer.name},\n\nanbei findest du die Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}.\nBitte überweise den Betrag bis zum {invoice.due_date.strftime('%d.%m.%Y')} auf das angegebene Konto (siehe Rechnung).\n\nBei Fragen kannst du dich gerne jederzeit melden.\n\nMit freundlichen Grüßen\n{config.company.name}"
 
     # Create the mail command (opens Thunderbird, containing the mail with the invoice attached)
-    mail_command = [
+    email_command = [
         "flatpak",
         "run",
         "org.mozilla.Thunderbird",
@@ -106,16 +108,11 @@ def compose_mail(
         f"from='{config.company.email}',to='{customer.email}',bcc='{config.company.email}',subject='{subject}',body='{message}',attachment='{(OUTPUT_DIR / output_file).absolute()}.pdf'",
     ]
 
-    return mail_command
+    return email_command
 
 
 # outsource the code for creating one invoice to a function
-def create_invoice(
-    invoice: Invoice,
-    config: utils.Config,
-    customer_file: Path,
-    dry_run: bool,
-):
+def create_invoice(invoice: Invoice, config: Config, customer_file: Path, dry_run: bool, latex_quiet: bool = True):
     """Create one invoice."""
     # Skip invoices that have already been sent or paid
     if invoice.status in ["sent", "paid"]:
@@ -134,17 +131,6 @@ def create_invoice(
         invoice.due_date = invoice.date + datetime.timedelta(days=config.invoice.due_days)
 
     # Load and configure jinja2 template
-    latex_jinja_env = jinja2.Environment(
-        block_start_string="((*",
-        block_end_string="*))",
-        variable_start_string="(((",
-        variable_end_string=")))",
-        comment_start_string="((=",
-        comment_end_string="=))",
-        trim_blocks=True,
-        autoescape=False,
-        loader=jinja2.FileSystemLoader("template"),
-    )
     template = latex_jinja_env.get_template("invoice.tex.j2")
 
     # Render the template
@@ -174,25 +160,7 @@ def create_invoice(
         f.write(rendered_template)
 
     # Run the generate_pdf command within a Podman container
-    latex_command = [
-        os.environ.get("CONTAINER_RUNTIME", "podman"),
-        "run",
-        "--rm",
-        "-it",
-        "-v",
-        f"{Path.cwd()}:/workdir:z",
-        "-w",
-        "/workdir",
-        "--userns",
-        f"keep-id:uid={os.getuid()},gid={os.getgid()}",
-        "texlive/texlive:latest-full",
-        "latexmk",
-        f"-output-directory={OUTPUT_DIR}",
-        "-pdf",
-        "-quiet",
-        f"-jobname={output_file}",
-        str(TMP_DIR / (output_file + ".tex")),
-    ]
+    latex_command = compose_latex_command(OUTPUT_DIR, TMP_DIR / (output_file + ".tex"), latex_quiet)
 
     try:
         subprocess.run(latex_command, check=True)
@@ -203,10 +171,10 @@ def create_invoice(
     # Check if OPEN_MAIL is set
     if not os.environ.get("OPEN_MAIL", False):
         # Create the subject and message for the mail
-        mail_command = compose_mail(invoice, config, customer, output_file, dry_run)
+        email_command = compose_email(invoice, config, customer, output_file, dry_run)
 
         try:
-            subprocess.run(mail_command, check=True)
+            subprocess.run(email_command, check=True)
             logger.success("Mail generated successfully.")
         except subprocess.CalledProcessError as e:
             logger.error(f"Mail generation failed: {e}")
@@ -250,7 +218,7 @@ def create_invoices(
         if not file.exists():
             raise FileNotFoundError(f"File not found: {file}")
 
-    config = utils.load_config(base_config)
+    config = load_config(base_config)
     invoices = utils.load_invoice(invoice_config)
 
     for invoice in invoices:

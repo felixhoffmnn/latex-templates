@@ -11,5 +11,8 @@
   },
   "[latex]": {
     "editor.formatOnSave": false
+  },
+  "files.associations": {
+    "*.tex.j2": "latex"
   }
 }

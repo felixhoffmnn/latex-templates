@@ -10,6 +10,11 @@ latex_run := container_runtime + " run --rm -it -v " + justfile_directory() + ":
 @help:
     just --list
 
+# Install dependencies
+@install:
+    poetry install
+    poetry run pre-commit install
+
 # Create a folder
 @_create-folder *PATHS:
     mkdir -p {{ PATHS }}
@@ -17,7 +22,7 @@ latex_run := container_runtime + " run --rm -it -v " + justfile_directory() + ":
 # Lint python and tex files
 lint:
     -poetry run ruff check ./latex_templates
-    -{{ latex_run }} chktex ./templates/*.tex
+    -{{ latex_run }} chktex ./templates/*.{tex.j2,tex,cls}
 
 # Check python types
 check:
@@ -26,7 +31,7 @@ check:
 # Format python and tex files
 @format:
     poetry run ruff format ./latex_templates
-    {{ latex_run }} latexindent -s -w ./templates/*.{tex,cls}
+    {{ latex_run }} latexindent -s -w ./templates/*.{tex.j2,tex,cls}
 
 # Generate a new invoice
 @invoice *FLAGS:

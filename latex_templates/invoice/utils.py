@@ -1,10 +1,9 @@
 import csv
-import tomllib
 from pathlib import Path
 
 import yaml
 
-from latex_templates.invoice.models import Config, Customer, Invoice
+from latex_templates.invoice.models import Customer, Invoice
 
 
 def confirm(prompt: str, default: bool = True) -> bool:
@@ -22,19 +21,13 @@ def confirm(prompt: str, default: bool = True) -> bool:
             print("Please respond with 'yes' or 'no' (or 'y' or 'n').\n")
 
 
-def load_config(file: Path) -> Config:
-    """Load config file."""
-    with file.open("rb") as f:
-        parsed_file = tomllib.load(f)
-        config = Config(**parsed_file)
-    return config
-
-
 def load_customer(file: Path, customer_id: str | int) -> Customer:
     """Load customer file."""
-    with file.open("r", encoding="utf-8-sig") as f:
+    with file.open("r", encoding="utf-8") as f:
         parsed_file = csv.DictReader(f)
-        customers = [Customer(**customer) for customer in parsed_file if customer]
+        customers = [
+            Customer(**{k: v if v else None for k, v in customer.items()}) for customer in parsed_file if customer
+        ]
 
     # Validate that the customer ids are unique
     customer_ids = [c.customer_id for c in customers]
