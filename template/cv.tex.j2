@@ -1,0 +1,139 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Developer CV
+% LaTeX Template
+% Version 1.0 (28/1/19)
+%
+% This template originates from:
+% http://www.LaTeXTemplates.com
+%
+% Authors:
+% Jan Vorisek (jan@vorisek.me)
+% Based on a template by Jan Küster (info@jankuester.com)
+% Modified for LaTeX Templates by Vel (vel@LaTeXTemplates.com)
+%
+% License:
+% Initially this template is licensed under MIT.
+% After some major modifications this template is licensed under GPLv3 (see COPYING file).
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Packages and other configurations
+\makeatletter
+\def\input@path{{lib/}{/workdir/template}}
+\makeatother
+
+\documentclass[9pt]{developercv} % Default font size, values from 8-12pt are recommended
+
+\begin{document}
+
+% Title and contact information
+\begin{minipage}[t]{0.525\textwidth} % 45% of the page width for name
+	\vspace{-\baselineskip} % Required for vertically aligning minipages
+
+	\colorbox{black}{{\HUGE\textcolor{white}{\textbf{\MakeUppercase{(((person.first_name)))}}}}} % First name
+	\colorbox{black}{{\HUGE\textcolor{white}{\textbf{\MakeUppercase{(((person.last_name)))}}}}} % Last name
+
+	\vspace{6pt}
+
+	{\huge (((person.title)))} % Career or current job title
+
+	\vspace{0.5cm} % Required for vertically aligning minipages
+
+	% The first parameter is the FontAwesome icon name, the second is the box size and the third is the text
+	% Other icons can be found by referring to fontawesome.pdf (supplied with the template) and using the word after \fa in the command for the icon you want
+	\icon{Asterisk}{10}{(((person.birthday))) in (((person.birthday_place)))} \\
+	\icon{MapMarker}{10}{(((person.address)))} \\
+	\icon{Phone}{10}{(((person.phone)))} \\
+	\icon{At}{10}{\href{mailto:(((person.email)))}{(((person.email)))}} \\
+	\icon{Github}{10}{\href{https://github.com/(((social.github)))}{(((social.github)))}} \\
+\end{minipage} \hfill
+\begin{minipage}[t]{0.375\textwidth} % 27.5% of the page width for the first row of icons
+	\vspace{-\baselineskip} % Required for vertically aligning minipages
+
+	\includegraphics[width=\textwidth]{/workdir/data/(((person.image)))}
+\end{minipage}
+
+\vspace{0.5cm}
+
+% Introduction
+% \cvsect{Ziele}
+
+% Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis nec aliquet massa, sed dapibus mauris. Etiam quis semper metus, nec aliquam nunc. Sed vitae ipsum eget ligula egestas luctus. Duis sed laoreet dui. Duis auctor, nisl nec mollis ultricies, nunc lacus pretium metus, quis mollis nisl nunc et massa. Vestibulum sed metus in lorem tristique ullamcorper id vitae erat. Nulla mollis sapien sollicitudin lacinia lacinia. Nulla sed felis nec tortor gravid
+
+% \vspace{0.2cm}
+
+% Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+
+\medskip
+
+\begin{minipage}[t]{0.45\textwidth}
+	\cvsect{Engagement}
+
+	(((engagement)))
+\end{minipage}\hfill
+\begin{minipage}[t]{0.45\textwidth}
+	\cvsect{Skills}
+
+	((* for skill in skills *))
+	(((skill)))
+	((( '' if loop.index == 0 else '\\\\medskip' )))
+	((* endfor *))
+\end{minipage}
+
+% EDUCATION
+\cvsect{Ausbildung}
+
+\begin{entrylist}
+	((* for education in education *))
+	\entry
+	{(((education.start_date))) -- (((education.end_date)))}
+	{(((education.title)))}
+	{(((education.institution)))}
+	{(((education.location)))}
+	{(((education.description))) ((* if education.tags *))\\ ((* for tag in education.tags *))\texttt{(((tag)))}((* if not loop.last *)), ((* endif *))((* endfor *))((* endif *))}
+	((* endfor *))
+\end{entrylist}
+
+% Experience
+\cvsect{Berufserfahrung}
+
+\begin{entrylist}
+	((* for experience in experience *))
+	\entry
+	{(((experience.start_date))) -- (((experience.end_date)))}
+	{(((experience.title)))}
+	{(((experience.company))))}
+	{(((experience.location)))}
+	{(((experience.description))) ((* if experience.tags *))\\ ((* for tag in experience.tags *))\texttt{(((tag)))}((* if not loop.last *)),((* endif *))((* endfor *))((* endif *))}
+	((* endfor *))
+\end{entrylist}
+
+% International experience
+\cvsect{Weitere Tätigkeiten \& Projekte}
+
+\begin{entrylist}
+	((* for project in projects *))
+	\entry
+	{(((project.start_date))) -- (((project.end_date)))}
+	{(((project.title)))}
+	{(((project.institution)))}
+	{(((project.location)))}
+	{(((project.description))) ((* if project.tags *))\\ ((* for tag in project.tags *))\texttt{(((tag)))}((* if not loop.last *)),((* endif *))((* endfor *))((* endif *))}
+	((* endfor *))
+\end{entrylist}
+
+% Additional experience
+\begin{minipage}[t]{0.45\textwidth}
+	\cvsect{Sprachen}
+
+	\textbf{Deutsch} -- Muttersprache \\
+	\textbf{Englisch} -- Verhandlungssicher \\
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.45\textwidth}
+	\cvsect{Interessen}
+
+	Volleyball, Badminton und Fotografie
+\end{minipage}
+
+\end{document}

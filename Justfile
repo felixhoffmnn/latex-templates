@@ -37,6 +37,10 @@ check:
 @invoice *FLAGS:
     poetry run python latex_templates/manage.py invoice {{ FLAGS }}
 
+# Render the CV
+@cv: (_create-folder "data/cv/{out,tmp}/")
+    poetry run python latex_templates/manage.py cv
+
 # Clean up the project
 clean:
     -rm template/*.{bak*,log}
