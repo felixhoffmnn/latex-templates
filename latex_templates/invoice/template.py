@@ -162,6 +162,8 @@ def create_invoice(invoice: Invoice, config: Config, customer_file: Path, dry_ru
     # Run the generate_pdf command within a Podman container
     latex_command = compose_latex_command(OUTPUT_DIR, TMP_DIR / (output_file + ".tex"), latex_quiet)
 
+    logger.debug(f"Running command: {latex_command}")
+
     try:
         subprocess.run(latex_command, check=True)
         logger.success(f"PDF generated successfully at: {OUTPUT_DIR / (output_file + '.pdf')}")
@@ -204,10 +206,12 @@ def create_invoices(
     This function will iterate over all invoices in the invoice config file and create them.
     Based on the `customer_id` in the invoice config file, the customer will be loaded from the customer file.
     """
-    if invoice_config is None:
+    if (invoice_config or customer_file or base_config) is None:
         invoice_config = EXAMPLE_DIR / "invoices.example.yml"
         customer_file = EXAMPLE_DIR / "customer.example.csv"
         base_config = EXAMPLE_DIR / "config.example.toml"
+
+        logger.warning("No config files specified. Using example config files.")
 
     invoice_config = Path(invoice_config or DATA_DIR / "invoices.yml")
     customer_file = Path(customer_file or INVOICE_DIR / "customer.csv")

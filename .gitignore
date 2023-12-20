@@ -8,8 +8,9 @@ data/
 out/
 tmp/
 
-templates/*
-!templates/*.tex
-!templates/*.cls
+template/*
+!template/*.tex.j2
+!template/*.tex
+!template/*.cls
 
 config.toml

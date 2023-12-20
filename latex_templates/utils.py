@@ -48,6 +48,6 @@ def compose_latex_command(out_dir: Path, tex_file: Path, quiet: bool):
         "latexmk",
         f"-output-directory={out_dir}",
         "-pdf",
-        "-quiet" if quiet else None,
+        "-quiet" if quiet else "-verbose",
         str(tex_file),
     ]

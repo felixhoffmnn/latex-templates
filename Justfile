@@ -22,7 +22,7 @@ latex_run := container_runtime + " run --rm -it -v " + justfile_directory() + ":
 # Lint python and tex files
 lint:
     -poetry run ruff check ./latex_templates
-    -{{ latex_run }} chktex ./templates/*.{tex.j2,tex,cls}
+    -{{ latex_run }} chktex ./template/*.{tex.j2,tex,cls}
 
 # Check python types
 check:
@@ -31,7 +31,7 @@ check:
 # Format python and tex files
 @format:
     poetry run ruff format ./latex_templates
-    {{ latex_run }} latexindent -s -w ./templates/*.{tex.j2,tex,cls}
+    {{ latex_run }} latexindent -s -w ./template/*.{tex.j2,tex,cls}
 
 # Generate a new invoice
 @invoice *FLAGS:
@@ -39,5 +39,5 @@ check:
 
 # Clean up the project
 clean:
-    -rm templates/*.{bak*,log}
+    -rm template/*.{bak*,log}
     -rm -r {out,tmp}

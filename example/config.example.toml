@@ -1,3 +1,17 @@
+[person]
+first_name = "Max"
+last_name = "Mustermann"
+birthday= "1990-01-01"
+birthday_place= "Hamburg"
+email = "max.mustermann@gmail.com"
+phone = "+49 176 12345678"
+
+[person.address]
+street = "Musterstraße 1"
+zip = "12345"
+city = "Musterstadt"
+country = "Deutschland"
+
 [company]
 name = "Musterfirma GmbH"
 name_long = "Musterfirma GmbH & Co. KG"
