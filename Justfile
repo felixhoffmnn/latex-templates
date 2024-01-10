@@ -40,6 +40,10 @@ json-schema:
 @invoice *COMMANDS: json-schema
     uv run python src/manage.py invoice {{ COMMANDS }}
 
+# Render a letter
+@letter *FLAGS:
+    uv run python src/manage.py letter {{ FLAGS }}
+
 # Print customer-to-id mapping
 [group("utils")]
 @print-customer:
@@ -52,7 +56,7 @@ link-files:
     -ln -s {{ invoice_path }} data/customer.csv
 
 # Clean up the project
-[group("utils")]
+[group("utils"), confirm("Type 'yes' to confirm clean up! Type 'no' to cancel.")]
 clean:
     -rm template/*.{bak*,log}
     -rm -r {out,tmp}

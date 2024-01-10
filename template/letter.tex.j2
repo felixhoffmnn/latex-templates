@@ -1,0 +1,57 @@
+\documentclass[fontsize=(((config.style.font_size)))pt,a4paper,foldmarks=true,fromalign=right,fromphone,fromemail,pagenumber=false,DIV=12]{scrlttr2}
+
+% Fonts
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[final]{microtype}
+\usepackage{color}
+\usepackage{csquotes}
+\usepackage[sfdefault]{ClearSans}
+
+% Language
+\usepackage[ngerman]{babel}
+
+% Colors and hyperlinks
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+% Remove the indent
+\setlength{\parindent}{0pt}
+
+\renewcommand*\familydefault{\sfdefault}
+
+%% Initialize the letter
+\begin{document}
+
+% Sender address
+\setkomavar{fromname}{(((config.person.first_name))) (((config.person.last_name)))}
+\setkomavar{fromaddress}{(((config.person.address.street))) \\ (((config.person.address.zip))) (((config.person.address.city)))}
+\setkomavar{fromphone}{(((config.person.phone | replace('tel:', '') | replace('-', ' '))))}
+\setkomavar{fromemail}{\href{mailto:(((config.person.email)))}{(((config.person.email)))}}
+
+% Optional attributes
+\setkomavar{subject}{\Large (((letter.subject)))}
+\setkomavar{date}{\small\textit{\today}}
+((* if letter.place *))\setkomavar{place}{\small{(((letter.place)))}}((* endif *))
+((* if letter.location *))
+\setkomavar{location}{\raggedright ((* for ref in letter.location *))(((ref.key))): (((ref.value)))\\((* endfor *))}
+((* endif *))
+
+% Configure the letter
+\renewcommand*{\raggedsignature}{\raggedright}
+
+\begin{letter}{
+		(((letter.toname))) \\
+		((* if letter.toaddress.co *))(((letter.toaddress.co))) \\((* endif *))
+		((* if letter.toaddress.street *))(((letter.toaddress.street))) \\((* endif *))
+		(((letter.toaddress.zip))) (((letter.toaddress.city))) \\
+	}
+
+	\opening{(((letter.opening)))}
+
+	(((content)))
+
+	\closing{(((letter.closing)))}
+
+\end{letter}
+\end{document}

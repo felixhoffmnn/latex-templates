@@ -14,6 +14,8 @@ dependencies = [
     "pydantic>=2.9.2",
     "pydantic-extra-types>=2.9.0",
     "pylatex>=1.4.2",
+    "pypandoc>=1.15",
+    "pyyaml>=6.0.2",
 ]
 
 [dependency-groups]

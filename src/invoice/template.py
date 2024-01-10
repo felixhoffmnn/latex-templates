@@ -11,11 +11,24 @@ from src.invoice import utils
 from src.invoice.models.customer import Customer
 from src.invoice.models.invoices import Invoice
 from src.models import Config
-from src.settings import EXAMPLE_DIR, INVOICE_DIR, OUTPUT_DIR, TMP_DIR
+from src.settings import (
+    CONFIG_DEFAULT_FILE,
+    CONFIG_EXAMPLE_FILE,
+    INVOICE_CUSTOMER_EXAMPLE_FILE,
+    INVOICE_CUSTOMER_FILE,
+    INVOICE_DIR,
+    INVOICE_EXAMPLE_FILE,
+    INVOICE_HISTORY_FILE,
+    OUT_DIR,
+    TMP_DIR,
+)
 from src.utils import compose_latex_command, latex_jinja_env, load_config
 
+INVOICE_OUT_DIR = OUT_DIR / "invoice"
+INVOICE_TMP_DIR = TMP_DIR / "invoice"
 
-def setup_csv_archive(file: Path = INVOICE_DIR / "invoice.csv"):
+
+def setup_csv_archive(file: Path = INVOICE_HISTORY_FILE):
     """Create the csv archive file if it doesn't exist."""
     if not file.exists():
         with file.open("w") as f:
@@ -51,7 +64,7 @@ def store_invoice_parameter(invoice: Invoice):
     setup_csv_archive()
 
     # Write the invoice data to the file
-    with (INVOICE_DIR / "invoice.csv").open("a") as f:
+    with (INVOICE_HISTORY_FILE).open("a") as f:
         csv.writer(f).writerow(
             [
                 invoice.invoice_id,
@@ -70,7 +83,7 @@ def archive_pdf(output_file: str, year: int):
 
     # Archive the invoice from the output directory to the archive directory
     Path.rename(
-        OUTPUT_DIR / (output_file + ".pdf"),
+        INVOICE_OUT_DIR / (output_file + ".pdf"),
         INVOICE_DIR / "archive" / str(year) / (output_file + ".pdf"),
     )
 
@@ -123,7 +136,7 @@ def compose_email(
     email_command = [
         *thunderbird_command,
         "-compose",
-        f"from='{config.company.email}',to='{customer.email}',bcc='{config.company.email}',subject='{subject}',body='{message}',attachment='{(OUTPUT_DIR / output_file).absolute()}.pdf'",
+        f"from='{config.company.email}',to='{customer.email}',bcc='{config.company.email}',subject='{subject}',body='{message}',attachment='{(INVOICE_OUT_DIR / output_file).absolute()}.pdf'",
     ]
     logger.debug(f"Email command: {email_command}")
 
@@ -168,23 +181,23 @@ def create_invoice(invoice: Invoice, config: Config, customer_file: Path, dry_ru
     )
 
     # Create output and tmp directory if they don't exist
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    TMP_DIR.mkdir(parents=True, exist_ok=True)
+    INVOICE_OUT_DIR.mkdir(parents=True, exist_ok=True)
+    INVOICE_TMP_DIR.mkdir(parents=True, exist_ok=True)
 
     # Compose file name for output (contains invoice number, date and customer id)
     output_file = f"{invoice.invoice_number}_{invoice.date.strftime('%Y%m%d')}_{customer.customer_id}"
 
     # Store tex file based on invoice number
-    with (TMP_DIR / (output_file + ".tex")).open("w") as f:
+    with (INVOICE_TMP_DIR / (output_file + ".tex")).open("w") as f:
         f.write(rendered_template)
 
     # Run the generate_pdf command within a Podman container
-    latex_command = compose_latex_command(OUTPUT_DIR, TMP_DIR / (output_file + ".tex"), verbose)
+    latex_command = compose_latex_command(INVOICE_OUT_DIR, INVOICE_TMP_DIR / (output_file + ".tex"), verbose)
     logger.debug(f"Latex command: {latex_command}")
 
     try:
         subprocess.run(latex_command, check=True)
-        logger.success(f"PDF generated successfully at: {OUTPUT_DIR / (output_file + '.pdf')}")
+        logger.success(f"PDF generated successfully at: {INVOICE_OUT_DIR / (output_file + '.pdf')}")
     except subprocess.CalledProcessError as e:
         logger.error(f"PDF generation failed: {e}")
         return
@@ -193,7 +206,7 @@ def create_invoice(invoice: Invoice, config: Config, customer_file: Path, dry_ru
     if config.settings.open_pdf_viewer:
         try:
             subprocess.run(
-                ["xdg-open", (OUTPUT_DIR / (output_file + ".pdf")).absolute()],
+                ["xdg-open", (INVOICE_OUT_DIR / (output_file + ".pdf")).absolute()],
                 check=True,
             )
             logger.success("PDF opened successfully.")
@@ -249,13 +262,13 @@ def create_invoices(
 
     if invoices_path:
         # Defaults to the data directory if environment variable is not set
-        customer_database = Path(INVOICE_DIR / "customer.csv")
+        customer_database = INVOICE_CUSTOMER_FILE
         # Defaults to project root directory if environment variable is not set
-        config_path = Path(os.getenv("CONFIG_PATH", Path("config.yml")))
+        config_path = Path(os.getenv("CONFIG_PATH", CONFIG_DEFAULT_FILE))
     else:
-        invoices_path = EXAMPLE_DIR / "invoices.example.yml"
-        customer_database = EXAMPLE_DIR / "customer.example.csv"
-        config_path = EXAMPLE_DIR / "config.example.yml"
+        invoices_path = INVOICE_EXAMPLE_FILE
+        customer_database = INVOICE_CUSTOMER_EXAMPLE_FILE
+        config_path = CONFIG_EXAMPLE_FILE
 
     # Log the used files
     logger.debug(f"Using invoices file: {invoices_path}")

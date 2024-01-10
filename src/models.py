@@ -6,9 +6,14 @@ class Address(BaseModel):
     """Address model."""
 
     street: str
-    zip: str
+    zip: str | int
     city: str
     country: str | None = Field(None, pattern=r"^(DE|Germany|Deutschland)$")
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        if isinstance(data.get("zip"), int):
+            self.zip = str(data.get("zip")).zfill(5)
 
 
 class Bank(BaseModel):
@@ -28,7 +33,7 @@ class Bank(BaseModel):
 class Style(BaseModel):
     """Style model for the latex template."""
 
-    font_size: int | None
+    font_size: int = 11
 
 
 class Invoice(BaseModel):
@@ -88,7 +93,7 @@ class Config(BaseModel):
     person: Person | None = None
     company: Company
     invoice: Invoice
-    style: Style | None = None
+    style: Style = Style()
 
     # if the conmpany address is not given, use the person address
     def __init__(self, **data):
