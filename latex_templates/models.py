@@ -30,10 +30,7 @@ class Bank(BaseModel):
 class Style(BaseModel):
     """Style model for the config.toml file."""
 
-    serif_font: str | None
-    sans_font: str | None
     font_size: int | None
-    geometry: str | None
 
 
 class Invoice(BaseModel):
@@ -41,7 +38,6 @@ class Invoice(BaseModel):
 
     VAT: int
     due_days: int
-    style: Style
 
     @validator("VAT")
     @classmethod
@@ -75,7 +71,7 @@ class Company(BaseModel):
     name_long: str | None = None
     address: Address
     email: EmailStr
-    url: HttpUrl
+    website: HttpUrl
     phone: PhoneNumber
     tax: Tax
     bank: Bank
@@ -87,6 +83,7 @@ class Config(BaseModel):
     person: Person | None = None
     company: Company
     invoice: Invoice
+    style: Style | None = None
 
     # if the conmpany address is not given, use the person address
     def __init__(self, **data):

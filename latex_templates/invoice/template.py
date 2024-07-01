@@ -8,7 +8,7 @@ from loguru import logger
 
 from latex_templates.invoice import utils
 from latex_templates.invoice.models.customer import Customer
-from latex_templates.invoice.models.invoice import Invoice
+from latex_templates.invoice.models.invoices import Invoice
 from latex_templates.models import Config
 from latex_templates.utils import compose_latex_command, latex_jinja_env, load_config
 
@@ -70,7 +70,7 @@ def store_invoice_parameter(invoice: Invoice):
 def archive_pdf(output_file: str, year: int):
     """Archive the pdf file."""
     # Check if the archive directory exists
-    (INVOICE_DIR / "archive").mkdir(parents=True, exist_ok=True)
+    (INVOICE_DIR / "archive" / str(year)).mkdir(parents=True, exist_ok=True)
 
     # Archive the invoice from the output directory to the archive directory
     Path.rename(
@@ -112,10 +112,10 @@ def compose_email(
 
 
 # outsource the code for creating one invoice to a function
-def create_invoice(invoice: Invoice, config: Config, customer_file: Path, dry_run: bool, latex_quiet: bool = True):
+def create_invoice(invoice: Invoice, config: Config, customer_file: Path, dry_run: bool, latex_quiet: bool):
     """Create one invoice."""
     # Skip invoices that have already been sent or paid
-    if invoice.status in ["sent", "paid"]:
+    if invoice.status is not None:
         logger.info("Skipping invoice because it has already been sent or paid.")
         return
 
@@ -184,7 +184,11 @@ def create_invoice(invoice: Invoice, config: Config, customer_file: Path, dry_ru
         logger.info("Skipping mail generation.")
 
     # Ask if everything looked good and if so, archive the invoice and save the invoice number to the csv file
-    if not dry_run and utils.confirm("Did everything look good?") and INVOICE_DIR is not None:
+    if (
+        not dry_run
+        and utils.confirm("Did everything look good and do you want to archive the invoice?")
+        and INVOICE_DIR is not None
+    ):
         # Archive the invoice
         archive_pdf(output_file, invoice.date.year)
 
@@ -200,6 +204,7 @@ def create_invoices(
     customer_file: Path | str | None = None,
     base_config: Path | str | None = None,
     dry_run: bool = False,
+    latex_quiet: bool = True,
 ):
     """Create multiple invoices.
 
@@ -226,4 +231,4 @@ def create_invoices(
     invoices = utils.load_invoice(invoice_config)
 
     for invoice in invoices:
-        create_invoice(invoice, config, customer_file, dry_run)
+        create_invoice(invoice, config, customer_file, dry_run, latex_quiet)

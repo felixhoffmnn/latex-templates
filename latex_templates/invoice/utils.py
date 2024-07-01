@@ -23,7 +23,7 @@ def confirm(prompt: str, default: bool = True) -> bool:
 
 def load_customer(file: Path, customer_id: str | int) -> Customer:
     """Load customer file."""
-    with file.open("r", encoding="utf-8") as f:
+    with file.open("r", encoding="utf-8-sig") as f:
         parsed_file = csv.DictReader(f)
         customers = [
             Customer(**{k: v if v else None for k, v in customer.items()}) for customer in parsed_file if customer
