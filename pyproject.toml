@@ -54,6 +54,7 @@ extend-select = [
     "TCH", # flake8-type-checking
     "TID", # flake8-tidy-imports
     "UP",  # pyupgrade
+    "RUF", # ruff
 ]
 ignore = [
     "D100", # Missing docstring in public module
@@ -62,7 +63,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.pylint]
-max-positional-args = 10
+max-args = 10
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

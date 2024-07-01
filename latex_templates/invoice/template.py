@@ -79,10 +79,34 @@ def archive_pdf(output_file: str, year: int):
     )
 
 
+def get_thunderbird():
+    """Check if Thunderbird is installed."""
+    try:
+        # Check if Thunderbird is installed as a snap
+        subprocess.run(["thunderbird", "--version"], check=True)
+        return ["thunderbird"]
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        logger.info("Thunderbird is not installed bare metal.")
+
+    try:
+        # Check if Thunderbird is installed as a flatpak
+        subprocess.run(
+            ["flatpak", "run", "org.mozilla.Thunderbird", "--version"],
+            check=True,
+        )
+        return ["flatpak", "run", "org.mozilla.Thunderbird"]
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        logger.info("Thunderbird is not installed as a flatpak.")
+
+    logger.warning("Thunderbird is not installed.")
+    return None
+
+
 def compose_email(
     invoice: Invoice,
     config: Config,
     customer: Customer,
+    thunderbird_command: list[str],
     output_file: str,
     dry_run: bool,
 ):
@@ -101,9 +125,7 @@ def compose_email(
 
     # Create the mail command (opens Thunderbird, containing the mail with the invoice attached)
     email_command = [
-        "flatpak",
-        "run",
-        "org.mozilla.Thunderbird",
+        *thunderbird_command,
         "-compose",
         f"from='{config.company.email}',to='{customer.email}',bcc='{config.company.email}',subject='{subject}',body='{message}',attachment='{(OUTPUT_DIR / output_file).absolute()}.pdf'",
     ]
@@ -170,10 +192,13 @@ def create_invoice(invoice: Invoice, config: Config, customer_file: Path, dry_ru
     except subprocess.CalledProcessError as e:
         logger.error(f"PDF generation failed: {e}")
 
+    # Check if thunderbird is installed
+    thunderbird_command = get_thunderbird()
+
     # Check if OPEN_MAIL is set
-    if not os.environ.get("OPEN_MAIL", False):
+    if not os.environ.get("OPEN_MAIL", False) and thunderbird_command is not None:
         # Create the subject and message for the mail
-        email_command = compose_email(invoice, config, customer, output_file, dry_run)
+        email_command = compose_email(invoice, config, customer, thunderbird_command, output_file, dry_run)
 
         try:
             subprocess.run(email_command, check=True)
