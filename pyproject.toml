@@ -1,38 +1,44 @@
 [tool.poetry]
 name = "latex_templates"
-version = "0.1.0"
+version = "0.1.1"
 description = "A collection of LaTeX templates."
 authors = ["Felix Hoffmann <felix.emmanuel.hoffmann@gmail.com>"]
+repository = "https://github.com/felixhoffmnn/latex-templates"
 readme = "README.md"
 packages = [{ include = "latex_templates" }]
 
 [tool.poetry.dependencies]
-python = "^3.12"
-jinja2 = "^3.1.2"
+python = ">=3.11"
+jinja2 = "^3.1.4"
 pylatex = "^1.4.2"
-fire = "^0.5.0"
+fire = "^0.6.0"
 loguru = "^0.7.2"
 
 [tool.poetry.group.pydantic.dependencies]
-pydantic = "^2.5.2"
-email-validator = "^2.1.0.post1"
-pydantic-extra-types = "^2.2.0"
-phonenumbers = "^8.13.27"
+pydantic = "^2.8"
+email-validator = "^2.2"
+pydantic-extra-types = "^2.8"
+phonenumbers = "^8.13"
 
 [tool.poetry.group.types.dependencies]
-types-pyyaml = "^6.0.12.12"
+types-pyyaml = "^6.0.12"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.1.6"
-pre-commit = "^3.5.0"
-mypy = "^1.7.1"
+ruff = "^0.5"
+pre-commit = "^3.7"
+mypy = "^1.10"
 
 [tool.mypy]
 ignore_missing_imports = true
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 120
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
 extend-select = [
     "B",   # flake8-bugbear
     "C",   # flake8-comprehensions
@@ -55,10 +61,10 @@ ignore = [
     "D104", # Missing docstring in public package
 ]
 
-[tool.ruff.pylint]
-max-args = 10
+[tool.ruff.lint.pylint]
+max-positional-args = 10
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
 [build-system]
