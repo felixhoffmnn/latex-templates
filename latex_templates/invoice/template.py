@@ -95,7 +95,7 @@ def compose_email(
         raise ValueError("Due date must be set.")
 
     subject = (
-        f"{"DRY RUN: " if dry_run else ""}Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}"
+        f"{'DRY RUN: ' if dry_run else ''}Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}"
     )
     message = f"Hallo {customer.name},\n\nanbei findest du die Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}.\nBitte überweise den Betrag bis zum {invoice.due_date.strftime('%d.%m.%Y')} auf das angegebene Konto (siehe Rechnung).\n\nBei Fragen kannst du dich gerne jederzeit melden.\n\nMit freundlichen Grüßen\n{config.company.name}"
 
