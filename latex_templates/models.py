@@ -1,6 +1,4 @@
-from datetime import date
-
-from pydantic import BaseModel, EmailStr, Field, HttpUrl, validator
+from pydantic import BaseModel, EmailStr, Field, HttpUrl, field_validator
 from pydantic_extra_types.phone_numbers import PhoneNumber
 
 
@@ -14,13 +12,13 @@ class Address(BaseModel):
 
 
 class Bank(BaseModel):
-    """Bank model for the config.toml file."""
+    """Bank model containing the bank account information."""
 
     iban: str = Field(pattern=r"^[A-Z]{2}\d{2}\s(\d{4}\s){4}\d{2}$|^[A-Z]{2}\d{20}$")
     bic: str = Field(pattern=r"^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$")
     bank_name: str
 
-    @validator("iban")
+    @field_validator("iban")
     @classmethod
     def normalize_iban(cls, v: str):
         clean_iban = v.replace(" ", "")
@@ -28,18 +26,18 @@ class Bank(BaseModel):
 
 
 class Style(BaseModel):
-    """Style model for the config.toml file."""
+    """Style model for the latex template."""
 
     font_size: int | None
 
 
 class Invoice(BaseModel):
-    """Invoice model for the config.toml file."""
+    """Invoice model containing tax and payment information."""
 
     VAT: int
     due_days: int
 
-    @validator("VAT")
+    @field_validator("VAT")
     @classmethod
     def check_vat(cls, v: int):
         if v not in [0, 7, 19]:
@@ -48,7 +46,7 @@ class Invoice(BaseModel):
 
 
 class Tax(BaseModel):
-    """Tax model for the config.toml file."""
+    """Tax model containing the tax information like the tax number."""
 
     number: str
     office: str
@@ -60,7 +58,6 @@ class Person(BaseModel):
     first_name: str
     last_name: str
     address: Address
-    birthday: date
     email: EmailStr
 
 
@@ -77,9 +74,17 @@ class Company(BaseModel):
     bank: Bank
 
 
+class Settings(BaseModel):
+    """Settings model to configure the template generation."""
+
+    open_pdf_viewer: bool
+    open_mail_client: bool
+
+
 class Config(BaseModel):
     """Config model for the config.toml file."""
 
+    settings: Settings
     person: Person | None = None
     company: Company
     invoice: Invoice

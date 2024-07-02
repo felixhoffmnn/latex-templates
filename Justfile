@@ -33,6 +33,10 @@ check:
     poetry run ruff format ./latex_templates
     {{ latex_run }} latexindent -s -w ./template/*.{tex.j2,tex,cls}
 
+# Generate json schemas for pydantic
+@json-schema:
+    poetry run python latex_templates/manage.py schemas
+
 # Generate a new invoice
 @invoice *FLAGS:
     poetry run python latex_templates/manage.py invoice {{ FLAGS }}

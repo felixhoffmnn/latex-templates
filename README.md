@@ -13,9 +13,10 @@ This project is intended to be a **collection of templates** for invoices and le
 - [ ] Support for multiple languages
 - [ ] Support for multiple currencies
 - [x] Type validation using [pydantic](https://docs.pydantic.dev)
+- [x] Support schema validation for VSCode (schemas are located in the `schemas` directory)
 - [x] QR Code generation for bank transfer using [qrbill](https://ctan.org/pkg/qrbill)
 - [ ] Support `VAT > 0` (currently only `VAT = 0` is supported)
-- [ ] Support multiple pages for invoices
+- [x] Support multiple pages for invoices
 - [x] Easy interaction using [just](https://just.systems/man/en/)
 - [x] Using a `texlive/texlive:latest-full` container for building the templates
 - [x] Python dependency management using [poetry](https://python-poetry.org)

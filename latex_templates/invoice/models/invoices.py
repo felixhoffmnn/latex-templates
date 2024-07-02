@@ -44,3 +44,9 @@ class Invoice(BaseModel):
         if total == 0:
             raise ValueError("Total must be greater than 0.")
         self.total = total
+
+
+class Invoices(BaseModel):
+    """Invoices model for a invoice file."""
+
+    invoices: list[Invoice]

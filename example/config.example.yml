@@ -1,0 +1,39 @@
+settings:
+  open_pdf_viewer: true
+  open_mail_client: true
+
+person:
+  first_name: "Max"
+  last_name: "Mustermann"
+  email: "max.mustermann@gmail.com"
+  phone: "+49 176 12345678"
+  address:
+    street: "Musterstraße 1"
+    zip: "12345"
+    city: "Musterstadt"
+    country: "Deutschland"
+
+company:
+  name: "Musterfirma GmbH"
+  name_long: "Musterfirma GmbH & Co. KG"
+  email: "info@musterfirma.de"
+  website: "https://musterfirma.de"
+  phone: "+49 176 12345678"
+  address:
+    street: "Musterstraße 100"
+    zip: "12345"
+    city: "Musterstadt"
+    country: "Deutschland"
+  tax:
+    number: "12 345 6789 0"
+    office: "Musterstadt"
+  bank:
+    iban: "DE01 2345 6789 0123 4567 89"
+    bic: "AAAAAAA1BBB"
+    bank_name: "Musterbank"
+
+invoice:
+  VAT: 0
+  due_days: 14
+  style:
+    font_size: 10

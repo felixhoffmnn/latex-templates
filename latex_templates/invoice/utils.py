@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 
-from latex_templates.invoice.models import Customer, Invoice
+from latex_templates.invoice.models import Customer, Invoices
 
 
 def confirm(prompt: str, default: bool = True) -> bool:
@@ -46,9 +46,9 @@ def load_customer(file: Path, customer_id: str | int) -> Customer:
     return matching_customers[0]
 
 
-def load_invoice(file: Path) -> list[Invoice]:
+def load_invoice(file: Path) -> Invoices:
     """Load invoice file."""
     with file.open("rb") as f:
         parsed_file = yaml.safe_load(f)
-        invoices = [Invoice(**invoice) for invoice in parsed_file]
+        invoices = Invoices(**parsed_file)
     return invoices

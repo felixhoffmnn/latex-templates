@@ -2,17 +2,23 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "autoDocstring.docstringFormat": "numpy",
-  "cSpell.language": "en,de-DE",
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"
     }
   },
+  "[toml]": {
+    "editor.defaultFormatter": "tamasfe.even-better-toml"
+  },
   "[latex]": {
     "editor.formatOnSave": false
   },
   "files.associations": {
     "*.tex.j2": "latex"
+  },
+  "yaml.schemas": {
+    "schema/invoices.json": "**/invoices*.yml",
+    "schema/config.json": "**/config*.yml"
   }
 }

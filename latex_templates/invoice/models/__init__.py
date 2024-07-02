@@ -1,4 +1,4 @@
 from .customer import Customer
-from .invoices import Invoice
+from .invoices import Invoices
 
-__all__ = ["Customer", "Invoice"]
+__all__ = ["Customer", "Invoices"]

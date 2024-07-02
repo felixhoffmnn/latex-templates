@@ -1,10 +1,17 @@
+import json
 import os
-import tomllib
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import jinja2
+import yaml
+from loguru import logger
 
+from latex_templates.invoice.models import Customer, Invoices
 from latex_templates.models import Config
+
+if TYPE_CHECKING:
+    from pydantic import BaseModel
 
 latex_jinja_env = jinja2.Environment(
     block_start_string="((*",
@@ -22,12 +29,12 @@ latex_jinja_env = jinja2.Environment(
 def load_config(file: Path) -> Config:
     """Load config file."""
     with file.open("rb") as f:
-        parsed_file = tomllib.load(f)
+        parsed_file = yaml.safe_load(f)
         config = Config(**parsed_file)
     return config
 
 
-def compose_latex_command(out_dir: Path, tex_file: Path, quiet: bool):
+def compose_latex_command(out_dir: Path, tex_file: Path, verbose: bool):
     """Compose the latex command.
 
     This function will compose the latex command to generate a pdf from a tex file.
@@ -48,6 +55,24 @@ def compose_latex_command(out_dir: Path, tex_file: Path, quiet: bool):
         "latexmk",
         f"-output-directory={out_dir}",
         "-pdf",
-        "-quiet" if quiet else "-verbose",
+        "-verbose" if verbose else "-quiet",
         str(tex_file),
     ]
+
+
+def generate_schema():
+    """Generate json schemas for pydantic models."""
+    schema_dir = Path("schema")
+    schemas: list[BaseModel] = [Config, Invoices, Customer]
+
+    # Delete existing schemas
+    if schema_dir.exists():
+        for file in schema_dir.iterdir():
+            file.unlink()
+    else:
+        schema_dir.mkdir()
+
+    for schema in schemas:
+        with Path(f"schema/{schema.__name__.lower()}.json").open("w") as f:
+            json.dump(schema.model_json_schema(), f, indent=2)
+        logger.info(f"Generated schema for {schema.__name__}")

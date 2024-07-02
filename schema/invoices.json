@@ -1,0 +1,196 @@
+{
+  "$defs": {
+    "Invoice": {
+      "description": "Invoice model for a invoice file.",
+      "properties": {
+        "customer_id": {
+          "minimum": 10000,
+          "title": "Customer Id",
+          "type": "integer"
+        },
+        "invoice_id": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invoice Id"
+        },
+        "invoice_number": {
+          "anyOf": [
+            {
+              "pattern": "^RE\\d{4}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invoice Number"
+        },
+        "date": {
+          "default": "2024-07-02",
+          "format": "date",
+          "title": "Date",
+          "type": "string"
+        },
+        "start_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start Date"
+        },
+        "end_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End Date"
+        },
+        "due_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due Date"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "pattern": "^(sent|paid)$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Status"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/Item"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "total": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Total"
+        }
+      },
+      "required": [
+        "customer_id",
+        "items"
+      ],
+      "title": "Invoice",
+      "type": "object"
+    },
+    "Item": {
+      "description": "Item model for an invoice file.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "quantity": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Quantity",
+          "type": "integer"
+        },
+        "unit": {
+          "default": "Stunde",
+          "pattern": "^(Stunde|St\u00fcck|Monat)$",
+          "title": "Unit",
+          "type": "string"
+        },
+        "price": {
+          "default": 0,
+          "minimum": 0.0,
+          "title": "Price",
+          "type": "number"
+        },
+        "total": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Total"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Item",
+      "type": "object"
+    }
+  },
+  "description": "Invoices model for a invoice file.",
+  "properties": {
+    "invoices": {
+      "items": {
+        "$ref": "#/$defs/Invoice"
+      },
+      "title": "Invoices",
+      "type": "array"
+    }
+  },
+  "required": [
+    "invoices"
+  ],
+  "title": "Invoices",
+  "type": "object"
+}

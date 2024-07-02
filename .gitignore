@@ -13,4 +13,4 @@ template/*
 !template/*.tex
 !template/*.cls
 
-config.toml
+config.yml
