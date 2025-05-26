@@ -57,4 +57,4 @@ jobs:
         with:
           name: pdf-files
           path: |
-            tex/**/*.pdf
+            *.pdf
