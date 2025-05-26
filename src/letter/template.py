@@ -66,3 +66,14 @@ def create_letter(
         logger.success(f"PDF generated successfully at: {LETTER_OUTPUT_DIR / 'letter.pdf'}")
     except subprocess.CalledProcessError as e:
         logger.error(f"PDF generation failed: {e}")
+
+    # Open the pdf file
+    if config.settings.open_pdf_viewer:
+        try:
+            subprocess.run(
+                ["xdg-open", (LETTER_OUTPUT_DIR / "letter.pdf").absolute()],
+                check=True,
+            )
+            logger.success("PDF opened successfully.")
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            logger.error(f"PDF opening failed: {e}")
