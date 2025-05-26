@@ -3,7 +3,8 @@ from pathlib import Path
 
 import yaml
 
-from latex_templates.invoice.models import Customer, Invoices
+from src.invoice.models import Customer, Invoices
+from src.settings import INVOICE_DIR
 
 
 def confirm(prompt: str, default: bool = True) -> bool:
@@ -52,3 +53,11 @@ def load_invoice(file: Path) -> Invoices:
         parsed_file = yaml.safe_load(f)
         invoices = Invoices(**parsed_file)
     return invoices
+
+
+def print_customer(file: Path = INVOICE_DIR / "customer.csv") -> None:
+    """Print customer-to-id mapping."""
+    with file.open("r", encoding="utf-8-sig") as f:
+        parsed_file = csv.DictReader(f)
+        for customer in parsed_file:
+            print(f"{customer['name']}: {customer['customer_id']}")

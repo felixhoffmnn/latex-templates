@@ -1,38 +1,32 @@
-[tool.poetry]
+[project]
 name = "latex_templates"
-version = "0.2.0"
+version = "0.3.0"
 description = "A collection of LaTeX templates."
-authors = ["Felix Hoffmann <felix.emmanuel.hoffmann@gmail.com>"]
-repository = "https://github.com/felixhoffmnn/latex-templates"
+authors = [{ name = "Felix Hoffmann", email = "post@felix-hoffmann.dev" }]
 readme = "README.md"
-packages = [{ include = "latex_templates" }]
+requires-python = ">=3.12"
+dependencies = [
+    "email-validator>=2.2.0",
+    "fire>=0.7.0",
+    "jinja2>=3.1.4",
+    "loguru>=0.7.2",
+    "phonenumbers>=8.13.48",
+    "pydantic>=2.9.2",
+    "pydantic-extra-types>=2.9.0",
+    "pylatex>=1.4.2",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.11"
-jinja2 = "^3.1.4"
-pylatex = "^1.4.2"
-fire = "^0.6.0"
-loguru = "^0.7.2"
+[dependency-groups]
+types = ["types-pyyaml>=6.0.12.20240917"]
+dev = ["mypy>=1.13.0", "pre-commit>=4.0.1", "ruff>=0.7.2"]
 
-[tool.poetry.group.pydantic.dependencies]
-pydantic = "^2.8"
-email-validator = "^2.2"
-pydantic-extra-types = "^2.8"
-phonenumbers = "^8.13"
-
-[tool.poetry.group.types.dependencies]
-types-pyyaml = "^6.0.12"
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.5"
-pre-commit = "^3.7"
-mypy = "^1.10"
+[tool.uv]
+default-groups = ["dev", "types"]
 
 [tool.mypy]
 ignore_missing_imports = true
 
 [tool.ruff]
-target-version = "py312"
 line-length = 120
 
 [tool.ruff.format]
@@ -51,7 +45,7 @@ extend-select = [
     "PIE", # flake8-pie
     "PGH", # pygrep
     "SIM", # flake8-simplify
-    "TCH", # flake8-type-checking
+    "TC",  # flake8-type-checking
     "TID", # flake8-tidy-imports
     "UP",  # pyupgrade
     "RUF", # ruff
@@ -67,7 +61,3 @@ max-args = 10
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"

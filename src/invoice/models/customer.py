@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, HttpUrl
 from pydantic_extra_types.phone_numbers import PhoneNumber
 
-from latex_templates.models import Address
+from src.models import Address
 
 
 class Customer(BaseModel):

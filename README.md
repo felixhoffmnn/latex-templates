@@ -22,9 +22,9 @@ This project is intended to be a **collection of templates** for invoices and le
 - [x] Python dependency management using [poetry](https://python-poetry.org)
 - [x] Keep track of the amount of invoices (using a `sqlite` database)
 - [x] Open Thunderbird with the generated pdf as attachment
-    - Requires Thunderbird to be installed as a `flatpak` package
-    - Additionally, you need to allow Thunberbird to access the output directory (**Note:** This is a security risk, as it allows Thunderbird to access all files in the output directory)
-    - Alternatively you can disable this feature by setting `OPEN_MAIL` to `false` in the `.env` file
+  - Requires Thunderbird to be installed as a `flatpak` package
+  - Additionally, you need to allow Thunberbird to access the output directory (**Note:** This is a security risk, as it allows Thunderbird to access all files in the output directory)
+  - Alternatively you can disable this feature by setting `OPEN_MAIL` to `false` in the `.env` file
 
 _An example of the invoice template can be found [here](data/invoices/example.pdf)._
 
@@ -32,7 +32,7 @@ _An example of the invoice template can be found [here](data/invoices/example.pd
 
 > :warning: You will need to have [podman](https://podman.io) or [docker](https://www.docker.com) installed on your system
 
-You can either just clone this repository or create a fork of it. First of all, you need to install the dependencies using **[poetry](https://python-poetry.org)** (if you haven't heard of it, you should google it, and follow a tutorial on how to use it). Additionally I suggest using **[just](https://just.systems/man/en/)**.
+You can either just clone this repository or create a fork of it. First of all, you need to install the dependencies using **[uv](https://github.com/astral-sh/uv)** (if you haven't heard of it, you should google it, and follow a tutorial on how to use it). Additionally I suggest using **[just](https://just.systems/man/en/)**.
 
 For initial testing, I created some example configuration files. If you want **to customize the templates** to your needs, I suggest **reading this [file](example/README.md)**.
 

@@ -7,8 +7,8 @@ import jinja2
 import yaml
 from loguru import logger
 
-from latex_templates.invoice.models import Customer, Invoices
-from latex_templates.models import Config
+from src.invoice.models import Customer, Invoices
+from src.models import Config
 
 if TYPE_CHECKING:
     from pydantic import BaseModel

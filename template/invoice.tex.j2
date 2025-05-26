@@ -37,20 +37,20 @@
 
 % SI units setup
 \sisetup{
-  locale = DE,
-  round-mode = places,
-  round-precision = 2,
-  group-minimum-digits=3,
-  detect-all = true,
+	locale = DE,
+	round-mode = places,
+	round-precision = 2,
+	group-minimum-digits=3,
+	detect-all = true,
 }
 \UseTblrLibrary{siunitx}
 
 % QR code setup
 \SetupQrBill{
-  QRType=BCD,
-  Version=002,
-  CodingType=1,
-  Trailer=SCT,
+	QRType=BCD,
+	Version=002,
+	CodingType=1,
+	Trailer=SCT,
 }
 
 % Miscellanous styling
@@ -67,9 +67,9 @@
 % Footer settings
 \renewcommand{\footrulewidth}{1pt}
 \lfoot{\footnotesize
-\begin{tblr}{width=\textwidth, colspec={X[l]X[l]X[l]}, leftsep=0pt, rightsep=0pt}
-	{(((config.company.name))) \\ (((config.company.address.street))) \\ (((config.company.address.zip))) (((config.company.address.city)))} & {(((config.company.phone | replace('tel:', '') | replace('-', ' ')))) \\ \href{mailto:(((config.company.email)))}{(((config.company.email)))} \\ \href{(((config.company.website)))}{(((config.company.website)))}} & {Finanzamt: (((config.company.tax.office))) \\ Steuernummer: (((config.company.tax.number)))} \\
-\end{tblr}
+	\begin{tblr}{width=\textwidth, colspec={X[l]X[l]X[l]}, leftsep=0pt, rightsep=0pt}
+		{(((config.company.name))) \\ (((config.company.address.street))) \\ (((config.company.address.zip))) (((config.company.address.city)))} & {(((config.company.phone | replace('tel:', '') | replace('-', ' ')))) \\ \href{mailto:(((config.company.email)))}{(((config.company.email)))} \\ \href{(((config.company.website)))}{(((config.company.website)))}} & {Finanzamt: (((config.company.tax.office))) \\ Steuernummer: (((config.company.tax.number)))} \\
+	\end{tblr}
 }
 
 \setlength{\parindent}{0cm}
@@ -95,7 +95,12 @@
 
 	\medskip
 
+	((* if customer.company *))
+	{\large \textbf{(((customer.company)))}} \\
+	c/o (((customer.name))) \\
+	((* else *))
 	{\large \textbf{(((customer.name)))}} \\
+	((* endif *))
 	(((customer.address.street))) \\
 	(((customer.address.zip))) (((customer.address.city)))
 \end{minipage}
@@ -125,12 +130,12 @@ meine Leistungen stelle ich Ihnen wie folgt in Rechnung.
 
 % Items
 \begin{longtblr}[entry = none, label = none, note{*} = {Umsatzsteuerfreie Leistungen gemäß §19 UStG.}]{width=\textwidth, colspec={cXrr*{2}{Q[si={table-format=4.2},r]}}, vlines, hlines, row{1}={guard,font=\bfseries}, row{Z}={guard,font=\bfseries,gray9}, rowhead=1, rowfoot=1, abovesep=4pt, belowsep=4pt}
-	Pos.                                               & Bezeichnung                                  & Menge & Einheit & Einzel \texteuro & Gesamt \texteuro          \\
+	Pos.                                               & Bezeichnung                                           & Menge & Einheit & Einzel \texteuro & Gesamt \texteuro          \\
 	% Add a counter for the items
 	((* for item in invoice.items *))
 	(((loop.index)))                                   & {\textbf{(((item.name)))} ((* if item.description *))                                                                  \\ \footnotesize (((item.description)))((* endif *))} & (((item.quantity))) & (((item.unit))) & (((item.price))) & (((item.total))) \\
 	((* endfor *))
-	\SetCell[c=5]{l} \textbf{Gesamtbetrag}\TblrNote{*} &                                              &       &         &                  & \num{(((invoice.total)))} \\
+	\SetCell[c=5]{l} \textbf{Gesamtbetrag}\TblrNote{*} &                                                       &       &         &                  & \num{(((invoice.total)))} \\
 \end{longtblr}
 
 Bitte überweisen Sie den Betrag von \textbf{\SI{(((invoice.total)))}{\euro}} bis zum \textbf{(((invoice.due_date)))} an die folgende Bankverbindung. \textit{Der dargestellte QR-Code kann zur automatischen Übernahme der Daten in Ihr Online-Banking genutzt werden.}
@@ -141,10 +146,10 @@ Bitte überweisen Sie den Betrag von \textbf{\SI{(((invoice.total)))}{\euro}} bi
 \begin{minipage}{0.7\textwidth}
 	\small
 	\begin{tblr}{width=\textwidth, colspec={X[l]X[l]}, leftsep=0pt, rightsep=0pt}
-		Kontoinhaber:     & (((config.company.name)))   \\
+		Kontoinhaber:     & (((config.company.name)))           \\
 		IBAN:             & (((config.company.bank.iban)))      \\
 		Bank:             & (((config.company.bank.bank_name))) \\
-		Verwendungszweck: & (((additional.purpose)))        \\
+		Verwendungszweck: & (((additional.purpose)))            \\
 	\end{tblr}
 \end{minipage}
 \begin{minipage}{0.3\textwidth}

@@ -3,6 +3,8 @@ set dotenv-load
 uid := `id -u`
 gid := `id -g`
 
+invoice_path := join(env_var_or_default("INVOICE_DIR", "data/"), "customer.csv")
+
 container_runtime := env_var_or_default("CONTAINER_RUNTIME", "podman")
 latex_run := container_runtime + " run --rm -it -v " + justfile_directory() + ":/workdir:z -w /workdir --userns keep-id:uid=" + uid + ",gid=" + gid + " texlive/texlive:latest-full"
 
@@ -11,37 +13,46 @@ latex_run := container_runtime + " run --rm -it -v " + justfile_directory() + ":
     just --list
 
 # Install dependencies
+[group("dev")]
 @install:
-    poetry install
-    poetry run pre-commit install
-
-# Create a folder
-@_create-folder *PATHS:
-    mkdir -p {{ PATHS }}
+    uv sync
+    uv run pre-commit install
 
 # Lint python and tex files
-lint:
-    -poetry run ruff check ./latex_templates
-    -{{ latex_run }} chktex ./template/*.{tex.j2,tex,cls}
-
-# Check python types
+[group("dev")]
 check:
-    poetry run mypy ./latex_templates
+    -uv run ruff check ./src
+    -uv run mypy ./src
 
 # Format python and tex files
-@format:
-    poetry run ruff format ./latex_templates
-    {{ latex_run }} latexindent -s -w ./template/*.{tex.j2,tex,cls}
+[group("dev")]
+format:
+    -uv run ruff format ./src
+    -{{ latex_run }} latexindent -s -w ./template/*.{tex.j2,tex,cls}
 
 # Generate json schemas for pydantic
-@json-schema:
-    poetry run python latex_templates/manage.py schemas
+[group("dev")]
+json-schema:
+    uv run python src/manage.py schemas
 
-# Generate a new invoice
-@invoice *FLAGS:
-    poetry run python latex_templates/manage.py invoice {{ FLAGS }}
+# Generate a new invoice (usage: just invoice <invoice_path> <flags>)
+[group("latex")]
+@invoice *COMMANDS: json-schema
+    uv run python src/manage.py invoice {{ COMMANDS }}
+
+# Print customer-to-id mapping
+[group("utils")]
+@print-customer:
+    uv run python src/manage.py print-customer
+
+# Link files outside the project
+[group("utils")]
+link-files:
+    {{ path_exists(invoice_path) }}
+    -ln -s {{ invoice_path }} data/customer.csv
 
 # Clean up the project
+[group("utils")]
 clean:
     -rm template/*.{bak*,log}
     -rm -r {out,tmp}

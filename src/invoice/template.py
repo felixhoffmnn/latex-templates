@@ -7,17 +7,12 @@ from pathlib import Path
 
 from loguru import logger
 
-from latex_templates.invoice import utils
-from latex_templates.invoice.models.customer import Customer
-from latex_templates.invoice.models.invoices import Invoice
-from latex_templates.models import Config
-from latex_templates.utils import compose_latex_command, latex_jinja_env, load_config
-
-DATA_DIR = Path("data")
-INVOICE_DIR = Path(os.getenv("INVOICE_DIR", DATA_DIR))
-EXAMPLE_DIR = Path("example")
-OUTPUT_DIR = Path("out/invoices")
-TMP_DIR = Path("tmp/invoices")
+from src.invoice import utils
+from src.invoice.models.customer import Customer
+from src.invoice.models.invoices import Invoice
+from src.models import Config
+from src.settings import EXAMPLE_DIR, INVOICE_DIR, OUTPUT_DIR, TMP_DIR
+from src.utils import compose_latex_command, latex_jinja_env, load_config
 
 
 def setup_csv_archive(file: Path = INVOICE_DIR / "invoice.csv"):
@@ -29,7 +24,7 @@ def setup_csv_archive(file: Path = INVOICE_DIR / "invoice.csv"):
 
 def get_invoice_id() -> int:
     """Access the archive csv file and return the next invoice id."""
-    custom_last_invoice = os.environ.get("LAST_INVOICE", 1)
+    custom_last_invoice = int(os.environ.get("LAST_INVOICE", "1"))
 
     # Setup the csv archive file
     setup_csv_archive()
@@ -122,7 +117,7 @@ def compose_email(
     subject = (
         f"{'DRY RUN: ' if dry_run else ''}Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}"
     )
-    message = f"Hallo {customer.name},\n\nanbei findest du die Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}.\nBitte überweise den Betrag bis zum {invoice.due_date.strftime('%d.%m.%Y')} auf das angegebene Konto (siehe Rechnung).\n\nBei Fragen kannst du dich gerne jederzeit melden.\n\nMit freundlichen Grüßen\n{config.company.name}"
+    message = f"<p>Hallo {customer.name},</p><p>anbei findest du die Rechnung <strong>{invoice.invoice_number}</strong> vom <strong>{invoice.date.strftime('%d.%m.%Y')}</strong>.<br>Bitte überweise den Betrag bis zum <strong>{invoice.due_date.strftime('%d.%m.%Y')}</strong> auf das angegebene Konto (siehe Rechnung).</p><p>Bei Fragen kannst du dich gerne jederzeit melden.</p><p>Viele Grüße<br>{config.company.name}</p>"
 
     # Create the mail command (opens Thunderbird, containing the mail with the invoice attached)
     email_command = [
@@ -139,7 +134,7 @@ def compose_email(
 def create_invoice(invoice: Invoice, config: Config, customer_file: Path, dry_run: bool, verbose: bool):
     """Create one invoice."""
     # Skip invoices that have already been sent or paid
-    if invoice.status is not None:
+    if invoice.status in ["sent", "paid"]:
         logger.info("Skipping invoice because it has already been sent or paid.")
         return
 
