@@ -1,5 +1,7 @@
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -76,3 +78,24 @@ def generate_schema():
         with Path(f"schema/{schema.__name__.lower()}.json").open("w") as f:
             json.dump(schema.model_json_schema(), f, indent=2)
         logger.info(f"Generated schema for {schema.__name__}")
+
+
+def config_logging(debug: bool):
+    """Configure the logging level based on the debug flag."""
+    logger.remove()
+    logger.add(sys.stderr, level="DEBUG" if debug else "INFO")
+
+
+def execute_command(command: list[str], exit_on_error: bool = False, output_file: Path | str | None = None):
+    """Run a command as subprocess."""
+    try:
+        subprocess.run(command, check=True)
+        logger.success("Command executed successfully.")
+        if output_file:
+            logger.info(f"Output file: {output_file}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Command execution failed: {e}")
+
+        if exit_on_error:
+            logger.error("Exiting due to command failure.")
+            sys.exit(1)

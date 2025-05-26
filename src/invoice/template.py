@@ -2,7 +2,6 @@ import csv
 import datetime
 import os
 import subprocess
-import sys
 from pathlib import Path
 
 from loguru import logger
@@ -14,6 +13,7 @@ from src.models import Config
 from src.settings import (
     CONFIG_DEFAULT_FILE,
     CONFIG_EXAMPLE_FILE,
+    EXAMPLE_DIR,
     INVOICE_CUSTOMER_EXAMPLE_FILE,
     INVOICE_CUSTOMER_FILE,
     INVOICE_DIR,
@@ -22,7 +22,7 @@ from src.settings import (
     OUT_DIR,
     TMP_DIR,
 )
-from src.utils import compose_latex_command, latex_jinja_env, load_config
+from src.utils import compose_latex_command, config_logging, execute_command, latex_jinja_env, load_config
 
 INVOICE_OUT_DIR = OUT_DIR / "invoice"
 INVOICE_TMP_DIR = TMP_DIR / "invoice"
@@ -116,7 +116,7 @@ def compose_email(
     config: Config,
     customer: Customer,
     thunderbird_command: list[str],
-    output_file: str,
+    output_file: Path,
     dry_run: bool,
 ):
     """Compose the mail command.
@@ -136,7 +136,7 @@ def compose_email(
     email_command = [
         *thunderbird_command,
         "-compose",
-        f"from='{config.company.email}',to='{customer.email}',bcc='{config.company.email}',subject='{subject}',body='{message}',attachment='{(INVOICE_OUT_DIR / output_file).absolute()}.pdf'",
+        f"from='{config.company.email}',to='{customer.email}',bcc='{config.company.email}',subject='{subject}',body='{message}',attachment='{output_file.absolute()}'",
     ]
     logger.debug(f"Email command: {email_command}")
 
@@ -144,7 +144,9 @@ def compose_email(
 
 
 # outsource the code for creating one invoice to a function
-def create_invoice(invoice: Invoice, config: Config, customer_file: Path, dry_run: bool, verbose: bool):
+def create_invoice(
+    invoice: Invoice, config: Config, customer_file: Path, dry_run: bool, verbose: bool, example_mode: bool
+):
     """Create one invoice."""
     # Skip invoices that have already been sent or paid
     if invoice.status in ["sent", "paid"]:
@@ -186,65 +188,60 @@ def create_invoice(invoice: Invoice, config: Config, customer_file: Path, dry_ru
 
     # Compose file name for output (contains invoice number, date and customer id)
     output_file = f"{invoice.invoice_number}_{invoice.date.strftime('%Y%m%d')}_{customer.customer_id}"
+    generated_tex_file = INVOICE_TMP_DIR / (output_file + ".tex")
+    generated_pdf_file = INVOICE_OUT_DIR / (output_file + ".pdf")
 
     # Store tex file based on invoice number
     with (INVOICE_TMP_DIR / (output_file + ".tex")).open("w") as f:
         f.write(rendered_template)
 
-    # Run the generate_pdf command within a Podman container
-    latex_command = compose_latex_command(INVOICE_OUT_DIR, INVOICE_TMP_DIR / (output_file + ".tex"), verbose)
-    logger.debug(f"Latex command: {latex_command}")
+    # Only run the PDF generation command if not in dry run mode
+    if not dry_run:
+        # Run the generate_pdf command within a Podman container
+        latex_command = compose_latex_command(INVOICE_OUT_DIR, generated_tex_file, verbose)
+        logger.debug(f"Latex command: {latex_command}")
 
-    try:
-        subprocess.run(latex_command, check=True)
-        logger.success(f"PDF generated successfully at: {INVOICE_OUT_DIR / (output_file + '.pdf')}")
-    except subprocess.CalledProcessError as e:
-        logger.error(f"PDF generation failed: {e}")
-        return
+        # Execute the command to generate the PDF
+        execute_command(latex_command, exit_on_error=True, output_file=generated_pdf_file)
 
-    # Open the pdf file
-    if config.settings.open_pdf_viewer:
-        try:
-            subprocess.run(
-                ["xdg-open", (INVOICE_OUT_DIR / (output_file + ".pdf")).absolute()],
-                check=True,
+        # If example mode, copy the generated PDF to the example directory
+        if example_mode:
+            Path.rename(
+                generated_pdf_file,
+                EXAMPLE_DIR / "invoice.example.pdf",
             )
-            logger.success("PDF opened successfully.")
-        except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            logger.error(f"PDF opening failed: {e}")
+            generated_pdf_file = EXAMPLE_DIR / "invoice.example.pdf"
 
-    # Check if thunderbird is installed
-    thunderbird_command = get_thunderbird()
+        # Open the pdf file
+        if config.settings.open_pdf_viewer:
+            # Needs to be done before thunderbird is opened, because it will block the terminal
+            execute_command(["xdg-open", str(generated_pdf_file)])
 
-    # Check if OPEN_MAIL is set
-    if config.settings.open_mail_client and thunderbird_command is not None:
-        # Create the subject and message for the mail
-        email_command = compose_email(invoice, config, customer, thunderbird_command, output_file, dry_run)
+        # Generate the email command to open Thunderbird with the invoice attached
+        if config.settings.open_mail_client:
+            thunderbird_command = get_thunderbird()
 
-        try:
-            subprocess.run(email_command, check=True)
-            logger.success("Mail generated successfully.")
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Mail generation failed: {e}")
+            if thunderbird_command:
+                execute_command(
+                    compose_email(invoice, config, customer, thunderbird_command, generated_pdf_file, dry_run)
+                )
+
+        # Ask if everything looked good and if so, archive the invoice and save the invoice number to the csv file
+        if not (dry_run or example_mode) and utils.confirm(
+            "Did everything look good and do you want to archive the invoice?"
+        ):
+            # Archive the invoice
+            archive_pdf(output_file, invoice.date.year)
+
+            # Save the invoice number
+            store_invoice_parameter(invoice)
+            logger.success("Invoice archived and invoice number saved.")
+        else:
+            logger.info("Skipping invoice archiving and invoice number saving.")
     else:
-        logger.info("Skipping mail generation.")
-
-    # Ask if everything looked good and if so, archive the invoice and save the invoice number to the csv file
-    if not dry_run and utils.confirm("Did everything look good and do you want to archive the invoice?"):
-        # Archive the invoice
-        archive_pdf(output_file, invoice.date.year)
-
-        # Save the invoice number
-        store_invoice_parameter(invoice)
-        logger.success("Invoice archived and invoice number saved.")
-    else:
-        logger.info("Skipping invoice archiving and invoice number saving.")
-
-
-def config_logging(debug: bool):
-    """Configure the logging level based on the debug flag."""
-    logger.remove()
-    logger.add(sys.stderr, level="DEBUG" if debug else "INFO")
+        logger.info("Dry run mode enabled. Skipping PDF generation.")
+        logger.debug(f"Rendered template saved to: {generated_tex_file}")
+        logger.debug(f"Output file would be saved to: {generated_pdf_file}")
 
 
 def create_invoices(
@@ -257,18 +254,20 @@ def create_invoices(
     This function will iterate over all invoices in the invoice config file and create them.
     Based on the `customer_id` in the invoice config file, the customer will be loaded from the customer file.
     """
-    # Configure the logging level
     config_logging(verbose)
 
-    if invoices_path:
-        # Defaults to the data directory if environment variable is not set
-        customer_database = INVOICE_CUSTOMER_FILE
-        # Defaults to project root directory if environment variable is not set
-        config_path = Path(os.getenv("CONFIG_PATH", CONFIG_DEFAULT_FILE))
-    else:
+    example_mode = invoices_path is None
+
+    if example_mode:
         invoices_path = INVOICE_EXAMPLE_FILE
         customer_database = INVOICE_CUSTOMER_EXAMPLE_FILE
         config_path = CONFIG_EXAMPLE_FILE
+    else:
+        # Defaults to the data directory if environment variable is not set
+        customer_database = INVOICE_CUSTOMER_FILE
+        invoices_path = Path(invoices_path)
+        # Defaults to project root directory if environment variable is not set
+        config_path = Path(os.getenv("CONFIG_PATH", CONFIG_DEFAULT_FILE))
 
     # Log the used files
     logger.debug(f"Using invoices file: {invoices_path}")
@@ -283,4 +282,4 @@ def create_invoices(
     config = load_config(config_path)
 
     for invoice in utils.load_invoice(Path(invoices_path)).invoices:
-        create_invoice(invoice, config, customer_database, dry_run, verbose)
+        create_invoice(invoice, config, customer_database, dry_run, verbose, example_mode)

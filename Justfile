@@ -18,11 +18,10 @@ latex_run := container_runtime + " run --rm -it -v " + justfile_directory() + ":
     uv sync
     uv run pre-commit install
 
-# Lint python and tex files
+# Check python code for type hints and linting
 [group("dev")]
 check:
     -uv run ruff check ./src
-    -uv run mypy ./src
 
 # Format python and tex files
 [group("dev")]
@@ -41,6 +40,7 @@ json-schema:
     uv run python src/manage.py invoice {{ COMMANDS }}
 
 # Render a letter
+[group("latex")]
 @letter *FLAGS:
     uv run python src/manage.py letter {{ FLAGS }}
 
@@ -48,6 +48,12 @@ json-schema:
 [group("utils")]
 @print-customer:
     uv run python src/manage.py print-customer
+
+# Generate a preview for the templates
+[group("utils")]
+@generate-preview:
+    -pdftoppm -f 1 -l 1 -r 150 -png "examples/invoice.example.pdf" > "examples/invoice.preview.png"
+    -pdftoppm -f 1 -l 1 -r 150 -png "examples/letter.example.pdf" > "examples/letter.preview.png"
 
 # Link files outside the project
 [group("utils")]

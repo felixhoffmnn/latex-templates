@@ -4,7 +4,7 @@ from pathlib import Path
 # Default directories
 DATA_DIR = Path("data")
 INVOICE_DIR = Path(os.getenv("INVOICE_DIR", DATA_DIR))
-EXAMPLE_DIR = Path("example")
+EXAMPLE_DIR = Path("examples")
 OUT_DIR = Path("out")
 TMP_DIR = Path("tmp")
 

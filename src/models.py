@@ -95,7 +95,7 @@ class Config(BaseModel):
     invoice: Invoice
     style: Style = Style()
 
-    # if the conmpany address is not given, use the person address
+    # if the company address is not given, use the person address
     def __init__(self, **data):
         if data.get("company", {}).get("name") is None:
             data["company"]["name"] = data.get("person", {}).get("name")
