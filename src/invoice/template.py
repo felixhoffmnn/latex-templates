@@ -35,21 +35,26 @@ def setup_csv_archive(file: Path = INVOICE_HISTORY_FILE):
             csv.writer(f).writerow(["invoice_id", "customer_id", "date", "total", "status"])
 
 
-def get_invoice_id() -> int:
+def get_invoice_id(
+    dry_run: bool,
+) -> int:
     """Access the archive csv file and return the next invoice id."""
     custom_last_invoice = int(os.environ.get("LAST_INVOICE", "1"))
+    max_invoice_id = 0
 
-    # Setup the csv archive file
-    setup_csv_archive()
+    if not dry_run:
+        # Setup the csv archive file
+        setup_csv_archive()
 
-    # Read the csv file, and get the max invoice id (skip the header)
-    with (INVOICE_DIR / "invoice.csv").open("r") as f:
-        reader = csv.reader(f)
-        next(reader)
-        invoice_ids = [int(row[0]) for row in reader if row]
+        # Read the csv file, and get the max invoice id (skip the header)
+        with (INVOICE_DIR / "invoice.csv").open("r") as f:
+            reader = csv.reader(f)
+            next(reader)
+            invoice_ids = [int(row[0]) for row in reader if row]
 
-    # Get the max invoice id
-    max_invoice_id = max(invoice_ids) if invoice_ids else 0
+            if invoice_ids:
+                # Get the max invoice id
+                max_invoice_id = max(invoice_ids)
 
     # Return the next invoice id
     return int(custom_last_invoice) if max_invoice_id == 0 else max_invoice_id + 1
@@ -157,7 +162,7 @@ def create_invoice(
     customer = utils.load_customer(customer_file, invoice.customer_id)
 
     # Create invoice number
-    invoice.invoice_id = get_invoice_id()
+    invoice.invoice_id = get_invoice_id(dry_run)
     invoice.invoice_number = f"RE{invoice.invoice_id:04d}"
 
     # Calculate due date
