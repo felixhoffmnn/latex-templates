@@ -17,6 +17,8 @@ This project is intended to be a **collection of templates** for invoices and le
 - [ ] Support for multiple languages
   - Currently only german is supported.
 - [ ] Support for multiple currencies
+- [ ] Add support for XRechnung
+- [ ] Migrate to typst for faster rendering
 - [x] Type validation using [pydantic](https://docs.pydantic.dev)
 - [x] Support schema validation for VSCode (schemas are located in the `schemas` directory)
 - [x] QR Code generation for bank transfer using [qrbill](https://ctan.org/pkg/qrbill)
