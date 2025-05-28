@@ -1,4 +1,4 @@
-# Latex Templates
+# Letter Templates
 
 This project is intended to be a **collection of templates** for invoices and letters. While there are many tools and templates out there, I found it difficult to find a _simple template_ that I could _easily modify_ to my needs. The goal of this project is to provide a simple template that can be easily modified to suit also your needs.
 
@@ -18,14 +18,13 @@ This project is intended to be a **collection of templates** for invoices and le
   - Currently only german is supported.
 - [ ] Support for multiple currencies
 - [ ] Add support for XRechnung
-- [ ] Migrate to typst for faster rendering
+- [x] Migrate to typst for faster rendering
 - [x] Type validation using [pydantic](https://docs.pydantic.dev)
 - [x] Support schema validation for VSCode (schemas are located in the `schemas` directory)
 - [x] QR Code generation for bank transfer using [qrbill](https://ctan.org/pkg/qrbill)
 - [ ] Support `VAT > 0` (currently only `VAT = 0` is supported)
 - [x] Support multiple pages for invoices
 - [x] Easy interaction using [just](https://just.systems/man/en/)
-- [x] Using a `texlive/texlive:latest-full` container for building the templates
 - [x] Python dependency management using [uv](https://docs.astral.sh/uv/)
 - [x] Keep track of the amount of invoices (using a `csv` file)
 - [x] Open Thunderbird with the generated pdf as attachment

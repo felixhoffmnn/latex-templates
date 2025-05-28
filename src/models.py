@@ -32,12 +32,6 @@ class Bank(BaseModel):
         return " ".join([clean_iban[i : i + 4] for i in range(0, len(clean_iban), 4)])
 
 
-class Style(BaseModel):
-    """Style model for the latex template."""
-
-    font_size: int = 11
-
-
 class Invoice(BaseModel):
     """Invoice model containing tax and payment information."""
 
@@ -83,4 +77,3 @@ class Config(BaseModel):
     settings: Settings
     sender: Sender
     invoice: Invoice
-    style: Style = Style()

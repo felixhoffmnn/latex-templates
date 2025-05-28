@@ -23,5 +23,3 @@ sender:
 invoice:
   VAT: 0
   due_days: 14
-  style:
-    font_size: 10

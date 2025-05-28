@@ -12,7 +12,7 @@ from src.settings import (
     OUT_DIR,
     TMP_DIR,
 )
-from src.utils import compose_latex_command, config_logging, execute_command, jinja_env, load_config
+from src.utils import config_logging, execute_command, jinja_env, load_config
 
 LETTER_OUT_DIR = OUT_DIR / "letter"
 LETTER_TMP_DIR = TMP_DIR / "letter"
@@ -58,18 +58,14 @@ def create_letter(
         content=content,
     )
 
-    # Store tex file based on invoice number
+    # Store typ file based on invoice number
     with (LETTER_TMP_DIR / "letter.typ").open("w") as f:
         f.write(rendered_template)
 
     # Only run the PDF generation command if not in dry run mode
     if not dry_run:
-        # Run the generate_pdf command within a Podman container
-        latex_command = compose_latex_command(LETTER_OUT_DIR, LETTER_TMP_DIR / "letter.tex", not verbose)
-
         # Execute the command to generate the PDF
-        logger.debug(f"Running command: {latex_command}")
-        execute_command(latex_command, exit_on_error=True, output_file=destination_path)
+        # execute_command(latex_command, exit_on_error=True, output_file=destination_path)
 
         # If example mode, copy the generated PDF to the example directory
         if example_mode:
@@ -81,5 +77,5 @@ def create_letter(
             execute_command(["xdg-open", str(destination_path)])
     else:
         logger.info("Dry run mode enabled. Skipping PDF generation.")
-        logger.debug(f"Rendered template saved to: {LETTER_TMP_DIR / 'letter.tex'}")
+        logger.debug(f"Rendered template saved to: {LETTER_TMP_DIR / 'letter.typ'}")
         logger.debug(f"Output PDF would be saved to: {destination_path}")

@@ -108,7 +108,7 @@ wheels = [
 ]
 
 [[package]]
-name = "latex-templates"
+name = "letter-templates"
 version = "0.3.0"
 source = { editable = "." }
 dependencies = [
@@ -119,7 +119,6 @@ dependencies = [
     { name = "phonenumbers" },
     { name = "pydantic" },
     { name = "pydantic-extra-types" },
-    { name = "pylatex" },
     { name = "pypandoc-binary" },
     { name = "pyyaml" },
     { name = "typst" },
@@ -143,7 +142,6 @@ requires-dist = [
     { name = "phonenumbers", specifier = ">=8.13.48" },
     { name = "pydantic", specifier = ">=2.9.2" },
     { name = "pydantic-extra-types", specifier = ">=2.9.0" },
-    { name = "pylatex", specifier = ">=1.4.2" },
     { name = "pypandoc-binary", specifier = ">=1.15" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "typst", specifier = ">=0.13.2" },
@@ -214,15 +212,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/43/16/fc88b08840de0e0a72a2f9d8c6bae36be573e475a6326ae854bcc549fc45/nodeenv-1.9.1.tar.gz", hash = "sha256:6ec12890a2dab7946721edbfbcd91f3319c6ccc9aec47be7c7e6b7011ee6645f", size = 47437 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d2/1d/1b658dbd2b9fa9c4c9f32accbfc0205d532c8c6194dc0f2a4c0428e7128a/nodeenv-1.9.1-py2.py3-none-any.whl", hash = "sha256:ba11c9782d29c27c70ffbdda2d7415098754709be8a7056d79a737cd901155c9", size = 22314 },
-]
-
-[[package]]
-name = "ordered-set"
-version = "4.1.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/4c/ca/bfac8bc689799bcca4157e0e0ced07e70ce125193fc2e166d2e685b7e2fe/ordered-set-4.1.0.tar.gz", hash = "sha256:694a8e44c87657c59292ede72891eb91d34131f6531463aab3009191c77364a8", size = 12826 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/33/55/af02708f230eb77084a299d7b08175cff006dea4f2721074b92cdb0296c0/ordered_set-4.1.0-py3-none-any.whl", hash = "sha256:046e1132c71fcf3330438a539928932caf51ddbc582496833e23de611de14562", size = 7634 },
 ]
 
 [[package]]
@@ -328,15 +317,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/d9/33/0cde418479949cd6a
 wheels = [
     { url = "https://files.pythonhosted.org/packages/df/ac/bee195ee49256385fad460ce420aeb42703a648dba487c20b6fd107e42ea/pydantic_extra_types-2.10.4-py3-none-any.whl", hash = "sha256:ce064595af3cab05e39ae062752432dcd0362ff80f7e695b61a3493a4d842db7", size = 37276 },
 ]
-
-[[package]]
-name = "pylatex"
-version = "1.4.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "ordered-set" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/6d/a8/10cf6b955b5fa19438790d9949867e04c785ae845e631c5ef6db444401d1/PyLaTeX-1.4.2.tar.gz", hash = "sha256:bb7b21bec57ecdba3f6f44c856ebebdf6549fd6e80661bd44fd5094236729242", size = 59710 }
 
 [[package]]
 name = "pypandoc-binary"

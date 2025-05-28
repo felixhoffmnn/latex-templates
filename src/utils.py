@@ -1,5 +1,4 @@
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -28,32 +27,6 @@ def load_config(file: Path) -> Config:
         parsed_file = yaml.safe_load(f)
         config = Config(**parsed_file)
     return config
-
-
-def compose_latex_command(out_dir: Path, tex_file: Path, verbose: bool):
-    """Compose the latex command.
-
-    This function will compose the latex command to generate a pdf from a tex file.
-    The generation will take place within a container
-    """
-    return [
-        os.environ.get("CONTAINER_RUNTIME", "podman"),
-        "run",
-        "--rm",
-        "-it",
-        "-v",
-        f"{Path.cwd()}:/app:z",
-        "-w",
-        "/app",
-        "--userns",
-        f"keep-id:uid={os.getuid()},gid={os.getgid()}",
-        "texlive/texlive:latest-full",
-        "latexmk",
-        f"-output-directory={out_dir}",
-        "-pdf",
-        "-verbose" if verbose else "-quiet",
-        str(tex_file),
-    ]
 
 
 def generate_schema():
