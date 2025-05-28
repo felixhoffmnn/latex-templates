@@ -16,6 +16,7 @@ dependencies = [
     "pylatex>=1.4.2",
     "pypandoc-binary>=1.15",
     "pyyaml>=6.0.2",
+    "typst>=0.13.2",
 ]
 
 [dependency-groups]

@@ -16,8 +16,7 @@ class Location(BaseModel):
 class Letter(BaseModel):
     """Addressee model for a letter."""
 
-    toname: str
-    toaddress: Address
+    recipient: Address
     location: list[Location] | None = None
     place: str | None = None
     subject: str

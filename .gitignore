@@ -11,6 +11,8 @@ schema/
 
 template/*
 !template/*.tex.j2
+!template/*.typ.j2
+!template/*.typ
 !template/*.tex
 !template/*.cls
 

@@ -1,8 +1,8 @@
 ---
-toname: Musterfirma GmbH
-toaddress:
+recipient:
+  name: Musterfirma GmbH
+  extra: c/o Musterfrau
   street: Musterstraße 1
-  co: Musterfrau
   zip: 12345
   city: Musterstadt
 place: Berlin

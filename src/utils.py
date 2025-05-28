@@ -15,13 +15,7 @@ from src.models import Config
 if TYPE_CHECKING:
     from pydantic import BaseModel
 
-latex_jinja_env = jinja2.Environment(
-    block_start_string="((*",
-    block_end_string="*))",
-    variable_start_string="(((",
-    variable_end_string=")))",
-    comment_start_string="((=",
-    comment_end_string="=))",
+jinja_env = jinja2.Environment(
     trim_blocks=True,
     autoescape=False,
     loader=jinja2.FileSystemLoader("template"),

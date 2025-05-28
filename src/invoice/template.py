@@ -22,7 +22,7 @@ from src.settings import (
     OUT_DIR,
     TMP_DIR,
 )
-from src.utils import compose_latex_command, config_logging, execute_command, latex_jinja_env, load_config
+from src.utils import compose_latex_command, config_logging, execute_command, jinja_env, load_config
 
 INVOICE_OUT_DIR = OUT_DIR / "invoice"
 INVOICE_TMP_DIR = TMP_DIR / "invoice"
@@ -170,7 +170,7 @@ def create_invoice(
         invoice.due_date = invoice.date + datetime.timedelta(days=config.invoice.due_days)
 
     # Load and configure jinja2 template
-    template = latex_jinja_env.get_template("invoice.tex.j2")
+    template = jinja_env.get_template("invoice.tex.j2")
 
     # Render the template
     rendered_template = template.render(

@@ -12,7 +12,7 @@ from src.settings import (
     OUT_DIR,
     TMP_DIR,
 )
-from src.utils import compose_latex_command, config_logging, execute_command, latex_jinja_env, load_config
+from src.utils import compose_latex_command, config_logging, execute_command, jinja_env, load_config
 
 LETTER_OUT_DIR = OUT_DIR / "letter"
 LETTER_TMP_DIR = TMP_DIR / "letter"
@@ -45,21 +45,21 @@ def create_letter(
     config = load_config(config_file)
     frontmatter, content = load_letter(letter_file)
 
-    template = latex_jinja_env.get_template("letter.tex.j2")
+    # Create output and tmp directory if they don't exist
+    LETTER_OUT_DIR.mkdir(parents=True, exist_ok=True)
+    LETTER_TMP_DIR.mkdir(parents=True, exist_ok=True)
+
+    base_template = jinja_env.get_template("letter.typ.j2")
 
     # Render the template
-    rendered_template = template.render(
+    rendered_template = base_template.render(
         config=config,
         letter=frontmatter,
         content=content,
     )
 
-    # Create output and tmp directory if they don't exist
-    LETTER_OUT_DIR.mkdir(parents=True, exist_ok=True)
-    LETTER_TMP_DIR.mkdir(parents=True, exist_ok=True)
-
     # Store tex file based on invoice number
-    with (LETTER_TMP_DIR / "letter.tex").open("w") as f:
+    with (LETTER_TMP_DIR / "letter.typ").open("w") as f:
         f.write(rendered_template)
 
     # Only run the PDF generation command if not in dry run mode

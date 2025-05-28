@@ -5,6 +5,8 @@ from pydantic_extra_types.phone_numbers import PhoneNumber
 class Address(BaseModel):
     """Address model."""
 
+    name: str
+    extra: str | None = None
     street: str
     zip: str | int
     city: str
@@ -57,20 +59,9 @@ class Tax(BaseModel):
     office: str
 
 
-class Person(BaseModel):
-    """Person model for the config.toml file."""
+class Sender(BaseModel):
+    """Sender model for the config.toml file."""
 
-    first_name: str
-    last_name: str
-    address: Address
-    email: EmailStr
-
-
-class Company(BaseModel):
-    """Company model for the config.toml file."""
-
-    name: str
-    name_long: str | None = None
     address: Address
     email: EmailStr
     website: HttpUrl
@@ -90,15 +81,6 @@ class Config(BaseModel):
     """Config model for the config.toml file."""
 
     settings: Settings
-    person: Person | None = None
-    company: Company
+    sender: Sender
     invoice: Invoice
     style: Style = Style()
-
-    # if the company address is not given, use the person address
-    def __init__(self, **data):
-        if data.get("company", {}).get("name") is None:
-            data["company"]["name"] = data.get("person", {}).get("name")
-        if data.get("company", {}).get("address") is None:
-            data["company"]["address"] = data.get("person", {}).get("address")
-        super().__init__(**data)
