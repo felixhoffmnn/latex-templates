@@ -23,7 +23,7 @@ class Bank(BaseModel):
 
     iban: str = Field(pattern=r"^[A-Z]{2}\d{2}\s(\d{4}\s){4}\d{2}$|^[A-Z]{2}\d{20}$")
     bic: str = Field(pattern=r"^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$")
-    bank_name: str
+    name: str
 
     @field_validator("iban")
     @classmethod

@@ -16,9 +16,9 @@ sender:
     number: "12 345 6789 0"
     office: "Musterstadt"
   bank:
+    name: "Musterbank"
     iban: "DE01 2345 6789 0123 4567 89"
     bic: "AAAAAAA1BBB"
-    bank_name: "Musterbank"
 
 invoice:
   VAT: 0

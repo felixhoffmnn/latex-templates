@@ -66,8 +66,8 @@ Bitte überweisen Sie den Betrag von *{{ invoice.total }} €* bis zum *{{ invoi
       gutter: 10pt,
 
       [Kontoinhaber:], [{{ config.sender.address.name }}],
+      [Bank:], [{{ config.sender.bank.name }}],
       [IBAN:], [{{ config.sender.bank.iban }}],
-      [Bank:], [{{ config.sender.bank.bank_name }}],
       [Betrag:], [{{ invoice.total }} €],
       [Verwendungszweck:], [{{ additional.purpose }}],
     )]
@@ -79,7 +79,7 @@ Bitte überweisen Sie den Betrag von *{{ invoice.total }} €* bis zum *{{ invoi
 1
 SCT
 
-{{ config.sender.name }}
+{{ config.sender.address.name }}
 {{ config.sender.bank.iban }}
 EUR{{ invoice.total }}
 

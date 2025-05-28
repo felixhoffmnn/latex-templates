@@ -5,9 +5,6 @@ gid := `id -g`
 
 invoice_path := join(env_var_or_default("INVOICE_DIR", "data/"), "customer.csv")
 
-container_runtime := env_var_or_default("CONTAINER_RUNTIME", "podman")
-
-
 # Print a list of available commands
 @help:
     just --list
