@@ -1,0 +1,97 @@
+#import "../../template/base.typ": letter-base
+#import "@preview/tiaoma:0.3.0"
+
+#let custom-gray = luma(90%)
+
+#show: letter-base.with(
+    sender: (
+        name: "{{ config.sender.address.name }}",
+        street: "{{ config.sender.address.street }}",
+        zip: "{{ config.sender.address.zip }}",
+        city: "{{ config.sender.address.city }}",
+        phone: "{{ config.sender.phone | replace('tel:', '') | replace('-', ' ') }}",
+        email: "{{ config.sender.email }}",
+        website: "{{ config.sender.website }}",
+    ),
+    tax: (
+        office: "{{ config.sender.tax.office }}",
+        number: "{{ config.sender.tax.number }}",
+    ),
+    recipient: (
+        name: "{{ customer.address.name }}",
+        {% if customer.address.extra %}
+        extra: "{{ customer.address.extra }}",
+        {% endif %}
+        street: "{{ customer.address.street }}",
+        zip: "{{ customer.address.zip }}",
+        city: "{{ customer.address.city }}",
+    ),
+    subject: "Rechnung {{ invoice.invoice_number }}",
+    // reference-signs: "config.reference_signs",
+    // information-box: "config.information_box",
+)
+
+Sehr geehrte Damen und Herren,
+
+meine Leistungen stelle ich Ihnen wie folgt in Rechnung.
+
+#[
+  #show table.cell.where(y: 0): strong
+  #table(
+    columns: (12mm, 3fr, 17mm, 1fr, 1fr, 1fr),
+    stroke: 0.75pt,
+    inset: 7pt,
+
+    table.header([Pos.], [Bezeichnung], [Menge], [Einheit], [Einzel €], [Gesamt €]),
+
+    {% for item in invoice.items %}
+    [{{ loop.index }}], [*{{ item.name }}* {% if item.description %} \ #text(10pt)[{{ item.description }}] {% endif %}], [{{ item.quantity }}], [{{ item.unit }}], [{{ item.price }} €], [{{ item.total}} €],
+    {% endfor %}
+
+    table.footer(
+      table.cell(colspan: 5, fill: custom-gray, [*Gesamtbetrag\**]),
+      table.cell(fill: custom-gray, [*{{ invoice.total }} €*]),
+    ),
+  )
+  #text(size: 10pt)[\* Umsatzsteuerfreie Leistungen gemäß §19 UStG.]
+]
+#v(1em)
+
+Bitte überweisen Sie den Betrag von *{{ invoice.total }} €* bis zum *{{ invoice.due_date }}* an die folgende Bankverbindung. _Der dargestellte QR-Code kann zur automatischen Übernahme der Daten in Ihr Online-Banking genutzt werden._
+
+#v(1em)
+#let billing-details = (
+  [#grid(
+      columns: (auto, 1fr),
+      gutter: 10pt,
+
+      [Kontoinhaber:], [{{ config.sender.address.name }}],
+      [Bank:], [{{ config.sender.bank.name }}],
+      [IBAN:], [{{ config.sender.bank.iban }}],
+      [Betrag:], [{{ invoice.total }} €],
+      [Verwendungszweck:], [{{ additional.purpose }}],
+    )]
+)
+
+// https://de.wikipedia.org/wiki/EPC-QR-Code
+#let invoice-data = "BCD
+002
+1
+SCT
+
+{{ config.sender.address.name }}
+{{ config.sender.bank.iban }}
+EUR{{ invoice.total }}
+
+{{ additional.purpose }}"
+
+#grid(
+  columns: (3fr, 1fr),
+  gutter: 3pt,
+
+  grid.cell(align: left + horizon, billing-details),
+  grid.cell(align: right + horizon, [#tiaoma.qrcode(invoice-data)])
+)
+#v(1em)
+
+Vielen Dank für die nette Zusammenarbeit.

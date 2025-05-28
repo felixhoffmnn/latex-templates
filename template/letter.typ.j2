@@ -1,0 +1,37 @@
+#import "../../template/base.typ": letter-base
+
+#show: letter-base.with(
+    sender: (
+        name: "{{ config.sender.address.name }}",
+        street: "{{ config.sender.address.street }}",
+        zip: "{{ config.sender.address.zip }}",
+        city: "{{ config.sender.address.city }}",
+        phone: "{{ config.sender.phone | replace('tel:', '') | replace('-', ' ') }}",
+        email: "{{ config.sender.email }}",
+        website: "{{ config.sender.website }}",
+    ),
+    tax: (
+        office: "{{ config.sender.tax.office }}",
+        number: "{{ config.sender.tax.number }}",
+    ),
+    recipient: (
+        name: "{{ letter.recipient.name }}",
+        {% if letter.recipient.extra %}
+        extra: "{{ letter.recipient.extra }}",
+        {% endif %}
+        street: "{{ letter.recipient.street }}",
+        zip: "{{ letter.recipient.zip }}",
+        city: "{{ letter.recipient.city }}",
+    ),
+    subject: "{{ letter.subject }}",
+    // reference-signs: "config.reference_signs",
+    // information-box: "config.information_box",
+)
+
+{{ letter.opening }}
+
+{{ content }}
+
+{{ letter.closing }}
+#v(1cm)
+{{ config.sender.address.name }}

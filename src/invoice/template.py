@@ -4,6 +4,7 @@ import os
 import subprocess
 from pathlib import Path
 
+import typst
 from loguru import logger
 
 from src.invoice import utils
@@ -22,7 +23,7 @@ from src.settings import (
     OUT_DIR,
     TMP_DIR,
 )
-from src.utils import compose_latex_command, config_logging, execute_command, latex_jinja_env, load_config
+from src.utils import config_logging, execute_command, jinja_env, load_config
 
 INVOICE_OUT_DIR = OUT_DIR / "invoice"
 INVOICE_TMP_DIR = TMP_DIR / "invoice"
@@ -135,13 +136,13 @@ def compose_email(
     subject = (
         f"{'DRY RUN: ' if dry_run else ''}Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}"
     )
-    message = f"<p>Hallo {customer.name},</p><p>anbei findest du die Rechnung <strong>{invoice.invoice_number}</strong> vom <strong>{invoice.date.strftime('%d.%m.%Y')}</strong>.<br>Bitte überweise den Betrag bis zum <strong>{invoice.due_date.strftime('%d.%m.%Y')}</strong> auf das angegebene Konto (siehe Rechnung).</p><p>Bei Fragen kannst du dich gerne jederzeit melden.</p><p>Viele Grüße<br>{config.company.name}</p>"
+    message = f"<p>Hallo {customer.address.name},</p><p>anbei findest du die Rechnung <strong>{invoice.invoice_number}</strong> vom <strong>{invoice.date.strftime('%d.%m.%Y')}</strong>.<br>Bitte überweise den Betrag bis zum <strong>{invoice.due_date.strftime('%d.%m.%Y')}</strong> auf das angegebene Konto (siehe Rechnung).</p><p>Bei Fragen kannst du dich gerne jederzeit melden.</p><p>Viele Grüße<br>{config.sender.address.name}</p>"
 
     # Create the mail command (opens Thunderbird, containing the mail with the invoice attached)
     email_command = [
         *thunderbird_command,
         "-compose",
-        f"from='{config.company.email}',to='{customer.email}',bcc='{config.company.email}',subject='{subject}',body='{message}',attachment='{output_file.absolute()}'",
+        f"from='{config.sender.email}',to='{customer.email}',bcc='{config.sender.email}',subject='{subject}',body='{message}',attachment='{output_file.absolute()}'",
     ]
     logger.debug(f"Email command: {email_command}")
 
@@ -169,8 +170,12 @@ def create_invoice(
     if invoice.due_date is None:
         invoice.due_date = invoice.date + datetime.timedelta(days=config.invoice.due_days)
 
+    # Create output and tmp directory if they don't exist
+    INVOICE_OUT_DIR.mkdir(parents=True, exist_ok=True)
+    INVOICE_TMP_DIR.mkdir(parents=True, exist_ok=True)
+
     # Load and configure jinja2 template
-    template = latex_jinja_env.get_template("invoice.tex.j2")
+    template = jinja_env.get_template("invoice.typ.j2")
 
     # Render the template
     rendered_template = template.render(
@@ -187,28 +192,20 @@ def create_invoice(
         additional={"purpose": f"Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}"},
     )
 
-    # Create output and tmp directory if they don't exist
-    INVOICE_OUT_DIR.mkdir(parents=True, exist_ok=True)
-    INVOICE_TMP_DIR.mkdir(parents=True, exist_ok=True)
-
     # Compose file name for output (contains invoice number, date and customer id)
     output_file = f"{invoice.invoice_number}_{invoice.date.strftime('%Y%m%d')}_{customer.customer_id}"
-    generated_tex_file = INVOICE_TMP_DIR / (output_file + ".tex")
+    generated_typ_file = INVOICE_TMP_DIR / (output_file + ".typ")
     generated_pdf_file = INVOICE_OUT_DIR / (output_file + ".pdf")
 
-    # Store tex file based on invoice number
-    with (INVOICE_TMP_DIR / (output_file + ".tex")).open("w") as f:
+    # Store typ file based on invoice number
+    with generated_typ_file.open("w") as f:
         f.write(rendered_template)
+
+    # Execute the command to generate the PDF
+    typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root="../../")
 
     # Only run the PDF generation command if not in dry run mode
     if not dry_run:
-        # Run the generate_pdf command within a Podman container
-        latex_command = compose_latex_command(INVOICE_OUT_DIR, generated_tex_file, verbose)
-        logger.debug(f"Latex command: {latex_command}")
-
-        # Execute the command to generate the PDF
-        execute_command(latex_command, exit_on_error=True, output_file=generated_pdf_file)
-
         # If example mode, copy the generated PDF to the example directory
         if example_mode:
             Path.rename(
@@ -245,7 +242,7 @@ def create_invoice(
             logger.info("Skipping invoice archiving and invoice number saving.")
     else:
         logger.info("Dry run mode enabled. Skipping PDF generation.")
-        logger.debug(f"Rendered template saved to: {generated_tex_file}")
+        logger.debug(f"Rendered template saved to: {generated_typ_file}")
         logger.debug(f"Output file would be saved to: {generated_pdf_file}")
 
 

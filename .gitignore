@@ -10,8 +10,7 @@ tmp/
 schema/
 
 template/*
-!template/*.tex.j2
-!template/*.tex
-!template/*.cls
+!template/*.typ.j2
+!template/*.typ
 
 config.yml

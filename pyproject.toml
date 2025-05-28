@@ -1,7 +1,7 @@
 [project]
-name = "latex_templates"
+name = "letter_templates"
 version = "0.3.0"
-description = "A collection of LaTeX templates."
+description = "A collection of templates for letters and invoices."
 authors = [{ name = "Felix Hoffmann", email = "post@felix-hoffmann.dev" }]
 readme = "README.md"
 requires-python = ">=3.12"
@@ -13,9 +13,9 @@ dependencies = [
     "phonenumbers>=8.13.48",
     "pydantic>=2.9.2",
     "pydantic-extra-types>=2.9.0",
-    "pylatex>=1.4.2",
     "pypandoc-binary>=1.15",
     "pyyaml>=6.0.2",
+    "typst==0.13.2",
 ]
 
 [dependency-groups]

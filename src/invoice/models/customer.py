@@ -8,7 +8,6 @@ class Customer(BaseModel):
     """Customer model for the customer.yaml file."""
 
     customer_id: int
-    name: str
     company: str | None = None
     email: EmailStr
     phone: PhoneNumber
@@ -19,6 +18,7 @@ class Customer(BaseModel):
     def __init__(self, **data):
         """Initialize the customer model."""
         data["address"] = {
+            "name": data.get("name"),
             "street": data.get("street"),
             "zip": data.get("zip"),
             "city": data.get("city"),

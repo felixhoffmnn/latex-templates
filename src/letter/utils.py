@@ -13,6 +13,6 @@ def load_letter(file: Path) -> tuple[Letter, str]:
     frontmatter, content = parsed_file.split("---", 2)[1:]
 
     attributes = Letter(**yaml.safe_load(frontmatter))
-    converted_content = pypandoc.convert_text(content, "latex", format="md")
+    converted_content = pypandoc.convert_text(content, "typst", format="md")
 
     return attributes, converted_content

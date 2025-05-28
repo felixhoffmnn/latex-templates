@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import typst
 from loguru import logger
 
 from src.letter.utils import load_letter
@@ -12,7 +13,7 @@ from src.settings import (
     OUT_DIR,
     TMP_DIR,
 )
-from src.utils import compose_latex_command, config_logging, execute_command, latex_jinja_env, load_config
+from src.utils import config_logging, execute_command, jinja_env, load_config
 
 LETTER_OUT_DIR = OUT_DIR / "letter"
 LETTER_TMP_DIR = TMP_DIR / "letter"
@@ -45,32 +46,30 @@ def create_letter(
     config = load_config(config_file)
     frontmatter, content = load_letter(letter_file)
 
-    template = latex_jinja_env.get_template("letter.tex.j2")
+    # Create output and tmp directory if they don't exist
+    LETTER_OUT_DIR.mkdir(parents=True, exist_ok=True)
+    LETTER_TMP_DIR.mkdir(parents=True, exist_ok=True)
+
+    base_template = jinja_env.get_template("letter.typ.j2")
+    generated_typ_file = LETTER_TMP_DIR / "letter.typ"
+    generated_pdf_file = LETTER_OUT_DIR / "letter.pdf"
 
     # Render the template
-    rendered_template = template.render(
+    rendered_template = base_template.render(
         config=config,
         letter=frontmatter,
         content=content,
     )
 
-    # Create output and tmp directory if they don't exist
-    LETTER_OUT_DIR.mkdir(parents=True, exist_ok=True)
-    LETTER_TMP_DIR.mkdir(parents=True, exist_ok=True)
-
-    # Store tex file based on invoice number
-    with (LETTER_TMP_DIR / "letter.tex").open("w") as f:
+    # Store typ file based on invoice number
+    with generated_typ_file.open("w") as f:
         f.write(rendered_template)
+
+    # Execute the command to generate the PDF
+    typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root="../../")
 
     # Only run the PDF generation command if not in dry run mode
     if not dry_run:
-        # Run the generate_pdf command within a Podman container
-        latex_command = compose_latex_command(LETTER_OUT_DIR, LETTER_TMP_DIR / "letter.tex", not verbose)
-
-        # Execute the command to generate the PDF
-        logger.debug(f"Running command: {latex_command}")
-        execute_command(latex_command, exit_on_error=True, output_file=destination_path)
-
         # If example mode, copy the generated PDF to the example directory
         if example_mode:
             Path.rename(destination_path, EXAMPLE_DIR / "letter.example.pdf")
@@ -81,5 +80,5 @@ def create_letter(
             execute_command(["xdg-open", str(destination_path)])
     else:
         logger.info("Dry run mode enabled. Skipping PDF generation.")
-        logger.debug(f"Rendered template saved to: {LETTER_TMP_DIR / 'letter.tex'}")
+        logger.debug(f"Rendered template saved to: {LETTER_TMP_DIR / 'letter.typ'}")
         logger.debug(f"Output PDF would be saved to: {destination_path}")
