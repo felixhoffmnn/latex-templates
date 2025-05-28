@@ -24,7 +24,7 @@ jinja_env = jinja2.Environment(
 
 def is_ci():
     """Check if the code is running in a CI environment."""
-    return os.getenv("CI") == "true"
+    return "CI" in os.environ or "GITHUB_ACTIONS" in os.environ
 
 
 def load_config(file: Path) -> Config:
