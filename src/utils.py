@@ -22,8 +22,8 @@ jinja_env = jinja2.Environment(
 )
 
 
-def is_github_actions():
-    """Check if the code is running in GitHub Actions."""
+def is_ci():
+    """Check if the code is running in a CI environment."""
     return os.getenv("CI") == "true"
 
 
