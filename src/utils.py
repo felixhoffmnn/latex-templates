@@ -1,5 +1,4 @@
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -20,11 +19,6 @@ jinja_env = jinja2.Environment(
     autoescape=False,
     loader=jinja2.FileSystemLoader("template"),
 )
-
-
-def is_ci():
-    """Check if the code is running in a CI environment."""
-    return "CI" in os.environ or "GITHUB_ACTIONS" in os.environ
 
 
 def load_config(file: Path) -> Config:

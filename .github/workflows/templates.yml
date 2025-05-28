@@ -9,8 +9,6 @@ on:
 jobs:
   generate-typ-files:
     runs-on: ubuntu-latest
-    env:
-      CI: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,10 +22,10 @@ jobs:
         run: uv sync --locked --all-extras --dev
 
       - name: Generate invoice
-        run: uv run python src/manage.py invoice
+        run: uv run python src/manage.py invoice --dry-run
 
       - name: Generate letter
-        run: uv run python src/manage.py letter
+        run: uv run python src/manage.py letter --dry-run
 
       - name: List all pdf files
         run: ls -l out

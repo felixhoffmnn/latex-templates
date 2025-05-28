@@ -23,7 +23,7 @@ from src.settings import (
     OUT_DIR,
     TMP_DIR,
 )
-from src.utils import config_logging, execute_command, is_ci, jinja_env, load_config
+from src.utils import config_logging, execute_command, jinja_env, load_config
 
 INVOICE_OUT_DIR = OUT_DIR / "invoice"
 INVOICE_TMP_DIR = TMP_DIR / "invoice"
@@ -205,7 +205,7 @@ def create_invoice(
     typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root="../../")
 
     # Only run the PDF generation command if not in dry run mode
-    if not dry_run and not is_ci():
+    if not dry_run:
         # If example mode, copy the generated PDF to the example directory
         if example_mode:
             Path.rename(
