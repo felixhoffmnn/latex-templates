@@ -23,7 +23,7 @@ from src.settings import (
     OUT_DIR,
     TMP_DIR,
 )
-from src.utils import config_logging, execute_command, jinja_env, load_config
+from src.utils import config_logging, execute_command, is_github_actions, jinja_env, load_config
 
 INVOICE_OUT_DIR = OUT_DIR / "invoice"
 INVOICE_TMP_DIR = TMP_DIR / "invoice"
@@ -201,11 +201,11 @@ def create_invoice(
     with generated_typ_file.open("w") as f:
         f.write(rendered_template)
 
-    # Only run the PDF generation command if not in dry run mode
-    if not dry_run:
-        # Execute the command to generate the PDF
-        typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root="../../")
+    # Execute the command to generate the PDF
+    typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root="../../")
 
+    # Only run the PDF generation command if not in dry run mode
+    if not dry_run and not is_github_actions():
         # If example mode, copy the generated PDF to the example directory
         if example_mode:
             Path.rename(

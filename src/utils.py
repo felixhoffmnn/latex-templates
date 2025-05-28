@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -19,6 +20,11 @@ jinja_env = jinja2.Environment(
     autoescape=False,
     loader=jinja2.FileSystemLoader("template"),
 )
+
+
+def is_github_actions():
+    """Check if the code is running in GitHub Actions."""
+    return os.getenv("CI") == "true"
 
 
 def load_config(file: Path) -> Config:
