@@ -115,6 +115,7 @@
       top: 20mm,
       bottom: 40mm,
     ),
+    font: ("Source Sans Pro", "Source Sans 3", "Arial", "Helvetica", "sans-serif"),
   )
 
   body

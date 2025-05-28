@@ -4,6 +4,7 @@ import os
 import subprocess
 from pathlib import Path
 
+import typst
 from loguru import logger
 
 from src.invoice import utils
@@ -135,13 +136,13 @@ def compose_email(
     subject = (
         f"{'DRY RUN: ' if dry_run else ''}Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}"
     )
-    message = f"<p>Hallo {customer.name},</p><p>anbei findest du die Rechnung <strong>{invoice.invoice_number}</strong> vom <strong>{invoice.date.strftime('%d.%m.%Y')}</strong>.<br>Bitte überweise den Betrag bis zum <strong>{invoice.due_date.strftime('%d.%m.%Y')}</strong> auf das angegebene Konto (siehe Rechnung).</p><p>Bei Fragen kannst du dich gerne jederzeit melden.</p><p>Viele Grüße<br>{config.company.name}</p>"
+    message = f"<p>Hallo {customer.address.name},</p><p>anbei findest du die Rechnung <strong>{invoice.invoice_number}</strong> vom <strong>{invoice.date.strftime('%d.%m.%Y')}</strong>.<br>Bitte überweise den Betrag bis zum <strong>{invoice.due_date.strftime('%d.%m.%Y')}</strong> auf das angegebene Konto (siehe Rechnung).</p><p>Bei Fragen kannst du dich gerne jederzeit melden.</p><p>Viele Grüße<br>{config.sender.address.name}</p>"
 
     # Create the mail command (opens Thunderbird, containing the mail with the invoice attached)
     email_command = [
         *thunderbird_command,
         "-compose",
-        f"from='{config.company.email}',to='{customer.email}',bcc='{config.company.email}',subject='{subject}',body='{message}',attachment='{output_file.absolute()}'",
+        f"from='{config.sender.email}',to='{customer.email}',bcc='{config.sender.email}',subject='{subject}',body='{message}',attachment='{output_file.absolute()}'",
     ]
     logger.debug(f"Email command: {email_command}")
 
@@ -203,7 +204,7 @@ def create_invoice(
     # Only run the PDF generation command if not in dry run mode
     if not dry_run:
         # Execute the command to generate the PDF
-        # execute_command(latex_command, exit_on_error=True, output_file=generated_pdf_file)
+        typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root="../../")
 
         # If example mode, copy the generated PDF to the example directory
         if example_mode:

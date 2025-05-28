@@ -144,7 +144,7 @@ requires-dist = [
     { name = "pydantic-extra-types", specifier = ">=2.9.0" },
     { name = "pypandoc-binary", specifier = ">=1.15" },
     { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "typst", specifier = ">=0.13.2" },
+    { name = "typst", specifier = "==0.13.2" },
 ]
 
 [package.metadata.requires-dev]

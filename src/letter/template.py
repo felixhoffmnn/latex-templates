@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import typst
 from loguru import logger
 
 from src.letter.utils import load_letter
@@ -50,6 +51,8 @@ def create_letter(
     LETTER_TMP_DIR.mkdir(parents=True, exist_ok=True)
 
     base_template = jinja_env.get_template("letter.typ.j2")
+    generated_typ_file = LETTER_TMP_DIR / "letter.typ"
+    generated_pdf_file = LETTER_OUT_DIR / "letter.pdf"
 
     # Render the template
     rendered_template = base_template.render(
@@ -59,13 +62,13 @@ def create_letter(
     )
 
     # Store typ file based on invoice number
-    with (LETTER_TMP_DIR / "letter.typ").open("w") as f:
+    with generated_typ_file.open("w") as f:
         f.write(rendered_template)
 
     # Only run the PDF generation command if not in dry run mode
     if not dry_run:
         # Execute the command to generate the PDF
-        # execute_command(latex_command, exit_on_error=True, output_file=destination_path)
+        typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root="../../")
 
         # If example mode, copy the generated PDF to the example directory
         if example_mode:
