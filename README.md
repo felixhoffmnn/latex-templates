@@ -16,27 +16,19 @@ your needs.
 
 **Features:**
 
-- [x] Invoice Template
-- [x] Letter Template
-- [ ] Support for multiple languages
-  - Currently only german is supported.
-- [ ] Support for multiple currencies
-- [ ] Add support for XRechnung
-- [x] Migrate to typst for faster rendering
-- [x] Type validation using [pydantic](https://docs.pydantic.dev)
-- [x] Support schema validation for VSCode (schemas are located in the `schemas`
-  directory)
-- [x] QR Code generation for bank transfer using [qrbill](https://ctan.org/pkg/qrbill)
-- [ ] Support `VAT > 0` (currently only `VAT = 0` is supported)
-- [x] Support multiple pages for invoices
-- [x] Easy interaction using [just](https://just.systems/man/en/)
-- [x] Python dependency management using [uv](https://docs.astral.sh/uv/)
-- [x] Keep track of the amount of invoices (using a `csv` file)
-- [x] Open Thunderbird with the generated pdf as attachment
+- Invoice Template
+- Letter Template
+- Migrate to typst for faster rendering
+- Type validation using [pydantic](https://docs.pydantic.dev)
+- Support schema validation for VSCode (schemas are located in the `schemas` directory)
+- QR Code generation for bank transfer using [qrbill](https://ctan.org/pkg/qrbill)
+- Support multiple pages for invoices
+- Easy interaction using [just](https://just.systems/man/en/)
+- Python dependency management using [uv](https://docs.astral.sh/uv/)
+- Keep track of the amount of invoices (using a `csv` file)
+- Open Thunderbird with the generated pdf as attachment
   - Requires Thunderbird to be installed as a `flatpak` package
   - Additionally, you need to allow Thunderbird to access the output directory
-    (**Note:** This is a security risk, as it allows Thunderbird to access all files in
-    the output directory)
   - You can disable this feature by setting `settings.open_mail_client` to `false` in
     `config.yml`
 
