@@ -15,7 +15,7 @@ INVOICE_CUSTOMER_EXAMPLE_FILE = EXAMPLE_DIR / "customer.example.csv"
 LETTER_EXAMPLE_FILE = EXAMPLE_DIR / "letter.example.md"
 
 # Default file paths
-CONFIG_DEFAULT_FILE = Path("config.toml")
+CONFIG_DEFAULT_FILE = Path("config.yml")
 INVOICE_HISTORY_FILE = INVOICE_DIR / "invoice.csv"
 INVOICE_CUSTOMER_FILE = INVOICE_DIR / "customer.csv"
 LETTER_DEFAULT_FILE = DATA_DIR / "letter.yml"

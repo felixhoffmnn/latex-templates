@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from src.models import Address
+from invoice_toolkit.models import Address
 
 
 class Location(BaseModel):

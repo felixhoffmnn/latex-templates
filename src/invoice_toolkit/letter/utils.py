@@ -3,7 +3,7 @@ from pathlib import Path
 import pypandoc
 import yaml
 
-from src.letter.models.letter import Letter
+from invoice_toolkit.letter.models.letter import Letter
 
 
 def load_letter(file: Path) -> tuple[Letter, str]:

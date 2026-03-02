@@ -3,8 +3,8 @@ from pathlib import Path
 import typst
 from loguru import logger
 
-from src.letter.utils import load_letter
-from src.settings import (
+from invoice_toolkit.letter.utils import load_letter
+from invoice_toolkit.settings import (
     CONFIG_DEFAULT_FILE,
     CONFIG_EXAMPLE_FILE,
     EXAMPLE_DIR,
@@ -13,7 +13,7 @@ from src.settings import (
     OUT_DIR,
     TMP_DIR,
 )
-from src.utils import config_logging, execute_command, jinja_env, load_config
+from invoice_toolkit.utils import config_logging, execute_command, jinja_env, load_config, validate_paths
 
 LETTER_OUT_DIR = OUT_DIR / "letter"
 LETTER_TMP_DIR = TMP_DIR / "letter"
@@ -42,6 +42,14 @@ def create_letter(
 
     letter_file = Path(letter_file or LETTER_DEFAULT_FILE)
     config_file = Path(config_file or CONFIG_DEFAULT_FILE)
+
+    if not example_mode:
+        validate_paths(
+            [
+                (letter_file, "letter file"),
+                (config_file, "config file"),
+            ]
+        )
 
     config = load_config(config_file)
     frontmatter, content = load_letter(letter_file)

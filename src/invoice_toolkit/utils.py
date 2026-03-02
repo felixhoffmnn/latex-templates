@@ -8,8 +8,8 @@ import jinja2
 import yaml
 from loguru import logger
 
-from src.invoice.models import Customer, Invoices
-from src.models import Config
+from invoice_toolkit.invoice.models import Customer, Invoices
+from invoice_toolkit.models import Config
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -19,6 +19,7 @@ jinja_env = jinja2.Environment(
     autoescape=False,
     loader=jinja2.FileSystemLoader("template"),
 )
+jinja_env.filters["currency"] = lambda value: f"{value:.2f}"
 
 
 def load_config(file: Path) -> Config:
@@ -51,6 +52,15 @@ def config_logging(debug: bool):
     """Configure the logging level based on the debug flag."""
     logger.remove()
     logger.add(sys.stderr, level="DEBUG" if debug else "INFO")
+
+
+def validate_paths(paths: list[tuple[Path, str]]):
+    """Validate that all required paths exist, logging and exiting if any are missing."""
+    missing = [(path, label) for path, label in paths if not path.exists()]
+    for path, label in missing:
+        logger.error(f"Missing {label}: {path}")
+    if missing:
+        sys.exit(1)
 
 
 def execute_command(command: list[str], exit_on_error: bool = False, output_file: Path | str | None = None):

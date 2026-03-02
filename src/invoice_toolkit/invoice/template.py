@@ -7,11 +7,11 @@ from pathlib import Path
 import typst
 from loguru import logger
 
-from src.invoice import utils
-from src.invoice.models.customer import Customer
-from src.invoice.models.invoices import Invoice
-from src.models import Config
-from src.settings import (
+from invoice_toolkit.invoice import utils
+from invoice_toolkit.invoice.models.customer import Customer
+from invoice_toolkit.invoice.models.invoices import Invoice
+from invoice_toolkit.models import Config
+from invoice_toolkit.settings import (
     CONFIG_DEFAULT_FILE,
     CONFIG_EXAMPLE_FILE,
     EXAMPLE_DIR,
@@ -23,7 +23,7 @@ from src.settings import (
     OUT_DIR,
     TMP_DIR,
 )
-from src.utils import config_logging, execute_command, jinja_env, load_config
+from invoice_toolkit.utils import config_logging, execute_command, jinja_env, load_config, validate_paths
 
 INVOICE_OUT_DIR = OUT_DIR / "invoice"
 INVOICE_TMP_DIR = TMP_DIR / "invoice"
@@ -250,6 +250,7 @@ def create_invoices(
     invoices_path: Path | str | None = None,
     dry_run: bool = False,
     verbose: bool = False,
+    make_all: bool = False,
 ):
     """Create multiple invoices.
 
@@ -276,12 +277,27 @@ def create_invoices(
     logger.debug(f"Using customer database: {customer_database}")
     logger.debug(f"Using config file: {config_path}")
 
-    # Check if all files exist
-    for file in [Path(invoices_path), customer_database, config_path]:
-        if not file.exists():
-            raise FileNotFoundError(f"File not found: {file}")
+    # Check if all required paths exist
+    validate_paths(
+        [
+            (INVOICE_DIR, "invoice data directory"),
+            (Path(invoices_path), "invoices file"),
+            (customer_database, "customer database"),
+            (config_path, "config file"),
+        ]
+    )
 
     config = load_config(config_path)
 
-    for invoice in utils.load_invoice(Path(invoices_path)).invoices:
+    all_invoices = utils.load_invoice(Path(invoices_path)).invoices
+
+    if dry_run or example_mode or make_all:
+        invoices_to_process = all_invoices
+    else:
+        invoices_to_process = utils.select_invoice(all_invoices, customer_database)
+        if not invoices_to_process:
+            logger.info("No draft invoices found.")
+            return
+
+    for invoice in invoices_to_process:
         create_invoice(invoice, config, customer_database, dry_run, verbose, example_mode)

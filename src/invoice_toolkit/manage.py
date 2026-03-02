@@ -1,11 +1,13 @@
 from fire import Fire
 
-from src.invoice.template import create_invoices
-from src.invoice.utils import print_customer
-from src.letter.template import create_letter
-from src.utils import generate_schema
+from invoice_toolkit.invoice.template import create_invoices
+from invoice_toolkit.invoice.utils import print_customer
+from invoice_toolkit.letter.template import create_letter
+from invoice_toolkit.utils import generate_schema
 
-if __name__ == "__main__":
+
+def main():
+    """CLI entry point."""
     Fire(
         {
             # Create one or more invoices
@@ -18,3 +20,7 @@ if __name__ == "__main__":
             "schemas": generate_schema,
         }
     )
+
+
+if __name__ == "__main__":
+    main()

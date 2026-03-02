@@ -45,19 +45,19 @@ meine Leistungen stelle ich Ihnen wie folgt in Rechnung.
     table.header([Pos.], [Bezeichnung], [Menge], [Einheit], [Einzel €], [Gesamt €]),
 
     {% for item in invoice.items %}
-    [{{ loop.index }}], [*{{ item.name }}* {% if item.description %} \ #text(10pt)[{{ item.description }}] {% endif %}], [{{ item.quantity }}], [{{ item.unit }}], [{{ item.price }} €], [{{ item.total}} €],
+    [{{ loop.index }}], [*{{ item.name }}* {% if item.description %} \ #text(10pt)[{{ item.description }}] {% endif %}], [{{ item.quantity }}], [{{ item.unit }}], [{{ item.price | currency }} €], [{{ item.total | currency }} €],
     {% endfor %}
 
     table.footer(
       table.cell(colspan: 5, fill: custom-gray, [*Gesamtbetrag\**]),
-      table.cell(fill: custom-gray, [*{{ invoice.total }} €*]),
+      table.cell(fill: custom-gray, [*{{ invoice.total | currency }} €*]),
     ),
   )
   #text(size: 10pt)[\* Umsatzsteuerfreie Leistungen gemäß §19 UStG.]
 ]
 #v(1em)
 
-Bitte überweisen Sie den Betrag von *{{ invoice.total }} €* bis zum *{{ invoice.due_date }}* an die folgende Bankverbindung. _Der dargestellte QR-Code kann zur automatischen Übernahme der Daten in Ihr Online-Banking genutzt werden._
+Bitte überweisen Sie den Betrag von *{{ invoice.total | currency }} €* bis zum *{{ invoice.due_date }}* an die folgende Bankverbindung. _Der dargestellte QR-Code kann zur automatischen Übernahme der Daten in Ihr Online-Banking genutzt werden._
 
 #v(1em)
 #let billing-details = (
@@ -68,7 +68,7 @@ Bitte überweisen Sie den Betrag von *{{ invoice.total }} €* bis zum *{{ invoi
       [Kontoinhaber:], [{{ config.sender.address.name }}],
       [Bank:], [{{ config.sender.bank.name }}],
       [IBAN:], [{{ config.sender.bank.iban }}],
-      [Betrag:], [{{ invoice.total }} €],
+      [Betrag:], [{{ invoice.total | currency }} €],
       [Verwendungszweck:], [{{ additional.purpose }}],
     )]
 )
@@ -81,7 +81,7 @@ SCT
 
 {{ config.sender.address.name }}
 {{ config.sender.bank.iban }}
-EUR{{ invoice.total }}
+EUR{{ invoice.total | currency }}
 
 {{ additional.purpose }}"
 

@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, HttpUrl
 from pydantic_extra_types.phone_numbers import PhoneNumber
 
-from src.models import Address
+from invoice_toolkit.models import Address
 
 
 class Customer(BaseModel):
