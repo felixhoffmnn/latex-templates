@@ -31,8 +31,8 @@ class Invoice(BaseModel):
 
     customer_id: int = Field(ge=10000)
     invoice_id: int | None = Field(None, ge=1)
-    invoice_number: str | None = Field(None, pattern=r"^RE\d{4}$")
-    date: dt.date = Field(dt.date.today())
+    invoice_number: str | None = Field(None, pattern=r"^RE\d{4,}$")
+    date: dt.date = Field(default_factory=dt.date.today)
     start_date: dt.date | None = None
     end_date: dt.date | None = None
     due_date: dt.date | None = None
@@ -50,7 +50,7 @@ class Invoice(BaseModel):
         if not self.items:
             raise ValueError("List of items must not be empty.")
 
-        total = sum([i.price * i.quantity for i in self.items])
+        total = sum(i.price * i.quantity for i in self.items)
         if total == 0:
             raise ValueError("Total must be greater than 0.")
         self.total = total

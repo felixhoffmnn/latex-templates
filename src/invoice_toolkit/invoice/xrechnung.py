@@ -28,7 +28,7 @@ def _set_seller(doc: Document, sender: Sender):
     seller.address.line_one = sender.address.street
     seller.address.postcode = str(sender.address.zip)
     seller.address.city_name = sender.address.city
-    seller.address.country_id = "DE"
+    seller.address.country_id = sender.address.country or "DE"
     seller.electronic_address.uri_ID = ("EM", str(sender.email))
     seller.contact.person_name = sender.address.name
     seller.contact.telephone.number = str(sender.phone).replace("tel:", "").replace("-", "")
@@ -46,7 +46,7 @@ def _set_buyer(doc: Document, customer: Customer):
     buyer.address.line_one = customer.address.street
     buyer.address.postcode = str(customer.address.zip)
     buyer.address.city_name = customer.address.city
-    buyer.address.country_id = "DE"
+    buyer.address.country_id = customer.address.country or "DE"
     buyer.electronic_address.uri_ID = ("EM", str(customer.email))
 
 

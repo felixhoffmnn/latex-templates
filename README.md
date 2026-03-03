@@ -20,8 +20,9 @@ your needs.
 - Letter Template
 - Migrate to typst for faster rendering
 - Type validation using [pydantic](https://docs.pydantic.dev)
-- Support schema validation for VSCode (schemas are located in the `schemas` directory)
-- QR Code generation for bank transfer using [qrbill](https://ctan.org/pkg/qrbill)
+- Support schema validation for VSCode (schemas are located in the `schema` directory)
+- QR Code generation for bank transfer using
+  [tiaoma](https://typst.app/universe/package/tiaoma)
 - Support multiple pages for invoices
 - Easy interaction using [just](https://just.systems/man/en/)
 - Python dependency management using [uv](https://docs.astral.sh/uv/)

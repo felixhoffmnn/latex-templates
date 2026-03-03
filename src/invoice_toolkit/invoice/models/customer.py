@@ -5,7 +5,7 @@ from invoice_toolkit.models import Address
 
 
 class Customer(BaseModel):
-    """Customer model for the customer.yaml file."""
+    """Customer model for the customer CSV file."""
 
     customer_id: int
     company: str | None = None

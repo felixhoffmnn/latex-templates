@@ -2,6 +2,7 @@ import csv
 from pathlib import Path
 
 import yaml
+from loguru import logger
 
 from invoice_toolkit.invoice.models import Customer, Invoices
 from invoice_toolkit.invoice.models.invoices import Invoice
@@ -28,16 +29,19 @@ def load_customers(file: Path) -> dict[int, Customer]:
 
     Returns a dict keyed by customer_id.
     """
-    with file.open("r", encoding="utf-8-sig") as f:
-        parsed_file = csv.DictReader(f)
-        customers = [
-            Customer(**{k: v if v else None for k, v in customer.items()}) for customer in parsed_file if customer
-        ]
+    try:
+        with file.open("r", encoding="utf-8-sig") as f:
+            parsed_file = csv.DictReader(f)
+            customers = [
+                Customer(**{k: v if v else None for k, v in customer.items()}) for customer in parsed_file if customer
+            ]
+    except Exception as e:
+        raise ValueError(f"Failed to load customers from {file}: {e}") from e
 
     # Validate that the customer ids are unique
     customer_ids = [c.customer_id for c in customers]
     if len(customer_ids) != len(set(customer_ids)):
-        raise ValueError("Customer ids must be unique.")
+        raise ValueError(f"Duplicate customer IDs found in {file}.")
 
     return {c.customer_id: c for c in customers}
 
@@ -48,7 +52,7 @@ def load_customer(file: Path, customer_id: str | int) -> Customer:
     customer_id = int(customer_id)
 
     if customer_id not in customers:
-        raise ValueError(f"No customer found with id {customer_id}")
+        raise ValueError(f"No customer found with id {customer_id} in {file}")
 
     return customers[customer_id]
 
@@ -57,7 +61,7 @@ def _parse_selection(raw: str, max_index: int) -> list[int]:
     """Parse a comma-separated selection string with range support.
 
     Accepts formats like "0,2-4,6". Returns deduplicated indices in input order,
-    filtering out non-numeric or out-of-bounds values. Defaults to [0] if nothing valid.
+    filtering out non-numeric or out-of-bounds values. Returns None if nothing valid.
     """
     seen: set[int] = set()
     result: list[int] = []
@@ -83,7 +87,7 @@ def _parse_selection(raw: str, max_index: int) -> list[int]:
                 seen.add(i)
                 result.append(i)
 
-    return result if result else [0]
+    return result if result else None
 
 
 def select_invoice(invoices: list[Invoice], customer_file: Path) -> list[Invoice]:
@@ -95,7 +99,7 @@ def select_invoice(invoices: list[Invoice], customer_file: Path) -> list[Invoice
     """
     drafts = [inv for inv in invoices if inv.status == "draft"]
 
-    if len(drafts) == 0:
+    if not drafts:
         return []
 
     if len(drafts) == 1:
@@ -122,15 +126,22 @@ def select_invoice(invoices: list[Invoice], customer_file: Path) -> list[Invoice
     raw = input("Which invoices should be generated? (e.g. 0,2-4,6): ").strip()
     indices = _parse_selection(raw, len(drafts) - 1)
 
+    if indices is None:
+        logger.warning(f"Invalid selection: '{raw}'. No invoices selected.")
+        return []
+
     return [drafts[i] for i in indices]
 
 
 def load_invoice(file: Path) -> Invoices:
     """Load invoice file."""
-    with file.open("rb") as f:
-        parsed_file = yaml.safe_load(f)
-        invoices = Invoices(**parsed_file)
-    return invoices
+    try:
+        with file.open("rb") as f:
+            parsed_file = yaml.safe_load(f)
+            invoices = Invoices(**parsed_file)
+        return invoices
+    except (yaml.YAMLError, ValueError, TypeError) as e:
+        raise ValueError(f"Failed to load invoices from {file}: {e}") from e
 
 
 def print_customer(file: Path = INVOICE_DIR / "customer.csv") -> None:

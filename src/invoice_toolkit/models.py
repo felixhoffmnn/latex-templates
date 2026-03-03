@@ -11,24 +11,26 @@ class Address(BaseModel):
     street: str
     zip: str | int
     city: str
-    country: str | None = Field(None, pattern=r"^(DE|Germany|Deutschland)$")
+    country: str | None = Field(None, pattern=r"^[A-Z]{2}$")
 
-    def __init__(self, **data):
-        super().__init__(**data)
-        if isinstance(data.get("zip"), int):
-            self.zip = str(data.get("zip")).zfill(5)
+    @field_validator("zip")
+    @classmethod
+    def normalize_zip(cls, v: str | int) -> str:
+        """Ensure zip is a zero-padded 5-digit string."""
+        return str(v).zfill(5)
 
 
 class Bank(BaseModel):
     """Bank model containing the bank account information."""
 
-    iban: str = Field(pattern=r"^[A-Z]{2}\d{2}\s(\d{4}\s){4}\d{2}$|^[A-Z]{2}\d{20}$")
+    iban: str = Field(pattern=r"^[A-Z]{2}\d{2}\s?(\d{4}\s?){4}\d{2}$|^[A-Z]{2}\d{20}$")
     bic: str = Field(pattern=r"^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$")
     name: str
 
-    @field_validator("iban")
+    @field_validator("iban", mode="before")
     @classmethod
     def normalize_iban(cls, v: str):
+        """Normalize IBAN by removing spaces first, then formatting in groups of 4."""
         clean_iban = v.replace(" ", "")
         return " ".join([clean_iban[i : i + 4] for i in range(0, len(clean_iban), 4)])
 
@@ -68,7 +70,7 @@ class Tax(BaseModel):
 
 
 class Sender(BaseModel):
-    """Sender model for the config.toml file."""
+    """Sender model for the config.yml file."""
 
     address: Address
     email: EmailStr
@@ -86,7 +88,7 @@ class Settings(BaseModel):
 
 
 class Config(BaseModel):
-    """Config model for the config.toml file."""
+    """Config model for the config.yml file."""
 
     settings: Settings
     sender: Sender

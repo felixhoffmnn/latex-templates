@@ -23,7 +23,8 @@ dependencies = [
 invoice-toolkit = "invoice_toolkit.manage:main"
 
 [dependency-groups]
-dev = [{ include-group = "lint" }, { include-group = "types" }]
+dev = [{ include-group = "lint" }, { include-group = "types" }, { include-group = "test" }]
+test = ["pytest>=8.0"]
 lint = ["pre-commit>=4.0.1", "ruff>=0.7.2"]
 types = ["types-pyyaml>=6.0.12.20240917"]
 
@@ -57,11 +58,17 @@ ignore = [
     "D104", # Missing docstring in public package
 ]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D101", "D103", "PLR2004"]
+
 [tool.ruff.lint.pylint]
 max-args = 10
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/invoice_toolkit"]

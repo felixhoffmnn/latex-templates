@@ -10,6 +10,7 @@ from loguru import logger
 
 from invoice_toolkit.invoice.models import Customer, Invoices
 from invoice_toolkit.models import Config
+from invoice_toolkit.settings import TEMPLATE_DIR
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 jinja_env = jinja2.Environment(
     trim_blocks=True,
     autoescape=False,
-    loader=jinja2.FileSystemLoader("template"),
+    loader=jinja2.FileSystemLoader(str(TEMPLATE_DIR)),
 )
 
 
@@ -32,10 +33,14 @@ jinja_env.filters["currency"] = _currency_filter
 
 def load_config(file: Path) -> Config:
     """Load config file."""
-    with file.open("rb") as f:
-        parsed_file = yaml.safe_load(f)
-        config = Config(**parsed_file)
-    return config
+    try:
+        with file.open("rb") as f:
+            parsed_file = yaml.safe_load(f)
+            config = Config(**parsed_file)
+        return config
+    except (yaml.YAMLError, ValueError, TypeError) as e:
+        logger.error(f"Failed to load config from {file}: {e}")
+        sys.exit(1)
 
 
 def generate_schema():
@@ -43,8 +48,7 @@ def generate_schema():
     schema_dir = Path("schema")
     schemas: list[BaseModel] = [Config, Invoices, Customer]
 
-    if not schema_dir.exists():
-        schema_dir.mkdir()
+    schema_dir.mkdir(exist_ok=True)
 
     for schema in schemas:
         with Path(f"schema/{schema.__name__.lower()}.json").open("w") as f:
@@ -74,9 +78,11 @@ def execute_command(command: list[str], exit_on_error: bool = False, output_file
         logger.success("Command executed successfully.")
         if output_file:
             logger.info(f"Output file: {output_file}")
+    except FileNotFoundError:
+        logger.error(f"Command not found: {command[0]}")
+        if exit_on_error:
+            sys.exit(1)
     except subprocess.CalledProcessError as e:
         logger.error(f"Command execution failed: {e}")
-
         if exit_on_error:
-            logger.error("Exiting due to command failure.")
             sys.exit(1)

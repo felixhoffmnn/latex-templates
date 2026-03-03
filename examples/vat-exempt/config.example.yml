@@ -8,7 +8,7 @@ sender:
     street: "Musterstraße 100"
     zip: "12345"
     city: "Musterstadt"
-    country: "Deutschland"
+    country: "DE"
   email: "info@musterfirma.de"
   website: "https://musterfirma.de"
   phone: "+49 176 12345678"

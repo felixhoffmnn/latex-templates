@@ -8,6 +8,7 @@ from invoice_toolkit.letter.utils import load_letter
 from invoice_toolkit.settings import (
     CONFIG_DEFAULT_FILE,
     OUT_DIR,
+    PROJECT_ROOT,
     TMP_DIR,
 )
 from invoice_toolkit.utils import config_logging, execute_command, jinja_env, load_config, validate_paths
@@ -66,7 +67,11 @@ def create_letter(
         f.write(rendered_template)
 
     # Execute the command to generate the PDF
-    typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root="../../")
+    try:
+        typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root=str(PROJECT_ROOT))
+    except Exception as e:
+        logger.error(f"Typst compilation failed for {generated_typ_file}: {e}")
+        sys.exit(1)
 
     if output is not None:
         Path(output).parent.mkdir(parents=True, exist_ok=True)
@@ -74,10 +79,9 @@ def create_letter(
         return
 
     if not dry_run:
-        destination_path = LETTER_OUT_DIR / "letter.pdf"
         if config.settings.open_pdf_viewer:
-            execute_command(["xdg-open", str(destination_path)])
+            execute_command(["xdg-open", str(generated_pdf_file)])
     else:
-        logger.info("Dry run mode enabled. Skipping PDF generation.")
-        logger.debug(f"Rendered template saved to: {LETTER_TMP_DIR / 'letter.typ'}")
-        logger.debug(f"Output PDF would be saved to: {generated_pdf_file}")
+        logger.info("Dry run mode enabled. Skipping post-generation steps.")
+        logger.debug(f"Rendered template saved to: {generated_typ_file}")
+        logger.debug(f"Output PDF saved to: {generated_pdf_file}")

@@ -19,12 +19,16 @@ from invoice_toolkit.settings import (
     INVOICE_DIR,
     INVOICE_HISTORY_FILE,
     OUT_DIR,
+    PROJECT_ROOT,
     TMP_DIR,
 )
 from invoice_toolkit.utils import config_logging, execute_command, jinja_env, load_config, validate_paths
 
 INVOICE_OUT_DIR = OUT_DIR / "invoice"
 INVOICE_TMP_DIR = TMP_DIR / "invoice"
+
+# Counter used to generate unique IDs in dry-run mode across a batch
+_dry_run_counter = 0
 
 
 def setup_csv_archive(file: Path = INVOICE_HISTORY_FILE):
@@ -34,29 +38,37 @@ def setup_csv_archive(file: Path = INVOICE_HISTORY_FILE):
             csv.writer(f).writerow(["invoice_id", "customer_id", "date", "total", "status"])
 
 
-def get_invoice_id(
-    dry_run: bool,
-) -> int:
+def get_invoice_id(dry_run: bool) -> int:
     """Access the archive csv file and return the next invoice id."""
+    global _dry_run_counter  # noqa: PLW0603
+
     custom_last_invoice = int(os.environ.get("LAST_INVOICE", "1"))
-    max_invoice_id = 0
 
-    if not dry_run:
-        # Setup the csv archive file
-        setup_csv_archive()
+    if dry_run:
+        _dry_run_counter += 1
+        return custom_last_invoice + _dry_run_counter - 1
 
-        # Read the csv file, and get the max invoice id (skip the header)
-        with (INVOICE_DIR / "invoice.csv").open("r") as f:
+    setup_csv_archive()
+
+    try:
+        with INVOICE_HISTORY_FILE.open("r") as f:
             reader = csv.reader(f)
-            next(reader)
-            invoice_ids = [int(row[0]) for row in reader if row]
+            next(reader, None)  # skip header, safe if file is empty
+            invoice_ids = []
+            for row in reader:
+                if row:
+                    try:
+                        invoice_ids.append(int(row[0]))
+                    except (ValueError, IndexError):
+                        logger.warning(f"Skipping malformed row in {INVOICE_HISTORY_FILE}: {row}")
+    except FileNotFoundError:
+        logger.warning(f"Invoice history file not found: {INVOICE_HISTORY_FILE}")
+        return custom_last_invoice
 
-            if invoice_ids:
-                # Get the max invoice id
-                max_invoice_id = max(invoice_ids)
+    if not invoice_ids:
+        return custom_last_invoice
 
-    # Return the next invoice id
-    return int(custom_last_invoice) if max_invoice_id == 0 else max_invoice_id + 1
+    return max(invoice_ids) + 1
 
 
 def store_invoice_parameter(invoice: Invoice):
@@ -64,14 +76,12 @@ def store_invoice_parameter(invoice: Invoice):
 
     This function should only be called after the invoice has been generated, and the user has confirmed that everything looks good.
     """
-    # Create the file if it doesn't exist and add the header (invoice_id,customer_id,date,total,status)
     setup_csv_archive()
 
     # Use gross total when VAT is applied, otherwise net total
-    stored_total = invoice.total_gross if invoice.total_vat > 0 else invoice.total
+    stored_total = invoice.total_gross if invoice.total_vat and invoice.total_vat > 0 else invoice.total
 
-    # Write the invoice data to the file
-    with (INVOICE_HISTORY_FILE).open("a") as f:
+    with INVOICE_HISTORY_FILE.open("a") as f:
         csv.writer(f).writerow(
             [
                 invoice.invoice_id,
@@ -91,13 +101,15 @@ def archive_invoice(output_file: str, year: int):
     for ext in (".pdf", ".xml"):
         src = INVOICE_OUT_DIR / (output_file + ext)
         if src.exists():
-            Path.rename(src, archive_dir / (output_file + ext))
+            src.rename(archive_dir / (output_file + ext))
+        else:
+            logger.debug(f"Skipping archive of missing file: {src}")
 
 
 def get_thunderbird():
     """Check if Thunderbird is installed."""
     try:
-        # Check if Thunderbird is installed as a snap
+        # Check if Thunderbird is installed on the system
         subprocess.run(["thunderbird", "--version"], check=True)
         return ["thunderbird"]
     except (subprocess.CalledProcessError, FileNotFoundError):
@@ -162,18 +174,14 @@ def _resolve_vat(invoice: Invoice, vat_exempt: bool, default_vat_rate: int):
     to vat_rate=0. When False, items without an explicit vat_rate (None) are
     filled with default_vat_rate; explicit values (including 0) are preserved.
     """
-    if vat_exempt:
-        for item in invoice.items:
+    for item in invoice.items:
+        if vat_exempt:
             if item.vat_rate is not None and item.vat_rate > 0:
                 logger.warning(f"Item '{item.name}' has vat_rate={item.vat_rate} but vat_exempt is True. Forcing to 0.")
             item.vat_rate = 0
-    else:
-        for item in invoice.items:
-            if item.vat_rate is None:
-                item.vat_rate = default_vat_rate
+        elif item.vat_rate is None:
+            item.vat_rate = default_vat_rate
 
-    # Recompute amounts for all items
-    for item in invoice.items:
         item.vat_amount = round(item.total * item.vat_rate / 100, 2)
         item.gross_total = item.total + item.vat_amount
 
@@ -288,7 +296,12 @@ def create_invoice(
     with generated_typ_file.open("w") as f:
         f.write(rendered_template)
 
-    typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root="../../")
+    try:
+        typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root=str(PROJECT_ROOT))
+    except Exception as e:
+        logger.error(f"Typst compilation failed for {generated_typ_file}: {e}")
+        sys.exit(1)
+
     generate_xrechnung_xml(invoice, customer, config, generated_xml_file, config.invoice.vat_exempt)
 
     if output is not None:
@@ -309,9 +322,9 @@ def create_invoice(
             dry_run,
         )
     else:
-        logger.info("Dry run mode enabled. Skipping PDF generation.")
+        logger.info("Dry run mode enabled. Skipping post-generation steps.")
         logger.debug(f"Rendered template saved to: {generated_typ_file}")
-        logger.debug(f"Output file would be saved to: {generated_pdf_file}")
+        logger.debug(f"Output PDF saved to: {generated_pdf_file}")
         logger.debug(f"XRechnung XML saved to: {generated_xml_file}")
 
 
@@ -337,7 +350,7 @@ def create_invoices(
 
     invoices_path = Path(invoices_path)
     customer_database = Path(customer_path) if customer_path else INVOICE_CUSTOMER_FILE
-    config_path = Path(config_path) if config_path else Path(os.getenv("CONFIG_PATH", CONFIG_DEFAULT_FILE))
+    config_path = Path(config_path) if config_path else Path(os.getenv("CONFIG_PATH", str(CONFIG_DEFAULT_FILE)))
 
     # Log the used files
     logger.debug(f"Using invoices file: {invoices_path}")
