@@ -81,7 +81,7 @@ def create_letter(
         # If example mode, copy the generated PDF to the example directory
         if example_mode:
             Path.rename(destination_path, EXAMPLE_DIR / "letter.example.pdf")
-            destination_path = EXAMPLE_DIR / "letter.example.pdf"
+            return
 
         # Open the pdf file
         if config.settings.open_pdf_viewer:

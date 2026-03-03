@@ -22,11 +22,20 @@ jobs:
         run: uv run invoice-toolkit invoice --dry-run
       - name: Generate letter
         run: uv run invoice-toolkit letter --dry-run
-      - name: List all pdf files
-        run: ls -l out
+      - name: Verify XML files generated
+        run: |
+          echo "Generated files:"
+          ls -l out/invoice/
+          xml_count=$(find out/invoice -name '*.xml' | wc -l)
+          if [ "$xml_count" -eq 0 ]; then
+            echo "ERROR: No XRechnung XML files were generated"
+            exit 1
+          fi
+          echo "Found $xml_count XML file(s)"
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: pdf-files
+          name: invoice-files
           path: |
             out/**/*.pdf
+            out/**/*.xml

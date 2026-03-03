@@ -12,6 +12,7 @@ class Customer(BaseModel):
     email: EmailStr
     phone: PhoneNumber
     url: HttpUrl | None = None
+    buyer_reference: str | None = None
     address: Address
 
     # address needs to be initialized manually

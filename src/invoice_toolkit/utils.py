@@ -19,7 +19,15 @@ jinja_env = jinja2.Environment(
     autoescape=False,
     loader=jinja2.FileSystemLoader("template"),
 )
-jinja_env.filters["currency"] = lambda value: f"{value:.2f}"
+
+
+def _currency_filter(value, locale="de"):
+    if locale == "de":
+        return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"{value:.2f}"
+
+
+jinja_env.filters["currency"] = _currency_filter
 
 
 def load_config(file: Path) -> Config:

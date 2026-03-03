@@ -36,28 +36,64 @@ Sehr geehrte Damen und Herren,
 meine Leistungen stelle ich Ihnen wie folgt in Rechnung.
 
 #[
+  #set text(size: 10pt)
   #show table.cell.where(y: 0): strong
   #table(
+    {% if has_vat %}
+    columns: (12mm, 3fr, 17mm, 1fr, 1fr, 1fr, 1fr),
+    align: (center, left, center, left, right, right, right),
+    {% else %}
     columns: (12mm, 3fr, 17mm, 1fr, 1fr, 1fr),
+    align: (center, left, center, left, right, right),
+    {% endif %}
     stroke: 0.75pt,
     inset: 7pt,
 
+    {% if has_vat %}
+    table.header([Pos.], [Bezeichnung], [Menge], [Einheit], [Einzel €], [MwSt %], [Netto €]),
+    {% else %}
     table.header([Pos.], [Bezeichnung], [Menge], [Einheit], [Einzel €], [Gesamt €]),
+    {% endif %}
 
     {% for item in invoice.items %}
+    {% if has_vat %}
+    [{{ loop.index }}], [*{{ item.name }}* {% if item.description %} \ #text(10pt)[{{ item.description }}] {% endif %}], [{{ item.quantity }}], [{{ item.unit }}], [{{ item.price | currency }} €], [{{ item.vat_rate }} %], [{{ item.total | currency }} €],
+    {% else %}
     [{{ loop.index }}], [*{{ item.name }}* {% if item.description %} \ #text(10pt)[{{ item.description }}] {% endif %}], [{{ item.quantity }}], [{{ item.unit }}], [{{ item.price | currency }} €], [{{ item.total | currency }} €],
+    {% endif %}
     {% endfor %}
 
+    {% if has_vat %}
+    table.cell(colspan: 6, align: left, [Nettobetrag]),
+    [{{ invoice.total | currency }} €],
+
+    {% for rate, group in vat_groups.items() %}
+    {% if rate > 0 %}
+    table.cell(colspan: 6, align: left, [zzgl. {{ rate }}% MwSt auf {{ group.basis | currency }} €]),
+    [{{ group.amount | currency }} €],
+    {% else %}
+    table.cell(colspan: 6, align: left, [Umsatzsteuerfreie Leistungen (§19 UStG)]),
+    [0,00 €],
+    {% endif %}
+    {% endfor %}
+
+    table.cell(colspan: 6, align: left, fill: custom-gray, [*Gesamtbetrag*]),
+    table.cell(fill: custom-gray, [*{{ invoice.total_gross | currency }} €*]),
+    {% else %}
     table.footer(
-      table.cell(colspan: 5, fill: custom-gray, [*Gesamtbetrag\**]),
+      table.cell(colspan: 5, align: left, fill: custom-gray, [*Gesamtbetrag\**]),
       table.cell(fill: custom-gray, [*{{ invoice.total | currency }} €*]),
     ),
+    {% endif %}
   )
+  {% if not has_vat %}
   #text(size: 10pt)[\* Umsatzsteuerfreie Leistungen gemäß §19 UStG.]
+  {% endif %}
 ]
 #v(1em)
 
-Bitte überweisen Sie den Betrag von *{{ invoice.total | currency }} €* bis zum *{{ invoice.due_date }}* an die folgende Bankverbindung. _Der dargestellte QR-Code kann zur automatischen Übernahme der Daten in Ihr Online-Banking genutzt werden._
+#block(breakable: false)[
+Bitte überweisen Sie den Betrag von *{{ display_total | currency }} €* bis zum *{{ invoice.due_date }}* an die folgende Bankverbindung. _Der dargestellte QR-Code kann zur automatischen Übernahme der Daten in Ihr Online-Banking genutzt werden._
 
 #v(1em)
 #let billing-details = (
@@ -68,7 +104,7 @@ Bitte überweisen Sie den Betrag von *{{ invoice.total | currency }} €* bis zu
       [Kontoinhaber:], [{{ config.sender.address.name }}],
       [Bank:], [{{ config.sender.bank.name }}],
       [IBAN:], [{{ config.sender.bank.iban }}],
-      [Betrag:], [{{ invoice.total | currency }} €],
+      [Betrag:], [{{ display_total | currency }} €],
       [Verwendungszweck:], [{{ additional.purpose }}],
     )]
 )
@@ -81,7 +117,8 @@ SCT
 
 {{ config.sender.address.name }}
 {{ config.sender.bank.iban }}
-EUR{{ invoice.total | currency }}
+EUR{{ display_total | currency("en") }}
+
 
 {{ additional.purpose }}"
 
@@ -94,4 +131,5 @@ EUR{{ invoice.total | currency }}
 )
 #v(1em)
 
-Vielen Dank für die nette Zusammenarbeit.
+Vielen Dank für die gute Zusammenarbeit.
+]

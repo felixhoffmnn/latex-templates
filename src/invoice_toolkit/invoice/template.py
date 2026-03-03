@@ -10,6 +10,7 @@ from loguru import logger
 from invoice_toolkit.invoice import utils
 from invoice_toolkit.invoice.models.customer import Customer
 from invoice_toolkit.invoice.models.invoices import Invoice
+from invoice_toolkit.invoice.xrechnung import generate_xrechnung_xml
 from invoice_toolkit.models import Config
 from invoice_toolkit.settings import (
     CONFIG_DEFAULT_FILE,
@@ -69,6 +70,9 @@ def store_invoice_parameter(invoice: Invoice):
     # Create the file if it doesn't exist and add the header (invoice_id,customer_id,date,total,status)
     setup_csv_archive()
 
+    # Use gross total when VAT is applied, otherwise net total
+    stored_total = invoice.total_gross if invoice.total_vat > 0 else invoice.total
+
     # Write the invoice data to the file
     with (INVOICE_HISTORY_FILE).open("a") as f:
         csv.writer(f).writerow(
@@ -76,22 +80,21 @@ def store_invoice_parameter(invoice: Invoice):
                 invoice.invoice_id,
                 invoice.customer_id,
                 invoice.date.strftime("%Y-%m-%d"),
-                invoice.total,
+                stored_total,
                 "sent",
             ]
         )
 
 
-def archive_pdf(output_file: str, year: int):
-    """Archive the pdf file."""
-    # Check if the archive directory exists
-    (INVOICE_DIR / "archive" / str(year)).mkdir(parents=True, exist_ok=True)
+def archive_invoice(output_file: str, year: int):
+    """Archive the invoice PDF and XML files."""
+    archive_dir = INVOICE_DIR / "archive" / str(year)
+    archive_dir.mkdir(parents=True, exist_ok=True)
 
-    # Archive the invoice from the output directory to the archive directory
-    Path.rename(
-        INVOICE_OUT_DIR / (output_file + ".pdf"),
-        INVOICE_DIR / "archive" / str(year) / (output_file + ".pdf"),
-    )
+    for ext in (".pdf", ".xml"):
+        src = INVOICE_OUT_DIR / (output_file + ext)
+        if src.exists():
+            Path.rename(src, archive_dir / (output_file + ext))
 
 
 def get_thunderbird():
@@ -122,7 +125,8 @@ def compose_email(
     config: Config,
     customer: Customer,
     thunderbird_command: list[str],
-    output_file: Path,
+    pdf_file: Path,
+    xml_file: Path,
     dry_run: bool,
 ):
     """Compose the mail command.
@@ -136,48 +140,136 @@ def compose_email(
     subject = (
         f"{'DRY RUN: ' if dry_run else ''}Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}"
     )
-    message = f"<p>Hallo {customer.address.name},</p><p>anbei findest du die Rechnung <strong>{invoice.invoice_number}</strong> vom <strong>{invoice.date.strftime('%d.%m.%Y')}</strong>.<br>Bitte überweise den Betrag bis zum <strong>{invoice.due_date.strftime('%d.%m.%Y')}</strong> auf das angegebene Konto (siehe Rechnung).</p><p>Bei Fragen kannst du dich gerne jederzeit melden.</p><p>Viele Grüße<br>{config.sender.address.name}</p>"
+    message = f"<p>Hallo {customer.address.name},</p><p>im Anhang findest du die Rechnung <strong>{invoice.invoice_number}</strong> vom <strong>{invoice.date.strftime('%d.%m.%Y')}</strong>.<br>Bitte überweise den Betrag bis zum <strong>{invoice.due_date.strftime('%d.%m.%Y')}</strong> auf das angegebene Konto (siehe Rechnung).</p><p>Bei Fragen kannst du dich gerne jederzeit melden.</p><p>Viele Grüße<br>{config.sender.address.name}</p>"
+
+    # Attach both PDF and XML
+    attachments = str(pdf_file.absolute())
+    if xml_file.exists():
+        attachments += f",{xml_file.absolute()}"
 
     # Create the mail command (opens Thunderbird, containing the mail with the invoice attached)
     email_command = [
         *thunderbird_command,
         "-compose",
-        f"from='{config.sender.email}',to='{customer.email}',bcc='{config.sender.email}',subject='{subject}',body='{message}',attachment='{output_file.absolute()}'",
+        f"from='{config.sender.email}',to='{customer.email}',bcc='{config.sender.email}',subject='{subject}',body='{message}',attachment='{attachments}'",
     ]
     logger.debug(f"Email command: {email_command}")
 
     return email_command
 
 
-# outsource the code for creating one invoice to a function
+def _apply_default_vat(invoice: Invoice, default_vat_rate: int):
+    """Apply the default VAT rate to items that have no explicit VAT set."""
+    if default_vat_rate == 0:
+        return
+    for item in invoice.items:
+        if item.vat_rate == 0:
+            item.vat_rate = default_vat_rate
+            item.vat_amount = round(item.total * item.vat_rate / 100, 2)
+            item.gross_total = item.total + item.vat_amount
+    invoice.total_vat = round(sum(i.vat_amount for i in invoice.items), 2)
+    invoice.total_gross = round(invoice.total + invoice.total_vat, 2)
+
+
+def _prepare_vat_context(invoice: Invoice) -> dict:
+    """Build template context for VAT display."""
+    has_vat = any(i.vat_rate > 0 for i in invoice.items)
+
+    vat_groups: dict[int, dict[str, float]] = {}
+    if has_vat:
+        for item in invoice.items:
+            rate = item.vat_rate
+            if rate not in vat_groups:
+                vat_groups[rate] = {"basis": 0.0, "amount": 0.0}
+            vat_groups[rate]["basis"] = round(vat_groups[rate]["basis"] + item.total, 2)
+            vat_groups[rate]["amount"] = round(vat_groups[rate]["amount"] + item.vat_amount, 2)
+
+    return {
+        "has_vat": has_vat,
+        "vat_groups": vat_groups,
+        "display_total": invoice.total_gross if has_vat else invoice.total,
+    }
+
+
+def _handle_post_generation(
+    invoice: Invoice,
+    config: Config,
+    customer: Customer,
+    output_file: str,
+    generated_pdf_file: Path,
+    generated_xml_file: Path,
+    dry_run: bool,
+    example_mode: bool,
+):
+    """Handle post-generation steps: PDF viewing, email, archiving."""
+    if example_mode:
+        has_vat = any(i.vat_rate > 0 for i in invoice.items)
+        suffix = "vat" if has_vat else "no-vat"
+        Path.rename(generated_pdf_file, EXAMPLE_DIR / f"invoice-{suffix}.example.pdf")
+        if generated_xml_file.exists():
+            Path.rename(generated_xml_file, EXAMPLE_DIR / f"invoice-{suffix}.example.xml")
+        return
+
+    if config.settings.open_pdf_viewer:
+        execute_command(["xdg-open", str(generated_pdf_file)])
+
+    if config.settings.open_mail_client:
+        thunderbird_command = get_thunderbird()
+        if thunderbird_command:
+            execute_command(
+                compose_email(
+                    invoice,
+                    config,
+                    customer,
+                    thunderbird_command,
+                    generated_pdf_file,
+                    generated_xml_file,
+                    dry_run,
+                )
+            )
+
+    if not (dry_run or example_mode) and utils.confirm(
+        "Did everything look good and do you want to archive the invoice?"
+    ):
+        archive_invoice(output_file, invoice.date.year)
+        store_invoice_parameter(invoice)
+        logger.success("Invoice archived and invoice number saved.")
+    else:
+        logger.info("Skipping invoice archiving and invoice number saving.")
+
+
 def create_invoice(
-    invoice: Invoice, config: Config, customer_file: Path, dry_run: bool, verbose: bool, example_mode: bool
+    invoice: Invoice,
+    config: Config,
+    customer_file: Path,
+    dry_run: bool,
+    verbose: bool,
+    example_mode: bool,
+    example_id: int | None = None,
 ):
     """Create one invoice."""
-    # Skip invoices that have already been sent or paid
     if invoice.status in ["sent", "paid"]:
         logger.info("Skipping invoice because it has already been sent or paid.")
         return
 
-    # Load customer
     customer = utils.load_customer(customer_file, invoice.customer_id)
 
-    # Create invoice number
-    invoice.invoice_id = get_invoice_id(dry_run)
+    if example_mode and example_id is not None:
+        invoice.invoice_id = example_id
+    else:
+        invoice.invoice_id = get_invoice_id(dry_run)
     invoice.invoice_number = f"RE{invoice.invoice_id:04d}"
 
-    # Calculate due date
     if invoice.due_date is None:
         invoice.due_date = invoice.date + datetime.timedelta(days=config.invoice.due_days)
 
-    # Create output and tmp directory if they don't exist
     INVOICE_OUT_DIR.mkdir(parents=True, exist_ok=True)
     INVOICE_TMP_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Load and configure jinja2 template
-    template = jinja_env.get_template("invoice.typ.j2")
+    _apply_default_vat(invoice, config.invoice.default_vat_rate)
+    vat_context = _prepare_vat_context(invoice)
 
-    # Render the template
+    template = jinja_env.get_template("invoice.typ.j2")
     rendered_template = template.render(
         config=config,
         customer=customer,
@@ -190,60 +282,36 @@ def create_invoice(
             }
         ),
         additional={"purpose": f"Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}"},
+        **vat_context,
     )
 
-    # Compose file name for output (contains invoice number, date and customer id)
     output_file = f"{invoice.invoice_number}_{invoice.date.strftime('%Y%m%d')}_{customer.customer_id}"
     generated_typ_file = INVOICE_TMP_DIR / (output_file + ".typ")
     generated_pdf_file = INVOICE_OUT_DIR / (output_file + ".pdf")
+    generated_xml_file = INVOICE_OUT_DIR / (output_file + ".xml")
 
-    # Store typ file based on invoice number
     with generated_typ_file.open("w") as f:
         f.write(rendered_template)
 
-    # Execute the command to generate the PDF
     typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root="../../")
+    generate_xrechnung_xml(invoice, customer, config, generated_xml_file)
 
-    # Only run the PDF generation command if not in dry run mode
     if not dry_run:
-        # If example mode, copy the generated PDF to the example directory
-        if example_mode:
-            Path.rename(
-                generated_pdf_file,
-                EXAMPLE_DIR / "invoice.example.pdf",
-            )
-            generated_pdf_file = EXAMPLE_DIR / "invoice.example.pdf"
-
-        # Open the pdf file
-        if config.settings.open_pdf_viewer:
-            # Needs to be done before thunderbird is opened, because it will block the terminal
-            execute_command(["xdg-open", str(generated_pdf_file)])
-
-        # Generate the email command to open Thunderbird with the invoice attached
-        if config.settings.open_mail_client:
-            thunderbird_command = get_thunderbird()
-
-            if thunderbird_command:
-                execute_command(
-                    compose_email(invoice, config, customer, thunderbird_command, generated_pdf_file, dry_run)
-                )
-
-        # Ask if everything looked good and if so, archive the invoice and save the invoice number to the csv file
-        if not (dry_run or example_mode) and utils.confirm(
-            "Did everything look good and do you want to archive the invoice?"
-        ):
-            # Archive the invoice
-            archive_pdf(output_file, invoice.date.year)
-
-            # Save the invoice number
-            store_invoice_parameter(invoice)
-            logger.success("Invoice archived and invoice number saved.")
-        else:
-            logger.info("Skipping invoice archiving and invoice number saving.")
+        _handle_post_generation(
+            invoice,
+            config,
+            customer,
+            output_file,
+            generated_pdf_file,
+            generated_xml_file,
+            dry_run,
+            example_mode,
+        )
     else:
         logger.info("Dry run mode enabled. Skipping PDF generation.")
         logger.debug(f"Rendered template saved to: {generated_typ_file}")
         logger.debug(f"Output file would be saved to: {generated_pdf_file}")
+        logger.debug(f"XRechnung XML saved to: {generated_xml_file}")
 
 
 def create_invoices(
@@ -299,5 +367,7 @@ def create_invoices(
             logger.info("No draft invoices found.")
             return
 
-    for invoice in invoices_to_process:
-        create_invoice(invoice, config, customer_database, dry_run, verbose, example_mode)
+    for idx, invoice in enumerate(invoices_to_process, start=1):
+        create_invoice(
+            invoice, config, customer_database, dry_run, verbose, example_mode, example_id=idx if example_mode else None
+        )

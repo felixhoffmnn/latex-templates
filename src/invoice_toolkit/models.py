@@ -35,10 +35,12 @@ class Bank(BaseModel):
 class Invoice(BaseModel):
     """Invoice model containing tax and payment information."""
 
-    VAT: int
+    default_vat_rate: int = Field(0, alias="VAT")
     due_days: int
 
-    @field_validator("VAT")
+    model_config = {"populate_by_name": True}
+
+    @field_validator("default_vat_rate")
     @classmethod
     def check_vat(cls, v: int):
         if v not in [0, 7, 19]:
@@ -51,6 +53,7 @@ class Tax(BaseModel):
 
     number: str
     office: str
+    vat_id: str | None = None
 
 
 class Sender(BaseModel):

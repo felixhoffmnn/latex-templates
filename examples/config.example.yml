@@ -15,9 +15,10 @@ sender:
   tax:
     number: "12 345 6789 0"
     office: "Musterstadt"
+    vat_id: "DE123456789"
   bank:
     name: "Musterbank"
-    iban: "DE01 2345 6789 0123 4567 89"
+    iban: "DE89 3704 0044 0532 0130 00"
     bic: "AAAAAAA1BBB"
 
 invoice:

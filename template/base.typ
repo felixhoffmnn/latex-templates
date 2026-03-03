@@ -52,14 +52,14 @@
       [
         #recipient.name \
         #recipient.street \
-        #recipient.zip, #recipient.city
+        #recipient.zip #recipient.city
       ]
     } else {
       [
         #recipient.name \
         #recipient.extra \
         #recipient.street \
-        #recipient.zip, #recipient.city
+        #recipient.zip #recipient.city
       ]
     }
   )
@@ -101,7 +101,7 @@
 
           grid.hline(stroke: 0.75pt),
 
-          [#sender.name \ #sender.street \ #sender.zip, #sender.city],
+          [#sender.name \ #sender.street \ #sender.zip #sender.city],
           [#link("tel:" + sender.phone)[#sender.phone] \ #link("mailto:" + sender.email)[#sender.email] \ #link(
               sender.website,
             )[#sender.website]],
@@ -118,5 +118,6 @@
     font: ("Source Sans Pro", "Source Sans 3", "Arial", "Helvetica", "sans-serif"),
   )
 
+  set text(lang: "de")
   body
 }
