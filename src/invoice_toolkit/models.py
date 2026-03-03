@@ -1,4 +1,5 @@
-from pydantic import BaseModel, EmailStr, Field, HttpUrl, field_validator
+from loguru import logger
+from pydantic import BaseModel, EmailStr, Field, HttpUrl, field_validator, model_validator
 from pydantic_extra_types.phone_numbers import PhoneNumber
 
 
@@ -36,6 +37,7 @@ class Invoice(BaseModel):
     """Invoice model containing tax and payment information."""
 
     default_vat_rate: int = Field(0, alias="VAT")
+    vat_exempt: bool = False
     due_days: int
 
     model_config = {"populate_by_name": True}
@@ -46,6 +48,15 @@ class Invoice(BaseModel):
         if v not in [0, 7, 19]:
             raise ValueError("VAT must be 0, 7 or 19")
         return v
+
+    @model_validator(mode="after")
+    def check_vat_exempt(self):
+        if self.vat_exempt and self.default_vat_rate > 0:
+            logger.warning(
+                f"vat_exempt is True but default_vat_rate is {self.default_vat_rate}. Resetting default_vat_rate to 0."
+            )
+            self.default_vat_rate = 0
+        return self
 
 
 class Tax(BaseModel):

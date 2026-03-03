@@ -8,9 +8,9 @@ your needs.
 
 ## Preview
 
-| Letter Template                                                                | Invoice Template (no VAT)                                                                                | Invoice Template (with VAT)                                                                          |
-| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| [![Letter Template](examples/letter.preview.png)](examples/letter.example.pdf) | [![Invoice Template (no VAT)](examples/invoice-no-vat.preview.png)](examples/invoice-no-vat.example.pdf) | [![Invoice Template (with VAT)](examples/invoice-vat.preview.png)](examples/invoice-vat.example.pdf) |
+| Letter Template                                                                              | Invoice Template (no VAT)                                                                                        | Invoice Template (with VAT)                                                                          |
+| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| [![Letter Template](examples/letter/letter.preview.png)](examples/letter/letter.example.pdf) | [![Invoice Template (no VAT)](examples/vat-exempt/invoice.preview.png)](examples/vat-exempt/invoice.example.pdf) | [![Invoice Template (with VAT)](examples/vat/invoice.preview.png)](examples/vat/invoice.example.pdf) |
 
 ## Invoice and Letter Template
 

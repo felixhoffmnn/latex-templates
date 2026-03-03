@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import typst
@@ -6,10 +7,6 @@ from loguru import logger
 from invoice_toolkit.letter.utils import load_letter
 from invoice_toolkit.settings import (
     CONFIG_DEFAULT_FILE,
-    CONFIG_EXAMPLE_FILE,
-    EXAMPLE_DIR,
-    LETTER_DEFAULT_FILE,
-    LETTER_EXAMPLE_FILE,
     OUT_DIR,
     TMP_DIR,
 )
@@ -22,6 +19,7 @@ LETTER_TMP_DIR = TMP_DIR / "letter"
 def create_letter(
     letter_file: Path | str | None = None,
     config_file: Path | str | None = None,
+    output: Path | str | None = None,
     dry_run: bool = False,
     verbose: bool = False,
 ):
@@ -31,25 +29,19 @@ def create_letter(
     """
     config_logging(verbose)
 
-    example_mode = letter_file is None or config_file is None
-    destination_path = LETTER_OUT_DIR / "letter.pdf"
+    if letter_file is None:
+        logger.error("Missing required argument: letter_file")
+        sys.exit(1)
 
-    if example_mode:
-        letter_file = LETTER_EXAMPLE_FILE
-        config_file = CONFIG_EXAMPLE_FILE
-
-        logger.warning("No config files specified. Using example config files.")
-
-    letter_file = Path(letter_file or LETTER_DEFAULT_FILE)
+    letter_file = Path(letter_file)
     config_file = Path(config_file or CONFIG_DEFAULT_FILE)
 
-    if not example_mode:
-        validate_paths(
-            [
-                (letter_file, "letter file"),
-                (config_file, "config file"),
-            ]
-        )
+    validate_paths(
+        [
+            (letter_file, "letter file"),
+            (config_file, "config file"),
+        ]
+    )
 
     config = load_config(config_file)
     frontmatter, content = load_letter(letter_file)
@@ -76,17 +68,16 @@ def create_letter(
     # Execute the command to generate the PDF
     typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root="../../")
 
-    # Only run the PDF generation command if not in dry run mode
-    if not dry_run:
-        # If example mode, copy the generated PDF to the example directory
-        if example_mode:
-            Path.rename(destination_path, EXAMPLE_DIR / "letter.example.pdf")
-            return
+    if output is not None:
+        Path(output).parent.mkdir(parents=True, exist_ok=True)
+        generated_pdf_file.rename(Path(f"{output}.pdf"))
+        return
 
-        # Open the pdf file
+    if not dry_run:
+        destination_path = LETTER_OUT_DIR / "letter.pdf"
         if config.settings.open_pdf_viewer:
             execute_command(["xdg-open", str(destination_path)])
     else:
         logger.info("Dry run mode enabled. Skipping PDF generation.")
         logger.debug(f"Rendered template saved to: {LETTER_TMP_DIR / 'letter.typ'}")
-        logger.debug(f"Output PDF would be saved to: {destination_path}")
+        logger.debug(f"Output PDF would be saved to: {generated_pdf_file}")

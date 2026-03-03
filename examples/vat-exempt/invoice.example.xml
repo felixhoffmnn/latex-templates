@@ -9,7 +9,7 @@
     </ram:GuidelineSpecifiedDocumentContextParameter>
   </rsm:ExchangedDocumentContext>
   <rsm:ExchangedDocument>
-    <ram:ID>RE0001</ram:ID>
+    <ram:ID>RE0017</ram:ID>
     <ram:TypeCode>380</ram:TypeCode>
     <ram:IssueDateTime>
       <udt:DateTimeString format="102">20260303</udt:DateTimeString>
@@ -124,7 +124,7 @@
       </ram:ActualDeliverySupplyChainEvent>
     </ram:ApplicableHeaderTradeDelivery>
     <ram:ApplicableHeaderTradeSettlement>
-      <ram:PaymentReference>Rechnung RE0001 vom 03.03.2026</ram:PaymentReference>
+      <ram:PaymentReference>Rechnung RE0017 vom 03.03.2026</ram:PaymentReference>
       <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
       <ram:SpecifiedTradeSettlementPaymentMeans>
         <ram:TypeCode>58</ram:TypeCode>

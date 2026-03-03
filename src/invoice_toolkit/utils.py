@@ -43,11 +43,7 @@ def generate_schema():
     schema_dir = Path("schema")
     schemas: list[BaseModel] = [Config, Invoices, Customer]
 
-    # Delete existing schemas
-    if schema_dir.exists():
-        for file in schema_dir.iterdir():
-            file.unlink()
-    else:
+    if not schema_dir.exists():
         schema_dir.mkdir()
 
     for schema in schemas:

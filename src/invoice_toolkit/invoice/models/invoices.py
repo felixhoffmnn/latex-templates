@@ -13,7 +13,7 @@ class Item(BaseModel):
     unit: Literal["Stunde", "Stück", "Monat"]
     price: float = Field(0, ge=0)
     total: float | None = Field(None, ge=0)
-    vat_rate: Literal[0, 7, 19] = 0
+    vat_rate: Literal[0, 7, 19] | None = None
     vat_amount: float | None = Field(None, ge=0)
     gross_total: float | None = Field(None, ge=0)
 
@@ -21,7 +21,8 @@ class Item(BaseModel):
         """Initialize the item model."""
         super().__init__(**data)
         self.total = self.price * self.quantity
-        self.vat_amount = round(self.total * self.vat_rate / 100, 2)
+        effective_rate = self.vat_rate if self.vat_rate is not None else 0
+        self.vat_amount = round(self.total * effective_rate / 100, 2)
         self.gross_total = self.total + self.vat_amount
 
 

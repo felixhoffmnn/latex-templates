@@ -7,7 +7,31 @@ on:
     branches: [main]
 
 jobs:
+  build-validator:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push XRechnung validator
+        uses: docker/build-push-action@v6
+        with:
+          context: container/
+          file: container/Containerfile.validator
+          push: true
+          tags: ghcr.io/felixhoffmnn/invoice-toolkit/xrechnung-validator:latest
+
   generate-typ-files:
+    needs: build-validator
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -18,20 +42,47 @@ jobs:
           enable-cache: true
       - name: Install the project
         run: uv sync --locked --all-extras --dev
-      - name: Generate invoice
-        run: uv run invoice-toolkit invoice --dry-run
+      - name: Generate invoice (vat-exempt)
+        run: >
+          uv run invoice-toolkit invoice examples/vat-exempt/invoices.example.yml
+          --config-path examples/vat-exempt/config.example.yml
+          --customer-path examples/vat-exempt/customer.example.csv
+          --dry-run --make-all
+      - name: Generate invoice (vat)
+        run: >
+          uv run invoice-toolkit invoice examples/vat/invoices.example.yml
+          --config-path examples/vat/config.example.yml
+          --customer-path examples/vat/customer.example.csv
+          --dry-run --make-all
       - name: Generate letter
-        run: uv run invoice-toolkit letter --dry-run
-      - name: Verify XML files generated
+        run: >
+          uv run invoice-toolkit letter examples/letter/letter.example.md
+          --config-file examples/letter/config.example.yml
+          --dry-run
+      - name: Verify generated files
         run: |
           echo "Generated files:"
-          ls -l out/invoice/
+          ls -la out/invoice/ out/letter/
           xml_count=$(find out/invoice -name '*.xml' | wc -l)
-          if [ "$xml_count" -eq 0 ]; then
-            echo "ERROR: No XRechnung XML files were generated"
+          if [ "$xml_count" -lt 2 ]; then
+            echo "ERROR: Expected at least 2 XML files, found $xml_count"
             exit 1
           fi
           echo "Found $xml_count XML file(s)"
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Validate XRechnung XML files
+        run: |
+          for f in out/invoice/*.xml; do
+            echo "Validating: $f"
+            docker run --rm -v "$(realpath "$f"):/data/$(basename "$f"):ro" \
+              ghcr.io/felixhoffmnn/invoice-toolkit/xrechnung-validator:latest \
+              "/data/$(basename "$f")"
+          done
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:

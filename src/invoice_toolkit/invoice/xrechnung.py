@@ -50,7 +50,7 @@ def _set_buyer(doc: Document, customer: Customer):
     buyer.electronic_address.uri_ID = ("EM", str(customer.email))
 
 
-def _add_line_item(doc: Document, idx: int, item: Item):
+def _add_line_item(doc: Document, idx: int, item: Item, vat_exempt: bool):
     """Add a single line item to the document."""
     li = LineItem()
     li.document.line_id = str(idx)
@@ -67,15 +67,18 @@ def _add_line_item(doc: Document, idx: int, item: Item):
     if item.vat_rate > 0:
         li.settlement.trade_tax.category_code = "S"
         li.settlement.trade_tax.rate_applicable_percent = Decimal(str(item.vat_rate))
-    else:
+    elif vat_exempt:
         li.settlement.trade_tax.category_code = "E"
+        li.settlement.trade_tax.rate_applicable_percent = Decimal("0")
+    else:
+        li.settlement.trade_tax.category_code = "Z"
         li.settlement.trade_tax.rate_applicable_percent = Decimal("0")
 
     li.settlement.monetary_summation.total_amount = Decimal(str(item.total))
     doc.trade.items.add(li)
 
 
-def _set_settlement(doc: Document, invoice: Invoice, sender: Sender):
+def _set_settlement(doc: Document, invoice: Invoice, sender: Sender, vat_exempt: bool):
     """Set settlement: payment means, terms, tax summaries, and monetary summation."""
     doc.trade.settlement.currency_code = "EUR"
     doc.trade.settlement.payment_reference = (
@@ -98,13 +101,13 @@ def _set_settlement(doc: Document, invoice: Invoice, sender: Sender):
         doc.trade.settlement.terms.add(terms)
 
     # Document-level tax summaries (BG-23)
-    _add_tax_summaries(doc, invoice)
+    _add_tax_summaries(doc, invoice, vat_exempt)
 
     # Monetary summation (BG-22)
     _set_monetary_summation(doc, invoice)
 
 
-def _add_tax_summaries(doc: Document, invoice: Invoice):
+def _add_tax_summaries(doc: Document, invoice: Invoice, vat_exempt: bool):
     """Add document-level tax summaries grouped by VAT rate."""
     vat_groups: dict[int, dict[str, Decimal]] = {}
     for item in invoice.items:
@@ -123,11 +126,14 @@ def _add_tax_summaries(doc: Document, invoice: Invoice):
         if rate > 0:
             tax.category_code = "S"
             tax.rate_applicable_percent = Decimal(str(rate))
-        else:
+        elif vat_exempt:
             tax.category_code = "E"
             tax.rate_applicable_percent = Decimal("0")
             tax.exemption_reason = "Kein Ausweis von Umsatzsteuer, da Kleinunternehmer gemäß §19 UStG."
             tax.exemption_reason_code = "vatex-eu-o"
+        else:
+            tax.category_code = "Z"
+            tax.rate_applicable_percent = Decimal("0")
 
         doc.trade.settlement.trade_tax.add(tax)
 
@@ -149,7 +155,9 @@ def _set_monetary_summation(doc: Document, invoice: Invoice):
     ms.due_amount = gross_total
 
 
-def generate_xrechnung_xml(invoice: Invoice, customer: Customer, config: Config, output_path: Path) -> Path:
+def generate_xrechnung_xml(
+    invoice: Invoice, customer: Customer, config: Config, output_path: Path, vat_exempt: bool = False
+) -> Path:
     """Generate an XRechnung CII XML file for the given invoice.
 
     Parameters
@@ -162,6 +170,8 @@ def generate_xrechnung_xml(invoice: Invoice, customer: Customer, config: Config,
         Application config with sender, bank, and tax details.
     output_path : Path
         The output XML file path.
+    vat_exempt : bool
+        Whether the sender is VAT-exempt (Kleinunternehmer §19 UStG).
 
     Returns
     -------
@@ -192,9 +202,9 @@ def generate_xrechnung_xml(invoice: Invoice, customer: Customer, config: Config,
 
     # Line items
     for idx, item in enumerate(invoice.items, start=1):
-        _add_line_item(doc, idx, item)
+        _add_line_item(doc, idx, item, vat_exempt)
 
-    _set_settlement(doc, invoice, config.sender)
+    _set_settlement(doc, invoice, config.sender, vat_exempt)
 
     # Serialize
     xml_bytes = doc.serialize(schema=None)

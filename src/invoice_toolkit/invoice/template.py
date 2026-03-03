@@ -2,6 +2,7 @@ import csv
 import datetime
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import typst
@@ -14,12 +15,8 @@ from invoice_toolkit.invoice.xrechnung import generate_xrechnung_xml
 from invoice_toolkit.models import Config
 from invoice_toolkit.settings import (
     CONFIG_DEFAULT_FILE,
-    CONFIG_EXAMPLE_FILE,
-    EXAMPLE_DIR,
-    INVOICE_CUSTOMER_EXAMPLE_FILE,
     INVOICE_CUSTOMER_FILE,
     INVOICE_DIR,
-    INVOICE_EXAMPLE_FILE,
     INVOICE_HISTORY_FILE,
     OUT_DIR,
     TMP_DIR,
@@ -158,22 +155,35 @@ def compose_email(
     return email_command
 
 
-def _apply_default_vat(invoice: Invoice, default_vat_rate: int):
-    """Apply the default VAT rate to items that have no explicit VAT set."""
-    if default_vat_rate == 0:
-        return
+def _resolve_vat(invoice: Invoice, vat_exempt: bool, default_vat_rate: int):
+    """Resolve VAT rates for all invoice items.
+
+    When vat_exempt is True (Kleinunternehmer §19 UStG), all items are forced
+    to vat_rate=0. When False, items without an explicit vat_rate (None) are
+    filled with default_vat_rate; explicit values (including 0) are preserved.
+    """
+    if vat_exempt:
+        for item in invoice.items:
+            if item.vat_rate is not None and item.vat_rate > 0:
+                logger.warning(f"Item '{item.name}' has vat_rate={item.vat_rate} but vat_exempt is True. Forcing to 0.")
+            item.vat_rate = 0
+    else:
+        for item in invoice.items:
+            if item.vat_rate is None:
+                item.vat_rate = default_vat_rate
+
+    # Recompute amounts for all items
     for item in invoice.items:
-        if item.vat_rate == 0:
-            item.vat_rate = default_vat_rate
-            item.vat_amount = round(item.total * item.vat_rate / 100, 2)
-            item.gross_total = item.total + item.vat_amount
+        item.vat_amount = round(item.total * item.vat_rate / 100, 2)
+        item.gross_total = item.total + item.vat_amount
+
     invoice.total_vat = round(sum(i.vat_amount for i in invoice.items), 2)
     invoice.total_gross = round(invoice.total + invoice.total_vat, 2)
 
 
-def _prepare_vat_context(invoice: Invoice) -> dict:
+def _prepare_vat_context(invoice: Invoice, vat_exempt: bool) -> dict:
     """Build template context for VAT display."""
-    has_vat = any(i.vat_rate > 0 for i in invoice.items)
+    has_vat = not vat_exempt and any(i.vat_rate > 0 for i in invoice.items)
 
     vat_groups: dict[int, dict[str, float]] = {}
     if has_vat:
@@ -199,17 +209,8 @@ def _handle_post_generation(
     generated_pdf_file: Path,
     generated_xml_file: Path,
     dry_run: bool,
-    example_mode: bool,
 ):
     """Handle post-generation steps: PDF viewing, email, archiving."""
-    if example_mode:
-        has_vat = any(i.vat_rate > 0 for i in invoice.items)
-        suffix = "vat" if has_vat else "no-vat"
-        Path.rename(generated_pdf_file, EXAMPLE_DIR / f"invoice-{suffix}.example.pdf")
-        if generated_xml_file.exists():
-            Path.rename(generated_xml_file, EXAMPLE_DIR / f"invoice-{suffix}.example.xml")
-        return
-
     if config.settings.open_pdf_viewer:
         execute_command(["xdg-open", str(generated_pdf_file)])
 
@@ -228,9 +229,7 @@ def _handle_post_generation(
                 )
             )
 
-    if not (dry_run or example_mode) and utils.confirm(
-        "Did everything look good and do you want to archive the invoice?"
-    ):
+    if not dry_run and utils.confirm("Did everything look good and do you want to archive the invoice?"):
         archive_invoice(output_file, invoice.date.year)
         store_invoice_parameter(invoice)
         logger.success("Invoice archived and invoice number saved.")
@@ -244,8 +243,7 @@ def create_invoice(
     customer_file: Path,
     dry_run: bool,
     verbose: bool,
-    example_mode: bool,
-    example_id: int | None = None,
+    output: Path | None = None,
 ):
     """Create one invoice."""
     if invoice.status in ["sent", "paid"]:
@@ -254,10 +252,7 @@ def create_invoice(
 
     customer = utils.load_customer(customer_file, invoice.customer_id)
 
-    if example_mode and example_id is not None:
-        invoice.invoice_id = example_id
-    else:
-        invoice.invoice_id = get_invoice_id(dry_run)
+    invoice.invoice_id = get_invoice_id(dry_run)
     invoice.invoice_number = f"RE{invoice.invoice_id:04d}"
 
     if invoice.due_date is None:
@@ -266,8 +261,8 @@ def create_invoice(
     INVOICE_OUT_DIR.mkdir(parents=True, exist_ok=True)
     INVOICE_TMP_DIR.mkdir(parents=True, exist_ok=True)
 
-    _apply_default_vat(invoice, config.invoice.default_vat_rate)
-    vat_context = _prepare_vat_context(invoice)
+    _resolve_vat(invoice, config.invoice.vat_exempt, config.invoice.default_vat_rate)
+    vat_context = _prepare_vat_context(invoice, config.invoice.vat_exempt)
 
     template = jinja_env.get_template("invoice.typ.j2")
     rendered_template = template.render(
@@ -294,7 +289,14 @@ def create_invoice(
         f.write(rendered_template)
 
     typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root="../../")
-    generate_xrechnung_xml(invoice, customer, config, generated_xml_file)
+    generate_xrechnung_xml(invoice, customer, config, generated_xml_file, config.invoice.vat_exempt)
+
+    if output is not None:
+        Path(output).parent.mkdir(parents=True, exist_ok=True)
+        generated_pdf_file.rename(Path(f"{output}.pdf"))
+        if generated_xml_file.exists():
+            generated_xml_file.rename(Path(f"{output}.xml"))
+        return
 
     if not dry_run:
         _handle_post_generation(
@@ -305,7 +307,6 @@ def create_invoice(
             generated_pdf_file,
             generated_xml_file,
             dry_run,
-            example_mode,
         )
     else:
         logger.info("Dry run mode enabled. Skipping PDF generation.")
@@ -316,6 +317,9 @@ def create_invoice(
 
 def create_invoices(
     invoices_path: Path | str | None = None,
+    config_path: Path | str | None = None,
+    customer_path: Path | str | None = None,
+    output: Path | str | None = None,
     dry_run: bool = False,
     verbose: bool = False,
     make_all: bool = False,
@@ -327,18 +331,13 @@ def create_invoices(
     """
     config_logging(verbose)
 
-    example_mode = invoices_path is None
+    if invoices_path is None:
+        logger.error("Missing required argument: invoices_path")
+        sys.exit(1)
 
-    if example_mode:
-        invoices_path = INVOICE_EXAMPLE_FILE
-        customer_database = INVOICE_CUSTOMER_EXAMPLE_FILE
-        config_path = CONFIG_EXAMPLE_FILE
-    else:
-        # Defaults to the data directory if environment variable is not set
-        customer_database = INVOICE_CUSTOMER_FILE
-        invoices_path = Path(invoices_path)
-        # Defaults to project root directory if environment variable is not set
-        config_path = Path(os.getenv("CONFIG_PATH", CONFIG_DEFAULT_FILE))
+    invoices_path = Path(invoices_path)
+    customer_database = Path(customer_path) if customer_path else INVOICE_CUSTOMER_FILE
+    config_path = Path(config_path) if config_path else Path(os.getenv("CONFIG_PATH", CONFIG_DEFAULT_FILE))
 
     # Log the used files
     logger.debug(f"Using invoices file: {invoices_path}")
@@ -347,20 +346,20 @@ def create_invoices(
 
     # Check if all required paths exist
     paths_to_validate = [
-        (Path(invoices_path), "invoices file"),
+        (invoices_path, "invoices file"),
         (customer_database, "customer database"),
         (config_path, "config file"),
     ]
-    if not example_mode:
+    if not dry_run:
         paths_to_validate.insert(0, (INVOICE_DIR, "invoice data directory"))
 
     validate_paths(paths_to_validate)
 
     config = load_config(config_path)
 
-    all_invoices = utils.load_invoice(Path(invoices_path)).invoices
+    all_invoices = utils.load_invoice(invoices_path).invoices
 
-    if dry_run or example_mode or make_all:
+    if dry_run or make_all:
         invoices_to_process = all_invoices
     else:
         invoices_to_process = utils.select_invoice(all_invoices, customer_database)
@@ -368,7 +367,12 @@ def create_invoices(
             logger.info("No draft invoices found.")
             return
 
-    for idx, invoice in enumerate(invoices_to_process, start=1):
+    for invoice in invoices_to_process:
         create_invoice(
-            invoice, config, customer_database, dry_run, verbose, example_mode, example_id=idx if example_mode else None
+            invoice,
+            config,
+            customer_database,
+            dry_run,
+            verbose,
+            output=Path(output) if output else None,
         )

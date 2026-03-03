@@ -23,4 +23,5 @@ sender:
 
 invoice:
   VAT: 0
+  vat_exempt: true
   due_days: 14

@@ -4,6 +4,10 @@ __pycache__/
 .mypy_cache/
 .env
 
+.claude/
+CLAUDE.md
+AGENTS.md
+
 out/
 tmp/
 
