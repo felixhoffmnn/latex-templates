@@ -17,8 +17,16 @@
         office: "{{ config.sender.tax.office }}",
         number: "{{ config.sender.tax.number }}",
     ),
+    bank: (
+        name: "{{ config.sender.bank.name }}",
+        iban: "{{ config.sender.bank.iban }}",
+        bic: "{{ config.sender.bank.bic }}",
+    ),
     recipient: (
         name: "{{ customer.address.name }}",
+        {% if customer.company %}
+        company: "{{ customer.company }}",
+        {% endif %}
         {% if customer.address.extra %}
         extra: "{{ customer.address.extra }}",
         {% endif %}
@@ -27,8 +35,15 @@
         city: "{{ customer.address.city }}",
     ),
     subject: "Rechnung {{ invoice.invoice_number }}",
-    // reference-signs: "config.reference_signs",
-    // information-box: "config.information_box",
+    date: [{{ invoice.date }}],
+    information-box: (
+        [Rechnungsnummer:], [{{ invoice.invoice_number }}],
+        [Rechnungsdatum:], [{{ invoice.date }}],
+        {% if invoice.start_date and invoice.end_date %}
+        [Leistungszeitraum:], [{{ invoice.start_date }} -- {{ invoice.end_date }}],
+        {% endif %}
+        [Kundennummer:], [{{ customer.customer_id }}],
+    ),
 )
 
 Sehr geehrte Damen und Herren,
@@ -40,11 +55,11 @@ meine Leistungen stelle ich Ihnen wie folgt in Rechnung.
   #show table.cell.where(y: 0): strong
   #table(
     {% if has_vat %}
-    columns: (12mm, 3fr, 17mm, 1fr, 1fr, 1fr, 1fr),
-    align: (center, left, center, left, right, right, right),
+    columns: (auto, 1fr, auto, auto, auto, auto, auto),
+    align: (center, left, right, left, right, right, right),
     {% else %}
-    columns: (12mm, 3fr, 17mm, 1fr, 1fr, 1fr),
-    align: (center, left, center, left, right, right),
+    columns: (auto, 1fr, auto, auto, auto, auto),
+    align: (center, left, right, left, right, right),
     {% endif %}
     stroke: 0.75pt,
     inset: 7pt,

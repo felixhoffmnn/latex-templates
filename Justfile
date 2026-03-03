@@ -81,3 +81,4 @@ validate *PATH: validator-build
 clean:
     -rm template/*.{bak*,log}
     -rm -r {out,tmp}
+    -find schema -mindepth 1 ! -name '.gitignore' -delete

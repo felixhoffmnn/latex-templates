@@ -15,14 +15,21 @@
     office: none,
     number: none,
   ),
+  bank: (
+    name: none,
+    iban: none,
+    bic: none,
+  ),
   recipient: (
     name: none,
+    company: none,
     extra: none,
     street: none,
     zip: none,
     city: none,
   ),
   subject: none,
+  date: none,
   reference-signs: (),
   information-box: (),
   body,
@@ -45,24 +52,26 @@
   if subject == "" {
     panic("Subject is required.")
   }
+  if (bank.name == "" or bank.iban == "" or bank.bic == "") {
+    panic("Bank information is incomplete. Please provide name, iban, and bic.")
+  }
 
 
-  let recipient-text = (
-    if (recipient.at("extra", default: "") == "") {
-      [
-        #recipient.name \
-        #recipient.street \
-        #recipient.zip #recipient.city
-      ]
+  let recipient-text = {
+    let parts = ()
+    let company = recipient.at("company", default: "")
+    let extra = recipient.at("extra", default: "")
+    if company != "" { parts += ([#company],) }
+    if company != "" {
+      parts += ([z. Hd. #recipient.name],)
     } else {
-      [
-        #recipient.name \
-        #recipient.extra \
-        #recipient.street \
-        #recipient.zip #recipient.city
-      ]
+      parts += ([#recipient.name],)
     }
-  )
+    if extra != "" { parts += ([#extra],) }
+    parts += ([#recipient.street],)
+    parts += ([#recipient.zip #recipient.city],)
+    parts.join(linebreak())
+  }
 
   show: letter-simple.with(
     sender: (
@@ -78,25 +87,28 @@
 
     information-box: context {
       if information-box != none {
-        pad(right: 10mm)[
+        pad(right: 10mm, align(right)[
+          #set text(size: 9pt)
           #grid(
-            columns: (1fr, auto),
-            gutter: 10pt,
+            columns: (auto, auto),
+            column-gutter: 8pt,
+            row-gutter: 6pt,
             align: right,
             ..information-box,
           )
-        ]
+        ])
       }
     },
     reference-signs: reference-signs,
 
-    date: [#datetime.today().display()],
+    date: if date != none { date } else { [#datetime.today().display("[day].[month].[year]")] },
     subject: subject,
 
-    footer: [#text(size: 10pt)[
+    footer: [#text(size: 8pt)[
         #grid(
-          columns: (1fr, 1fr, 1fr),
-          gutter: 3pt,
+          columns: (auto, auto, auto, auto),
+          column-gutter: 1fr,
+          row-gutter: 3pt,
           inset: (top: 7pt),
 
           grid.hline(stroke: 0.75pt),
@@ -106,6 +118,7 @@
               sender.website,
             )[#sender.website]],
           [Finanzamt: #tax.office \ Steuernummer: #tax.number],
+          [Bank: #bank.name \ IBAN: #bank.iban \ BIC: #bank.bic],
         )
       ]],
 

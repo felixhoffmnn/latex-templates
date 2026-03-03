@@ -14,6 +14,11 @@
         office: "{{ config.sender.tax.office }}",
         number: "{{ config.sender.tax.number }}",
     ),
+    bank: (
+        name: "{{ config.sender.bank.name }}",
+        iban: "{{ config.sender.bank.iban }}",
+        bic: "{{ config.sender.bank.bic }}",
+    ),
     recipient: (
         name: "{{ letter.recipient.name }}",
         {% if letter.recipient.extra %}
