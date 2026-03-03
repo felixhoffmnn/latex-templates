@@ -346,14 +346,15 @@ def create_invoices(
     logger.debug(f"Using config file: {config_path}")
 
     # Check if all required paths exist
-    validate_paths(
-        [
-            (INVOICE_DIR, "invoice data directory"),
-            (Path(invoices_path), "invoices file"),
-            (customer_database, "customer database"),
-            (config_path, "config file"),
-        ]
-    )
+    paths_to_validate = [
+        (Path(invoices_path), "invoices file"),
+        (customer_database, "customer database"),
+        (config_path, "config file"),
+    ]
+    if not example_mode:
+        paths_to_validate.insert(0, (INVOICE_DIR, "invoice data directory"))
+
+    validate_paths(paths_to_validate)
 
     config = load_config(config_path)
 

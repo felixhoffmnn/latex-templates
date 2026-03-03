@@ -4,10 +4,8 @@ __pycache__/
 .mypy_cache/
 .env
 
-data/
 out/
 tmp/
-schema/
 
 template/*
 !template/*.typ.j2
