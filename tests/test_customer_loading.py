@@ -1,11 +1,14 @@
 """Tests for customer CSV loading and lookup."""
 
 import csv
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from invoice_toolkit.invoice.utils import load_customer, load_customers
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture()

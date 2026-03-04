@@ -17,11 +17,12 @@ This file tracks planned features and improvements. Items are grouped by categor
 - Extract the cli into a separate package
 - Extract the core logic into a separate package
 - Publish the packages on Github
+- Make fire dependency optional and only use it in the cli package
+- Evaluate all the other dependencies and make them optional if they are only used in
+  specific parts of the codebase
 
-## Pytest in Github Actions
+## ty Typechecking
 
-- Add a Github Action to run pytest on every push and pull request
-
-## Remove loguru
-
-- Replace loguru with the built-in logging module to reduce dependencies
+- Add ty to pyproject.toml
+- Add to pre-commit hooks
+- Add to CI pipeline

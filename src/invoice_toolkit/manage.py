@@ -1,3 +1,5 @@
+"""CLI entry point for invoice and letter generation."""
+
 from fire import Fire
 
 from invoice_toolkit.invoice.template import create_invoices

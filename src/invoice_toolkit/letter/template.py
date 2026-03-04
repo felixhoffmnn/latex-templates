@@ -1,8 +1,10 @@
+"""Letter template rendering and PDF generation via Typst."""
+
+import logging
 import sys
 from pathlib import Path
 
 import typst
-from loguru import logger
 
 from invoice_toolkit.letter.utils import load_letter
 from invoice_toolkit.settings import (
@@ -12,6 +14,8 @@ from invoice_toolkit.settings import (
     TMP_DIR,
 )
 from invoice_toolkit.utils import config_logging, execute_command, jinja_env, load_config, validate_paths
+
+logger = logging.getLogger(__name__)
 
 LETTER_OUT_DIR = OUT_DIR / "letter"
 LETTER_TMP_DIR = TMP_DIR / "letter"

@@ -4,13 +4,12 @@ version = "0.4.0"
 description = "A collection of templates for letters and invoices."
 authors = [{ name = "Felix Hoffmann", email = "post@felix-hoffmann.dev" }]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
     "drafthorse>=2025.2.0",
     "email-validator>=2.2.0",
     "fire>=0.7.0",
     "jinja2>=3.1.4",
-    "loguru>=0.7.2",
     "phonenumbers>=8.13.48",
     "pydantic>=2.9.2",
     "pydantic-extra-types>=2.9.0",
@@ -19,19 +18,30 @@ dependencies = [
     "typst==0.13.2",
 ]
 
+[dependency-groups]
+dev = [
+    { include-group = "lint" },
+    { include-group = "types" },
+    { include-group = "test" },
+]
+test = ["pytest>=8.0"]
+lint = ["pre-commit>=4.0.1", "ruff>=0.7.2"]
+types = ["ty>=0.0.20", "types-pyyaml>=6.0.12.20240917"]
+
 [project.scripts]
 invoice-toolkit = "invoice_toolkit.manage:main"
 
-[dependency-groups]
-dev = [{ include-group = "lint" }, { include-group = "types" }, { include-group = "test" }]
-test = ["pytest>=8.0"]
-lint = ["pre-commit>=4.0.1", "ruff>=0.7.2"]
-types = ["types-pyyaml>=6.0.12.20240917"]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff]
+target-version = "py314"
 line-length = 120
 
 [tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 docstring-code-format = true
 
 [tool.ruff.lint]
@@ -52,27 +62,18 @@ extend-select = [
     "UP",  # pyupgrade
     "RUF", # ruff
 ]
-ignore = [
-    "D100", # Missing docstring in public module
-    "D102", # Missing docstring in public method
-    "D104", # Missing docstring in public package
-]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D101", "D103", "PLR2004"]
+"tests/**" = ["D101", "D102", "D103", "PLR2004"]
 
 [tool.ruff.lint.pylint]
 max-args = 10
 
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = ["pydantic.BaseModel"]
+
 [tool.ruff.lint.pydocstyle]
-convention = "numpy"
+convention = "google"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/invoice_toolkit"]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"

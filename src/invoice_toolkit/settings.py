@@ -1,3 +1,5 @@
+"""Global path constants and directory configuration."""
+
 import os
 from pathlib import Path
 

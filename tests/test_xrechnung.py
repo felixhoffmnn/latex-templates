@@ -20,8 +20,8 @@ def config():
         sender=Sender(
             address=Address(name="Seller GmbH", street="Seller St 1", zip="12345", city="Berlin", country="DE"),
             email="seller@example.com",
-            website="https://seller.example.com",
-            phone="+49 176 12345678",
+            website="https://seller.example.com",  # type: ignore[invalid-argument-type]
+            phone="+49 176 12345678",  # type: ignore[invalid-argument-type]
             tax=Tax(number="12 345 6789 0", office="Berlin", vat_id="DE123456789"),
             bank=Bank(iban="DE89370400440532013000", bic="AAAAAAA1BBB", name="Test Bank"),
         ),

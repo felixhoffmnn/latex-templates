@@ -1,6 +1,12 @@
-from loguru import logger
+"""Core Pydantic models for application configuration."""
+
+import logging
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr, Field, HttpUrl, field_validator, model_validator
 from pydantic_extra_types.phone_numbers import PhoneNumber
+
+logger = logging.getLogger(__name__)
 
 
 class Address(BaseModel):
@@ -38,21 +44,15 @@ class Bank(BaseModel):
 class Invoice(BaseModel):
     """Invoice model containing tax and payment information."""
 
-    default_vat_rate: int = Field(0, alias="VAT")
+    default_vat_rate: Literal[0, 7, 19] = Field(0, alias="VAT")
     vat_exempt: bool = False
     due_days: int
 
     model_config = {"populate_by_name": True}
 
-    @field_validator("default_vat_rate")
-    @classmethod
-    def check_vat(cls, v: int):
-        if v not in [0, 7, 19]:
-            raise ValueError("VAT must be 0, 7 or 19")
-        return v
-
     @model_validator(mode="after")
     def check_vat_exempt(self):
+        """Force ``default_vat_rate`` to 0 when ``vat_exempt`` is True."""
         if self.vat_exempt and self.default_vat_rate > 0:
             logger.warning(
                 f"vat_exempt is True but default_vat_rate is {self.default_vat_rate}. Resetting default_vat_rate to 0."

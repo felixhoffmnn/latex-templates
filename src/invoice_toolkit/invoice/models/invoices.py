@@ -1,3 +1,5 @@
+"""Invoice and line-item data models with VAT calculation."""
+
 import datetime as dt
 from typing import Literal
 
@@ -12,10 +14,10 @@ class Item(BaseModel):
     quantity: int = Field(1, ge=1)
     unit: Literal["Stunde", "Stück", "Monat"]
     price: float = Field(0, ge=0)
-    total: float | None = Field(None, ge=0)
+    total: float = Field(0.0, ge=0)
     vat_rate: Literal[0, 7, 19] | None = None
-    vat_amount: float | None = Field(None, ge=0)
-    gross_total: float | None = Field(None, ge=0)
+    vat_amount: float = Field(0.0, ge=0)
+    gross_total: float = Field(0.0, ge=0)
 
     def __init__(self, **data):
         """Initialize the item model."""
@@ -39,9 +41,9 @@ class Invoice(BaseModel):
     status: Literal["draft", "sent", "paid"] = "draft"
     buyer_reference: str | None = None
     items: list[Item]
-    total: float | None = Field(None, ge=0)
-    total_vat: float | None = Field(None, ge=0)
-    total_gross: float | None = Field(None, ge=0)
+    total: float = Field(0.0, ge=0)
+    total_vat: float = Field(0.0, ge=0)
+    total_gross: float = Field(0.0, ge=0)
 
     def __init__(self, **data):
         """Initialize the invoice model."""

@@ -1,4 +1,7 @@
+"""Shared utilities for configuration, logging, and command execution."""
+
 import json
+import logging
 import subprocess
 import sys
 from pathlib import Path
@@ -6,7 +9,6 @@ from typing import TYPE_CHECKING
 
 import jinja2
 import yaml
-from loguru import logger
 
 from invoice_toolkit.invoice.models import Customer, Invoices
 from invoice_toolkit.models import Config
@@ -14,6 +16,8 @@ from invoice_toolkit.settings import TEMPLATE_DIR
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
+
+logger = logging.getLogger("invoice_toolkit")
 
 jinja_env = jinja2.Environment(
     trim_blocks=True,
@@ -46,7 +50,7 @@ def load_config(file: Path) -> Config:
 def generate_schema():
     """Generate json schemas for pydantic models."""
     schema_dir = Path("schema")
-    schemas: list[BaseModel] = [Config, Invoices, Customer]
+    schemas: list[type[BaseModel]] = [Config, Invoices, Customer]
 
     schema_dir.mkdir(exist_ok=True)
 
@@ -58,8 +62,13 @@ def generate_schema():
 
 def config_logging(debug: bool):
     """Configure the logging level based on the debug flag."""
-    logger.remove()
-    logger.add(sys.stderr, level="DEBUG" if debug else "INFO")
+    logging.basicConfig(
+        level=logging.DEBUG if debug else logging.INFO,
+        format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        stream=sys.stderr,
+        force=True,
+    )
 
 
 def validate_paths(paths: list[tuple[Path, str]]):
@@ -75,7 +84,7 @@ def execute_command(command: list[str], exit_on_error: bool = False, output_file
     """Run a command as subprocess."""
     try:
         subprocess.run(command, check=True)
-        logger.success("Command executed successfully.")
+        logger.info("Command executed successfully.")
         if output_file:
             logger.info(f"Output file: {output_file}")
     except FileNotFoundError:

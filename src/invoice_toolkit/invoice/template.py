@@ -1,18 +1,18 @@
+"""Invoice generation workflow including rendering, PDF compilation, and archiving."""
+
 import csv
 import datetime
+import logging
 import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING, Literal
 
 import typst
-from loguru import logger
 
 from invoice_toolkit.invoice import utils
-from invoice_toolkit.invoice.models.customer import Customer
-from invoice_toolkit.invoice.models.invoices import Invoice
 from invoice_toolkit.invoice.xrechnung import generate_xrechnung_xml
-from invoice_toolkit.models import Config
 from invoice_toolkit.settings import (
     CONFIG_DEFAULT_FILE,
     INVOICE_CUSTOMER_FILE,
@@ -23,6 +23,13 @@ from invoice_toolkit.settings import (
     TMP_DIR,
 )
 from invoice_toolkit.utils import config_logging, execute_command, jinja_env, load_config, validate_paths
+
+if TYPE_CHECKING:
+    from invoice_toolkit.invoice.models.customer import Customer
+    from invoice_toolkit.invoice.models.invoices import Invoice
+    from invoice_toolkit.models import Config
+
+logger = logging.getLogger(__name__)
 
 INVOICE_OUT_DIR = OUT_DIR / "invoice"
 INVOICE_TMP_DIR = TMP_DIR / "invoice"
@@ -59,7 +66,7 @@ def get_invoice_id(dry_run: bool) -> int:
                 if row:
                     try:
                         invoice_ids.append(int(row[0]))
-                    except (ValueError, IndexError):
+                    except ValueError, IndexError:
                         logger.warning(f"Skipping malformed row in {INVOICE_HISTORY_FILE}: {row}")
     except FileNotFoundError:
         logger.warning(f"Invoice history file not found: {INVOICE_HISTORY_FILE}")
@@ -112,7 +119,7 @@ def get_thunderbird():
         # Check if Thunderbird is installed on the system
         subprocess.run(["thunderbird", "--version"], check=True)
         return ["thunderbird"]
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except subprocess.CalledProcessError, FileNotFoundError:
         logger.info("Thunderbird is not installed bare metal.")
 
     try:
@@ -122,7 +129,7 @@ def get_thunderbird():
             check=True,
         )
         return ["flatpak", "run", "org.mozilla.Thunderbird"]
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except subprocess.CalledProcessError, FileNotFoundError:
         logger.info("Thunderbird is not installed as a flatpak.")
 
     logger.warning("Thunderbird is not installed.")
@@ -167,7 +174,7 @@ def compose_email(
     return email_command
 
 
-def _resolve_vat(invoice: Invoice, vat_exempt: bool, default_vat_rate: int):
+def _resolve_vat(invoice: Invoice, vat_exempt: bool, default_vat_rate: Literal[0, 7, 19]):
     """Resolve VAT rates for all invoice items.
 
     When vat_exempt is True (Kleinunternehmer §19 UStG), all items are forced
@@ -182,6 +189,7 @@ def _resolve_vat(invoice: Invoice, vat_exempt: bool, default_vat_rate: int):
         elif item.vat_rate is None:
             item.vat_rate = default_vat_rate
 
+        assert item.vat_rate is not None
         item.vat_amount = round(item.total * item.vat_rate / 100, 2)
         item.gross_total = item.total + item.vat_amount
 
@@ -191,12 +199,13 @@ def _resolve_vat(invoice: Invoice, vat_exempt: bool, default_vat_rate: int):
 
 def _prepare_vat_context(invoice: Invoice, vat_exempt: bool) -> dict:
     """Build template context for VAT display."""
-    has_vat = not vat_exempt and any(i.vat_rate > 0 for i in invoice.items)
+    has_vat = not vat_exempt and any(i.vat_rate is not None and i.vat_rate > 0 for i in invoice.items)
 
     vat_groups: dict[int, dict[str, float]] = {}
     if has_vat:
         for item in invoice.items:
             rate = item.vat_rate
+            assert rate is not None
             if rate not in vat_groups:
                 vat_groups[rate] = {"basis": 0.0, "amount": 0.0}
             vat_groups[rate]["basis"] = round(vat_groups[rate]["basis"] + item.total, 2)
@@ -240,7 +249,7 @@ def _handle_post_generation(
     if not dry_run and utils.confirm("Did everything look good and do you want to archive the invoice?"):
         archive_invoice(output_file, invoice.date.year)
         store_invoice_parameter(invoice)
-        logger.success("Invoice archived and invoice number saved.")
+        logger.info("Invoice archived and invoice number saved.")
     else:
         logger.info("Skipping invoice archiving and invoice number saving.")
 

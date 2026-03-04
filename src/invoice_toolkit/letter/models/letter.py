@@ -1,3 +1,5 @@
+"""Letter data models for recipient addressing and metadata."""
+
 from pydantic import BaseModel
 
 from invoice_toolkit.models import Address

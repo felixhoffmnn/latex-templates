@@ -1,9 +1,14 @@
-from pathlib import Path
+"""Utilities for loading letter files with YAML frontmatter."""
+
+from typing import TYPE_CHECKING
 
 import pypandoc
 import yaml
 
 from invoice_toolkit.letter.models.letter import Letter
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def load_letter(file: Path) -> tuple[Letter, str]:

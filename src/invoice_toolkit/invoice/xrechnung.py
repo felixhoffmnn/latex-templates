@@ -1,18 +1,23 @@
 """XRechnung CII XML generation using the drafthorse library."""
 
+import logging
 from decimal import Decimal
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from drafthorse.models.accounting import ApplicableTradeTax
 from drafthorse.models.document import Document
 from drafthorse.models.party import TaxRegistration
 from drafthorse.models.payment import PaymentMeans, PaymentTerms
 from drafthorse.models.tradelines import LineItem
-from loguru import logger
 
-from invoice_toolkit.invoice.models.customer import Customer
-from invoice_toolkit.invoice.models.invoices import Invoice, Item
-from invoice_toolkit.models import Config, Sender
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from invoice_toolkit.invoice.models.customer import Customer
+    from invoice_toolkit.invoice.models.invoices import Invoice, Item
+    from invoice_toolkit.models import Config, Sender
+
+logger = logging.getLogger(__name__)
 
 UNIT_CODE_MAP = {
     "Stunde": "HUR",
@@ -64,6 +69,7 @@ def _add_line_item(doc: Document, idx: int, item: Item, vat_exempt: bool):
     li.delivery.billed_quantity = (Decimal(str(item.quantity)), unit_code)
 
     li.settlement.trade_tax.type_code = "VAT"
+    assert item.vat_rate is not None
     if item.vat_rate > 0:
         li.settlement.trade_tax.category_code = "S"
         li.settlement.trade_tax.rate_applicable_percent = Decimal(str(item.vat_rate))
@@ -112,6 +118,7 @@ def _add_tax_summaries(doc: Document, invoice: Invoice, vat_exempt: bool):
     vat_groups: dict[int, dict[str, Decimal]] = {}
     for item in invoice.items:
         rate = item.vat_rate
+        assert rate is not None
         if rate not in vat_groups:
             vat_groups[rate] = {"basis": Decimal("0"), "amount": Decimal("0")}
         vat_groups[rate]["basis"] += Decimal(str(item.total))
@@ -173,7 +180,7 @@ def generate_xrechnung_xml(
     vat_exempt : bool
         Whether the sender is VAT-exempt (Kleinunternehmer §19 UStG).
 
-    Returns
+    Returns:
     -------
     Path
         The path to the generated XML file.

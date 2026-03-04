@@ -63,12 +63,12 @@ class TestBank:
 class TestInvoiceConfig:
     def test_valid_vat_rates(self):
         for rate in [0, 7, 19]:
-            inv = Invoice(VAT=rate, due_days=14)
+            inv = Invoice(VAT=rate, due_days=14)  # type: ignore[invalid-argument-type]
             assert inv.default_vat_rate == rate
 
     def test_invalid_vat_rate_rejected(self):
         with pytest.raises(ValidationError):
-            Invoice(VAT=10, due_days=14)
+            Invoice(VAT=10, due_days=14)  # type: ignore[invalid-argument-type]
 
     def test_vat_exempt_resets_rate(self):
         inv = Invoice(VAT=19, vat_exempt=True, due_days=14)
@@ -76,7 +76,7 @@ class TestInvoiceConfig:
         assert inv.vat_exempt is True
 
     def test_populate_by_name(self):
-        inv = Invoice(default_vat_rate=19, due_days=14)
+        inv = Invoice(default_vat_rate=19, due_days=14)  # type: ignore[unknown-argument]
         assert inv.default_vat_rate == 19
 
 

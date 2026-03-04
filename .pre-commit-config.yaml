@@ -34,3 +34,10 @@ repos:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
+  - repo: local
+    hooks:
+      - id: ty-typecheck
+        name: Type checking with ty
+        entry: uv run ty check .
+        language: system
+        pass_filenames: false

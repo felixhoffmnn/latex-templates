@@ -1,3 +1,5 @@
+"""Customer data model for CSV-based customer management."""
+
 from pydantic import BaseModel, EmailStr, HttpUrl
 from pydantic_extra_types.phone_numbers import PhoneNumber
 

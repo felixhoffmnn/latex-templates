@@ -1,12 +1,20 @@
+"""Utilities for loading and selecting invoices and customers."""
+
 import csv
-from pathlib import Path
+import logging
+from typing import TYPE_CHECKING
 
 import yaml
-from loguru import logger
 
 from invoice_toolkit.invoice.models import Customer, Invoices
-from invoice_toolkit.invoice.models.invoices import Invoice
 from invoice_toolkit.settings import INVOICE_DIR
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from invoice_toolkit.invoice.models.invoices import Invoice
+
+logger = logging.getLogger(__name__)
 
 
 def confirm(prompt: str, default: bool = True) -> bool:
@@ -57,7 +65,7 @@ def load_customer(file: Path, customer_id: str | int) -> Customer:
     return customers[customer_id]
 
 
-def _parse_selection(raw: str, max_index: int) -> list[int]:
+def _parse_selection(raw: str, max_index: int) -> list[int] | None:
     """Parse a comma-separated selection string with range support.
 
     Accepts formats like "0,2-4,6". Returns deduplicated indices in input order,
