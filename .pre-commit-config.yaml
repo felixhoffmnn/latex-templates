@@ -14,22 +14,23 @@ repos:
         args: [--maxkb=1024]
       - id: detect-private-key
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.21
+    rev: 0.7.22
     hooks:
       - id: mdformat
         args:
-          - --wrap=88
+          - --wrap=no
         additional_dependencies:
           - mdformat-gfm # GitHub Flavored Markdown
           - mdformat-tables # Better table formatting
           - mdformat-frontmatter # Support for YAML front matter
-          - mdformat-footnote # Support for footnotes
+          - mdformat-footnote # Better footnote formatting
+          - mdformat-simple-breaks # Better handling thematic breaks
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.10.7
+    rev: 0.10.9
     hooks:
       - id: uv-lock
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.4
+    rev: v0.15.5
     hooks:
       - id: ruff-check
         args: [--fix]

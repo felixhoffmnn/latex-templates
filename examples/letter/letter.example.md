@@ -14,11 +14,8 @@ location:
 subject: Beispielbrief
 ---
 
-Nisi eiusmod occaecat dolore aliqua duis id occaecat laborum qui enim et occaecat dolore
-mollit.
+Nisi eiusmod occaecat dolore aliqua duis id occaecat laborum qui enim et occaecat dolore mollit.
 
-Excepteur irure ut proident aute. Quis commodo dolor esse ullamco voluptate occaecat
-irure eiusmod esse occaecat eu occaecat exercitation. Ipsum excepteur occaecat dolore
-dolore.
+Excepteur irure ut proident aute. Quis commodo dolor esse ullamco voluptate occaecat irure eiusmod esse occaecat eu occaecat exercitation. Ipsum excepteur occaecat dolore dolore.
 
 Hier ist noch ein Link: [Google](https://www.google.com)
