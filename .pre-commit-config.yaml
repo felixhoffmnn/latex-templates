@@ -12,7 +12,10 @@ repos:
       - id: check-merge-conflict
       - id: check-added-large-files
         args: [--maxkb=1024]
-      - id: detect-private-key
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.3
+    hooks:
+      - id: gitleaks
   - repo: https://github.com/executablebooks/mdformat
     rev: 0.7.22
     hooks:
