@@ -4,18 +4,18 @@ import datetime as dt
 from xml.etree import ElementTree as ET
 
 import pytest
+from factories import make_config, make_customer, make_invoice
 
-from invoice_toolkit.invoice.models.customer import Customer
 from invoice_toolkit.invoice.models.invoices import Invoice, Item
 from invoice_toolkit.invoice.template import _resolve_vat
 from invoice_toolkit.invoice.xrechnung import generate_xrechnung_xml
-from invoice_toolkit.models import Address, Bank, Config, Sender, Tax
+from invoice_toolkit.models import Address, Bank, Sender, Tax
 from invoice_toolkit.models import Invoice as InvoiceConfig
 
 
 @pytest.fixture()
 def config():
-    return Config(
+    return make_config(
         sender=Sender(
             address=Address(name="Seller GmbH", street="Seller St 1", zip="12345", city="Berlin", country="DE"),
             email="seller@example.com",
@@ -30,8 +30,7 @@ def config():
 
 @pytest.fixture()
 def customer():
-    return Customer(
-        customer_id=10000,
+    return make_customer(
         name="Buyer Name",
         email="buyer@example.com",
         phone="+49 176 98765432",
@@ -48,10 +47,7 @@ def invoice():
         Item(name="Service A", quantity=2, unit="Stunde", price=100.0, vat_rate=19),
         Item(name="Product B", quantity=1, unit="Stück", price=50.0, vat_rate=7),
     ]
-    inv = Invoice(
-        customer_id=10000,
-        invoice_id=1,
-        invoice_number="RE0001",
+    inv = make_invoice(
         date=dt.date(2025, 6, 15),
         due_date=dt.date(2025, 6, 29),
         items=items,

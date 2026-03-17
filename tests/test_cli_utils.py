@@ -1,11 +1,11 @@
 """Tests for invoice_cli/utils.py: path resolution, validate_paths, confirm, get_thunderbird, compose_email."""
 
-import datetime as dt
 import os
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from factories import make_config, make_customer, make_invoice
 
 from invoice_cli.utils import (
     _find_yaml,
@@ -16,58 +16,6 @@ from invoice_cli.utils import (
     resolve_invoices_path,
     validate_paths,
 )
-from invoice_toolkit.invoice.models.customer import Customer
-from invoice_toolkit.invoice.models.invoices import Invoice, Item
-from invoice_toolkit.models import Address, Bank, Config, Sender, Tax
-from invoice_toolkit.models import Invoice as InvoiceConfig
-
-# ---------------------------------------------------------------------------
-# Helper factories
-# ---------------------------------------------------------------------------
-
-
-def _make_item(price=50.0, quantity=1, vat_rate=None):
-    return Item(name="Service", quantity=quantity, unit="Stunde", price=price, vat_rate=vat_rate)
-
-
-def _make_invoice(**kwargs):
-    defaults = {
-        "customer_id": 10000,
-        "invoice_id": 1,
-        "invoice_number": "RE0001",
-        "date": dt.date(2025, 6, 15),
-        "due_date": dt.date(2025, 7, 15),
-        "items": [_make_item()],
-    }
-    defaults.update(kwargs)
-    return Invoice(**defaults)
-
-
-def _make_config():
-    return Config(
-        sender=Sender(
-            address=Address(name="Sender Name", street="St 1", zip="12345", city="Berlin"),
-            email="sender@example.com",
-            website="https://example.com",  # type: ignore[invalid-argument-type]
-            phone="+49 176 12345678",  # type: ignore[invalid-argument-type]
-            tax=Tax(number="12 345 6789 0", office="Berlin"),
-            bank=Bank(name="Test Bank", iban="DE89370400440532013000", bic="AAAAAAA1BBB"),
-        ),
-        invoice=InvoiceConfig(VAT=0, due_days=14),
-    )
-
-
-def _make_customer():
-    return Customer(
-        customer_id=10000,
-        name="Kunde Name",
-        email="kunde@example.com",
-        phone="+49 176 87654321",
-        street="Kundenstr. 1",
-        zip="54321",
-        city="Munich",
-    )
-
 
 # ---------------------------------------------------------------------------
 # _find_yaml
@@ -258,8 +206,8 @@ class TestComposeEmail:
         pdf.touch()
         xml.touch()
 
-        inv = _make_invoice()
-        cmd = compose_email(inv, _make_config(), _make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
+        inv = make_invoice()
+        cmd = compose_email(inv, make_config(), make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
         assert cmd[0] == "thunderbird"
         assert cmd[1] == "-compose"
         assert "Rechnung RE0001" in cmd[2]
@@ -270,8 +218,8 @@ class TestComposeEmail:
         pdf.touch()
         xml.touch()
 
-        inv = _make_invoice()
-        cmd = compose_email(inv, _make_config(), _make_customer(), ["thunderbird"], pdf, xml, dry_run=True)
+        inv = make_invoice()
+        cmd = compose_email(inv, make_config(), make_customer(), ["thunderbird"], pdf, xml, dry_run=True)
         assert "DRY RUN:" in cmd[2]
 
     def test_missing_due_date_raises(self, tmp_path):
@@ -279,17 +227,17 @@ class TestComposeEmail:
         xml = tmp_path / "RE0001.xml"
         pdf.touch()
 
-        inv = _make_invoice(due_date=None)
+        inv = make_invoice(due_date=None)
         with pytest.raises(ValueError, match="Due date must be set"):
-            compose_email(inv, _make_config(), _make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
+            compose_email(inv, make_config(), make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
 
     def test_pdf_attachment_included(self, tmp_path):
         pdf = tmp_path / "RE0001.pdf"
         xml = tmp_path / "RE0001.xml"
         pdf.touch()
 
-        inv = _make_invoice()
-        cmd = compose_email(inv, _make_config(), _make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
+        inv = make_invoice()
+        cmd = compose_email(inv, make_config(), make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
         assert str(pdf.absolute()) in cmd[2]
 
     def test_xml_attachment_when_exists(self, tmp_path):
@@ -298,8 +246,8 @@ class TestComposeEmail:
         pdf.touch()
         xml.touch()
 
-        inv = _make_invoice()
-        cmd = compose_email(inv, _make_config(), _make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
+        inv = make_invoice()
+        cmd = compose_email(inv, make_config(), make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
         assert str(xml.absolute()) in cmd[2]
 
     def test_xml_attachment_excluded_when_missing(self, tmp_path):
@@ -308,8 +256,8 @@ class TestComposeEmail:
         pdf.touch()
         # xml not created
 
-        inv = _make_invoice()
-        cmd = compose_email(inv, _make_config(), _make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
+        inv = make_invoice()
+        cmd = compose_email(inv, make_config(), make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
         assert str(xml.absolute()) not in cmd[2]
 
     def test_html_body_contains_customer_name(self, tmp_path):
@@ -317,6 +265,6 @@ class TestComposeEmail:
         xml = tmp_path / "RE0001.xml"
         pdf.touch()
 
-        inv = _make_invoice()
-        cmd = compose_email(inv, _make_config(), _make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
+        inv = make_invoice()
+        cmd = compose_email(inv, make_config(), make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
         assert "Kunde Name" in cmd[2]

@@ -6,9 +6,8 @@ import logging
 import shutil
 from typing import TYPE_CHECKING
 
-import typst
-
 from invoice_toolkit.letter.utils import load_letter
+from invoice_toolkit.utils import render_typst_to_pdf
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -55,19 +54,11 @@ def create_letter(
     rendered_template = base_template.render(
         config=config,
         letter=frontmatter,
+        recipient=frontmatter.recipient,
         content=content,
     )
 
-    try:
-        with generated_typ_file.open("w") as f:
-            f.write(rendered_template)
-    except OSError as e:
-        raise OSError(f"Failed to write Typst file {generated_typ_file}: {e}") from e
-
-    try:
-        typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root=str(paths.project_root))
-    except Exception as e:
-        raise RuntimeError(f"Typst compilation failed for {generated_typ_file}: {e}") from e
+    render_typst_to_pdf(rendered_template, generated_typ_file, generated_pdf_file, paths.project_root)
 
     if output is not None:
         output.parent.mkdir(parents=True, exist_ok=True)

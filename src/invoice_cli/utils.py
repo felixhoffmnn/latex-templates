@@ -100,17 +100,6 @@ def validate_paths(paths: list[tuple[Path, str]]):
         sys.exit(1)
 
 
-def config_logging(debug: bool):
-    """Configure the logging level based on the debug flag."""
-    logging.basicConfig(
-        level=logging.DEBUG if debug else logging.INFO,
-        format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        stream=sys.stderr,
-        force=True,
-    )
-
-
 # ---------------------------------------------------------------------------
 # Interactive helpers
 # ---------------------------------------------------------------------------

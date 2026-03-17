@@ -25,35 +25,40 @@ setup:
         echo "Created .env from .env.example"
     fi
 
+# Run tests
+[group("dev")]
+test:
+    uv run pytest
+
 # Check python code for type hints and linting
 [group("dev")]
 check:
-    -uv run ruff check ./src/invoice_toolkit
+    -uv run ruff check
 
 # Format python files
 [group("dev")]
 format:
-    -uv run ruff format ./src/invoice_toolkit
+    -uv run ruff format
 
 # Generate json schemas for pydantic
 [group("dev")]
 @json-schema:
-    uv run invoice-toolkit schemas
+    uv run toolkit schemas
 
 # Generate a new invoice (usage: just invoice <invoice_path> <flags>)
 [group("typst")]
 @invoice *CMD:
-    uv run invoice-toolkit invoice {{ CMD }} {{ OPEN_PDF }} {{ OPEN_MAIL }}
+    uv run --extra cli toolkit invoice {{ CMD }} {{ OPEN_PDF }} {{ OPEN_MAIL }}
 
 # Render a letter
 [group("typst")]
 @letter *FLAGS:
-    uv run invoice-toolkit letter {{ FLAGS }} {{ OPEN_PDF }}
+    uv run --extra cli toolkit letter {{ FLAGS }} {{ OPEN_PDF }}
 
 # Print customer-to-id mapping
 [group("utils")]
 @print-customer:
-    uv run invoice-toolkit print-customer
+    uv run --extra cli toolkit print-customer
 
 # Generate examples and previews for the templates
 [group("utils")]
@@ -62,14 +67,14 @@ generate-examples: json-schema
     set -euo pipefail
 
     # Letter
-    uv run invoice-toolkit letter examples/letter/letter.example.md \
+    uv run --extra cli toolkit letter examples/letter/letter.example.md \
         --config examples/letter/config.example.yml \
         --output examples/letter/letter.example \
         --dry-run
 
     # Invoices
     for variant in vat-exempt vat; do
-        uv run invoice-toolkit invoice --invoices "examples/${variant}/invoices.example.yml" \
+        uv run --extra cli toolkit invoice --invoices "examples/${variant}/invoices.example.yml" \
             --config "examples/${variant}/config.example.yml" \
             --customer "examples/${variant}/customer.example.csv" \
             --output "examples/${variant}/invoice.example" \

@@ -9,7 +9,6 @@ requires-python = ">=3.14"
 dependencies = [
     "drafthorse>=2025.2.0",
     "email-validator>=2.2.0",
-    "typer>=0.15.0",
     "jinja2>=3.1.4",
     "phonenumbers>=8.13.48",
     "pydantic>=2.9.2",
@@ -18,6 +17,9 @@ dependencies = [
     "pyyaml>=6.0.2",
     "typst==0.13.2",
 ]
+
+[project.optional-dependencies]
+cli = ["typer>=0.15.0"]
 
 [dependency-groups]
 dev = [
@@ -30,7 +32,7 @@ lint = ["prek>=0.3.6", "ruff>=0.7.2"]
 types = ["ty>=0.0.20", "types-pyyaml>=6.0.12.20240917"]
 
 [project.scripts]
-invoice-toolkit = "invoice_cli.main:main"
+toolkit = "invoice_cli.main:app"
 
 [build-system]
 requires = ["hatchling"]
@@ -78,3 +80,7 @@ convention = "google"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["tests"]
+
+[tool.ty.environment]
+extra-paths = ["tests"]

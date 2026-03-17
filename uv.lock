@@ -107,8 +107,12 @@ dependencies = [
     { name = "pydantic-extra-types" },
     { name = "pypandoc-binary" },
     { name = "pyyaml" },
-    { name = "typer" },
     { name = "typst" },
+]
+
+[package.optional-dependencies]
+cli = [
+    { name = "typer" },
 ]
 
 [package.dev-dependencies]
@@ -141,9 +145,10 @@ requires-dist = [
     { name = "pydantic-extra-types", specifier = ">=2.9.0" },
     { name = "pypandoc-binary", specifier = ">=1.15" },
     { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "typer", specifier = ">=0.15.0" },
+    { name = "typer", marker = "extra == 'cli'", specifier = ">=0.15.0" },
     { name = "typst", specifier = "==0.13.2" },
 ]
+provides-extras = ["cli"]
 
 [package.metadata.requires-dev]
 dev = [

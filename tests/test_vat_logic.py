@@ -1,23 +1,15 @@
 """Tests for VAT resolution and VAT context preparation."""
 
 import pytest
+from factories import make_invoice, make_item
 
-from invoice_toolkit.invoice.models.invoices import Invoice, Item
 from invoice_toolkit.invoice.template import _prepare_vat_context, _resolve_vat
-
-
-def _make_item(price=100.0, quantity=1, vat_rate=None):
-    return Item(name="Service", quantity=quantity, unit="Stunde", price=price, vat_rate=vat_rate)
-
-
-def _make_invoice(items, **kwargs):
-    return Invoice(customer_id=10000, items=items, **kwargs)
 
 
 class TestResolveVat:
     def test_vat_exempt_forces_zero(self):
-        items = [_make_item(vat_rate=19), _make_item(vat_rate=7)]
-        inv = _make_invoice(items)
+        items = [make_item(vat_rate=19), make_item(vat_rate=7)]
+        inv = make_invoice(items=items)
 
         _resolve_vat(inv, vat_exempt=True, default_vat_rate=19)
 
@@ -28,8 +20,8 @@ class TestResolveVat:
         assert inv.total_gross == inv.total
 
     def test_default_rate_fills_none(self):
-        items = [_make_item(vat_rate=None), _make_item(vat_rate=7)]
-        inv = _make_invoice(items)
+        items = [make_item(vat_rate=None), make_item(vat_rate=7)]
+        inv = make_invoice(items=items)
 
         _resolve_vat(inv, vat_exempt=False, default_vat_rate=19)
 
@@ -37,8 +29,8 @@ class TestResolveVat:
         assert inv.items[1].vat_rate == 7  # explicit rate preserved
 
     def test_explicit_zero_preserved(self):
-        items = [_make_item(vat_rate=0)]
-        inv = _make_invoice(items)
+        items = [make_item(vat_rate=0)]
+        inv = make_invoice(items=items)
 
         _resolve_vat(inv, vat_exempt=False, default_vat_rate=19)
 
@@ -46,8 +38,8 @@ class TestResolveVat:
         assert inv.items[0].vat_amount == 0.0
 
     def test_amounts_recomputed(self):
-        items = [_make_item(price=100, vat_rate=None)]
-        inv = _make_invoice(items)
+        items = [make_item(price=100, vat_rate=None)]
+        inv = make_invoice(items=items)
 
         _resolve_vat(inv, vat_exempt=False, default_vat_rate=19)
 
@@ -58,10 +50,10 @@ class TestResolveVat:
 
     def test_mixed_rates(self):
         items = [
-            _make_item(price=100, vat_rate=19),
-            _make_item(price=50, vat_rate=7),
+            make_item(price=100, vat_rate=19),
+            make_item(price=50, vat_rate=7),
         ]
-        inv = _make_invoice(items)
+        inv = make_invoice(items=items)
 
         _resolve_vat(inv, vat_exempt=False, default_vat_rate=19)
 
@@ -72,8 +64,8 @@ class TestResolveVat:
 
 class TestPrepareVatContext:
     def test_vat_exempt_context(self):
-        items = [_make_item(vat_rate=0)]
-        inv = _make_invoice(items)
+        items = [make_item(vat_rate=0)]
+        inv = make_invoice(items=items)
         _resolve_vat(inv, vat_exempt=True, default_vat_rate=0)
 
         ctx = _prepare_vat_context(inv, vat_exempt=True)
@@ -84,10 +76,10 @@ class TestPrepareVatContext:
 
     def test_vat_context_with_rates(self):
         items = [
-            _make_item(price=100, vat_rate=19),
-            _make_item(price=50, vat_rate=7),
+            make_item(price=100, vat_rate=19),
+            make_item(price=50, vat_rate=7),
         ]
-        inv = _make_invoice(items)
+        inv = make_invoice(items=items)
         _resolve_vat(inv, vat_exempt=False, default_vat_rate=19)
 
         ctx = _prepare_vat_context(inv, vat_exempt=False)
@@ -102,8 +94,8 @@ class TestPrepareVatContext:
         assert ctx["display_total"] == inv.total_gross
 
     def test_all_zero_rate_no_vat(self):
-        items = [_make_item(price=100, vat_rate=0)]
-        inv = _make_invoice(items)
+        items = [make_item(price=100, vat_rate=0)]
+        inv = make_invoice(items=items)
         _resolve_vat(inv, vat_exempt=False, default_vat_rate=0)
 
         ctx = _prepare_vat_context(inv, vat_exempt=False)

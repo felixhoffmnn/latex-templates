@@ -17,7 +17,6 @@ if TYPE_CHECKING:
 
 from invoice_cli.utils import (
     compose_email,
-    config_logging,
     confirm,
     default_project_paths,
     execute_command,
@@ -27,13 +26,15 @@ from invoice_cli.utils import (
     validate_paths,
 )
 from invoice_toolkit.invoice import utils
+from invoice_toolkit.invoice.models import Invoices
 from invoice_toolkit.invoice.template import (
     InvoiceResult,
     archive_invoice,
     create_invoices,
     store_invoice_parameter,
 )
-from invoice_toolkit.utils import create_jinja_env, load_config
+from invoice_toolkit.models import Config
+from invoice_toolkit.utils import create_jinja_env, load_yaml_model
 
 logger = logging.getLogger(__name__)
 
@@ -166,8 +167,6 @@ def invoice_command(
     ] = True,
 ):
     """Create one or more invoices."""
-    config_logging(verbose)
-
     paths = default_project_paths()
     jinja_env = create_jinja_env(paths.template_dir)
 
@@ -189,8 +188,8 @@ def invoice_command(
 
     validate_paths(paths_to_validate)
 
-    config = load_config(resolved_config)
-    all_invoices = utils.load_invoice(resolved_invoices).invoices
+    config = load_yaml_model(resolved_config, Config)
+    all_invoices = load_yaml_model(resolved_invoices, Invoices).invoices
 
     if dry_run or make_all:
         invoices_to_process = all_invoices

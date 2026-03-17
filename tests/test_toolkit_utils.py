@@ -1,9 +1,10 @@
-"""Tests for invoice_toolkit/utils.py: _currency_filter, create_jinja_env, load_config."""
+"""Tests for invoice_toolkit/utils.py: _currency_filter, create_jinja_env, load_yaml_model."""
 
 import pytest
 import yaml
 
-from invoice_toolkit.utils import _currency_filter, create_jinja_env, load_config
+from invoice_toolkit.models import Config
+from invoice_toolkit.utils import _currency_filter, create_jinja_env, load_yaml_model
 
 
 class TestCurrencyFilter:
@@ -81,29 +82,29 @@ class TestLoadConfig:
     def test_valid_config(self, tmp_path):
         config_file = tmp_path / "config.yml"
         config_file.write_text(yaml.dump(self._make_config_yaml()))
-        config = load_config(config_file)
+        config = load_yaml_model(config_file, Config)
         assert config.sender.address.name == "Test"
         assert config.invoice.due_days == 14
 
     def test_invalid_yaml_raises_value_error(self, tmp_path):
         config_file = tmp_path / "config.yml"
         config_file.write_text("invalid: yaml: [broken")
-        with pytest.raises(ValueError, match="Failed to load config"):
-            load_config(config_file)
+        with pytest.raises(ValueError, match=r"(?i)Failed to load Config"):
+            load_yaml_model(config_file, Config)
 
     def test_missing_file_raises_value_error(self, tmp_path):
         config_file = tmp_path / "nonexistent.yml"
-        with pytest.raises(ValueError, match="Failed to load config"):
-            load_config(config_file)
+        with pytest.raises(ValueError, match=r"(?i)Failed to load Config"):
+            load_yaml_model(config_file, Config)
 
     def test_missing_required_fields_raises_value_error(self, tmp_path):
         config_file = tmp_path / "config.yml"
         config_file.write_text(yaml.dump({"sender": {}}))
-        with pytest.raises(ValueError, match="Failed to load config"):
-            load_config(config_file)
+        with pytest.raises(ValueError, match=r"(?i)Failed to load Config"):
+            load_yaml_model(config_file, Config)
 
     def test_empty_file_raises_value_error(self, tmp_path):
         config_file = tmp_path / "config.yml"
         config_file.write_text("")
-        with pytest.raises(ValueError, match="Failed to load config"):
-            load_config(config_file)
+        with pytest.raises(ValueError, match=r"(?i)Failed to load Config"):
+            load_yaml_model(config_file, Config)

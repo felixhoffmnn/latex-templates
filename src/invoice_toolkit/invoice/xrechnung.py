@@ -10,6 +10,8 @@ from drafthorse.models.party import TaxRegistration
 from drafthorse.models.payment import PaymentMeans, PaymentTerms
 from drafthorse.models.tradelines import LineItem
 
+from invoice_toolkit.invoice.utils import group_items_by_vat
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -116,21 +118,11 @@ def _set_settlement(doc: Document, invoice: Invoice, sender: Sender, vat_exempt:
 
 def _add_tax_summaries(doc: Document, invoice: Invoice, vat_exempt: bool):
     """Add document-level tax summaries grouped by VAT rate."""
-    vat_groups: dict[int, dict[str, Decimal]] = {}
-    for item in invoice.items:
-        rate = item.vat_rate
-        if rate is None:
-            raise ValueError(f"Item '{item.name}' has no VAT rate in tax summary")
-        if rate not in vat_groups:
-            vat_groups[rate] = {"basis": Decimal("0"), "amount": Decimal("0")}
-        vat_groups[rate]["basis"] += Decimal(str(item.total))
-        vat_groups[rate]["amount"] += Decimal(str(item.vat_amount))
-
-    for rate, group in sorted(vat_groups.items()):
+    for rate, group in sorted(group_items_by_vat(invoice.items).items()):
         tax = ApplicableTradeTax()
-        tax.calculated_amount = group["amount"]
+        tax.calculated_amount = Decimal(str(group.amount))
         tax.type_code = "VAT"
-        tax.basis_amount = group["basis"]
+        tax.basis_amount = Decimal(str(group.basis))
 
         if rate > 0:
             tax.category_code = "S"

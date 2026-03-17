@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import csv
-import datetime as dt
 import os
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
+from factories import make_invoice as _base_make_invoice
+
 import invoice_toolkit.invoice.template as tpl
-from invoice_toolkit.invoice.models.invoices import Invoice, Item
 from invoice_toolkit.invoice.template import (
     archive_invoice,
     get_invoice_id,
@@ -23,20 +23,9 @@ if TYPE_CHECKING:
 CSV_HEADER = ["invoice_id", "customer_id", "date", "total", "status"]
 
 
-def _make_item(price=50.0, quantity=1, vat_rate=None):
-    return Item(name="Service", quantity=quantity, unit="Stunde", price=price, vat_rate=vat_rate)
-
-
 def _make_invoice(invoice_id=1, total_vat=0.0, **kwargs):
-    defaults = {
-        "customer_id": 10000,
-        "invoice_id": invoice_id,
-        "invoice_number": f"RE{invoice_id:04d}",
-        "date": dt.date(2025, 6, 15),
-        "items": [_make_item()],
-    }
-    defaults.update(kwargs)
-    inv = Invoice(**defaults)
+    kwargs.setdefault("invoice_number", f"RE{invoice_id:04d}")
+    inv = _base_make_invoice(invoice_id=invoice_id, **kwargs)
     inv.total_vat = total_vat
     if total_vat > 0:
         inv.total_gross = inv.total + total_vat

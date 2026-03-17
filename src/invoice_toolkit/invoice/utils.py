@@ -2,16 +2,43 @@
 
 import csv
 import logging
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-import yaml
-
-from invoice_toolkit.invoice.models import Customer, Invoices
+from invoice_toolkit.invoice.models import Customer
 
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from invoice_toolkit.invoice.models.invoices import Item
+
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class VatGroup:
+    """Aggregated basis and tax amount for a single VAT rate."""
+
+    basis: float
+    amount: float
+
+
+def group_items_by_vat(items: list[Item]) -> dict[int, VatGroup]:
+    """Group invoice items by VAT rate and sum their basis/amount.
+
+    Raises ValueError if any item has no VAT rate.
+    """
+    groups: dict[int, VatGroup] = {}
+    for item in items:
+        rate = item.vat_rate
+        if rate is None:
+            raise ValueError(f"Item '{item.name}' has no VAT rate")
+        prev = groups.get(rate, VatGroup(basis=0.0, amount=0.0))
+        groups[rate] = VatGroup(
+            basis=round(prev.basis + item.total, 2),
+            amount=round(prev.amount + item.vat_amount, 2),
+        )
+    return groups
 
 
 def load_customers(file: Path) -> dict[int, Customer]:
@@ -45,14 +72,3 @@ def load_customer(file: Path, customer_id: str | int) -> Customer:
         raise ValueError(f"No customer found with id {customer_id} in {file}")
 
     return customers[customer_id]
-
-
-def load_invoice(file: Path) -> Invoices:
-    """Load invoice file."""
-    try:
-        with file.open("rb") as f:
-            parsed_file = yaml.safe_load(f)
-            invoices = Invoices(**parsed_file)
-        return invoices
-    except (yaml.YAMLError, ValueError, TypeError) as e:
-        raise ValueError(f"Failed to load invoices from {file}: {e}") from e

@@ -1,0 +1,12 @@
+    recipient: (
+        name: "{{ recipient.name }}",
+        {% if recipient.company is defined and recipient.company %}
+        company: "{{ recipient.company }}",
+        {% endif %}
+        {% if recipient.extra is defined and recipient.extra %}
+        extra: "{{ recipient.extra }}",
+        {% endif %}
+        street: "{{ recipient.street }}",
+        zip: "{{ recipient.zip }}",
+        city: "{{ recipient.city }}",
+    ),

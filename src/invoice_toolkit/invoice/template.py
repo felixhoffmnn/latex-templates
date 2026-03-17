@@ -10,10 +10,10 @@ import shutil
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
-import typst
-
 from invoice_toolkit.invoice import utils
+from invoice_toolkit.invoice.utils import group_items_by_vat
 from invoice_toolkit.invoice.xrechnung import generate_xrechnung_xml
+from invoice_toolkit.utils import render_typst_to_pdf
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -161,14 +161,8 @@ def _prepare_vat_context(invoice: Invoice, vat_exempt: bool) -> dict:
 
     vat_groups: dict[int, dict[str, float]] = {}
     if has_vat:
-        for item in invoice.items:
-            rate = item.vat_rate
-            if rate is None:
-                raise ValueError(f"Item '{item.name}' has no VAT rate in VAT context preparation")
-            if rate not in vat_groups:
-                vat_groups[rate] = {"basis": 0.0, "amount": 0.0}
-            vat_groups[rate]["basis"] = round(vat_groups[rate]["basis"] + item.total, 2)
-            vat_groups[rate]["amount"] = round(vat_groups[rate]["amount"] + item.vat_amount, 2)
+        for rate, group in group_items_by_vat(invoice.items).items():
+            vat_groups[rate] = {"basis": group.basis, "amount": group.amount}
 
     return {
         "has_vat": has_vat,
@@ -215,6 +209,14 @@ def create_invoice(
     rendered_template = template.render(
         config=config,
         customer=customer,
+        recipient={
+            "name": customer.address.name,
+            "company": customer.company,
+            "extra": customer.address.extra,
+            "street": customer.address.street,
+            "zip": customer.address.zip,
+            "city": customer.address.city,
+        },
         invoice=invoice.model_copy(
             update={
                 "date": invoice.date.strftime("%d.%m.%Y"),
@@ -232,16 +234,7 @@ def create_invoice(
     generated_pdf_file = invoice_out_dir / (output_file + ".pdf")
     generated_xml_file = invoice_out_dir / (output_file + ".xml")
 
-    try:
-        with generated_typ_file.open("w") as f:
-            f.write(rendered_template)
-    except OSError as e:
-        raise OSError(f"Failed to write Typst file {generated_typ_file}: {e}") from e
-
-    try:
-        typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root=str(paths.project_root))
-    except Exception as e:
-        raise RuntimeError(f"Typst compilation failed for {generated_typ_file}: {e}") from e
+    render_typst_to_pdf(rendered_template, generated_typ_file, generated_pdf_file, paths.project_root)
 
     generate_xrechnung_xml(invoice, customer, config, generated_xml_file, config.invoice.vat_exempt)
 

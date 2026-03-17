@@ -9,14 +9,14 @@ from typing import Annotated
 import typer
 
 from invoice_cli.utils import (
-    config_logging,
     default_project_paths,
     execute_command,
     resolve_config_path,
     validate_paths,
 )
 from invoice_toolkit.letter.template import create_letter
-from invoice_toolkit.utils import create_jinja_env, load_config
+from invoice_toolkit.models import Config
+from invoice_toolkit.utils import create_jinja_env, load_yaml_model
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +32,6 @@ def letter_command(
     open_pdf: Annotated[bool, typer.Option("--open-pdf/--no-open-pdf", help="Open the generated PDF.")] = True,
 ):
     """Create a letter."""
-    config_logging(verbose)
-
     paths = default_project_paths()
     jinja_env = create_jinja_env(paths.template_dir)
 
@@ -46,7 +44,7 @@ def letter_command(
         ]
     )
 
-    config = load_config(resolved_config)
+    config = load_yaml_model(resolved_config, Config)
 
     try:
         pdf_path = create_letter(
