@@ -46,20 +46,22 @@ jobs:
         run: uv sync --locked --all-extras --dev
       - name: Generate invoice (vat-exempt)
         run: >
-          uv run --extra cli toolkit invoice examples/vat-exempt/invoices.example.yml
-          --config-path examples/vat-exempt/config.example.yml
-          --customer-path examples/vat-exempt/customer.example.csv
-          --dry-run --make-all
+          uv run --extra cli toolkit invoice
+          --invoices examples/vat-exempt/invoices.example.yml
+          --config examples/vat-exempt/config.example.yml
+          --customer examples/vat-exempt/customer.example.csv
+          --dry-run --all
       - name: Generate invoice (vat)
         run: >
-          uv run --extra cli toolkit invoice examples/vat/invoices.example.yml
-          --config-path examples/vat/config.example.yml
-          --customer-path examples/vat/customer.example.csv
-          --dry-run --make-all
+          uv run --extra cli toolkit invoice
+          --invoices examples/vat/invoices.example.yml
+          --config examples/vat/config.example.yml
+          --customer examples/vat/customer.example.csv
+          --dry-run --all
       - name: Generate letter
         run: >
           uv run --extra cli toolkit letter examples/letter/letter.example.md
-          --config-file examples/letter/config.example.yml
+          --config examples/letter/config.example.yml
           --dry-run
       - name: Verify generated files
         run: |

@@ -43,7 +43,7 @@ format:
 # Generate json schemas for pydantic
 [group("dev")]
 @json-schema:
-    uv run toolkit schemas
+    uv run --extra cli toolkit schemas
 
 # Generate a new invoice (usage: just invoice <invoice_path> <flags>)
 [group("typst")]
