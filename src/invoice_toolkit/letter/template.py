@@ -8,10 +8,10 @@ import typst
 
 from invoice_toolkit.letter.utils import load_letter
 from invoice_toolkit.settings import (
-    CONFIG_DEFAULT_FILE,
     OUT_DIR,
     PROJECT_ROOT,
     TMP_DIR,
+    resolve_config_path,
 )
 from invoice_toolkit.utils import config_logging, execute_command, jinja_env, load_config, validate_paths
 
@@ -27,6 +27,7 @@ def create_letter(
     output: Path | str | None = None,
     dry_run: bool = False,
     verbose: bool = False,
+    open_pdf: bool = True,
 ):
     """Create a letter.
 
@@ -39,7 +40,7 @@ def create_letter(
         sys.exit(1)
 
     letter_file = Path(letter_file)
-    config_file = Path(config_file or CONFIG_DEFAULT_FILE)
+    config_file = Path(config_file) if config_file else resolve_config_path()
 
     validate_paths(
         [
@@ -83,7 +84,7 @@ def create_letter(
         return
 
     if not dry_run:
-        if config.settings.open_pdf_viewer:
+        if open_pdf:
             execute_command(["xdg-open", str(generated_pdf_file)])
     else:
         logger.info("Dry run mode enabled. Skipping post-generation steps.")

@@ -18,4 +18,4 @@ Lastly, create a file containing the invoices you want to generate (see [vat-exe
 
 [^1]: I suggest to place the file in the root directory of the repository.
 
-[^2]: Because this file contains sensitive information, I suggest to place it outside of the repository. You can specify the location of the file using the `INVOICE_DIR` environment variable. Alternatively, it will default to the `data` directory.
+[^2]: Because this file contains sensitive information, I suggest to place it outside of the repository. You can specify the location of the file using the `DATA_DIR` environment variable. Alternatively, it will default to the `data` directory.

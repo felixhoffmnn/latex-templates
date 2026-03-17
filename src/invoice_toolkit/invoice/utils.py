@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import yaml
 
 from invoice_toolkit.invoice.models import Customer, Invoices
-from invoice_toolkit.settings import INVOICE_DIR
+from invoice_toolkit.settings import DATA_DIR
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -152,7 +152,7 @@ def load_invoice(file: Path) -> Invoices:
         raise ValueError(f"Failed to load invoices from {file}: {e}") from e
 
 
-def print_customer(file: Path = INVOICE_DIR / "customer.csv") -> None:
+def print_customer(file: Path = DATA_DIR / "customer.csv") -> None:
     """Print customer-to-id mapping."""
     with file.open("r", encoding="utf-8-sig") as f:
         parsed_file = csv.DictReader(f)

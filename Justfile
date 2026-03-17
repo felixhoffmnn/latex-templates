@@ -1,17 +1,29 @@
 set dotenv-load := true
 
 CONTAINER_RUNTIME := env("CONTAINER_RUNTIME", "podman")
+OPEN_PDF := env("OPEN_PDF", "true")
+OPEN_MAIL := env("OPEN_MAIL", "true")
 VALIDATOR_IMAGE := "ghcr.io/felixhoffmnn/invoice-toolkit/xrechnung-validator:latest"
 
 # Print a list of available commands
-@help:
+[private]
+@default:
     just --list
 
-# Install dependencies
+# Install dependencies, bootstrap config, and generate schemas
 [group("dev")]
-@install:
+setup:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
     uv sync
-    uv run pre-commit install
+    uv run prek install
+
+    # Bootstrap .env from example if missing
+    if [ ! -f .env ]; then
+        cp .env.example .env
+        echo "Created .env from .env.example"
+    fi
 
 # Check python code for type hints and linting
 [group("dev")]
@@ -30,13 +42,13 @@ format:
 
 # Generate a new invoice (usage: just invoice <invoice_path> <flags>)
 [group("typst")]
-@invoice *CMD: json-schema
-    uv run invoice-toolkit invoice {{ CMD }}
+@invoice *CMD:
+    uv run invoice-toolkit invoice {{ CMD }} --open-pdf={{ OPEN_PDF }} --open-mail={{ OPEN_MAIL }}
 
 # Render a letter
 [group("typst")]
-@letter *FLAGS: json-schema
-    uv run invoice-toolkit letter {{ FLAGS }}
+@letter *FLAGS:
+    uv run invoice-toolkit letter {{ FLAGS }} --open-pdf={{ OPEN_PDF }} --open-mail={{ OPEN_MAIL }}
 
 # Print customer-to-id mapping
 [group("utils")]
@@ -71,9 +83,14 @@ generate-examples: json-schema
     done
 
 # Validate a XRechnung XML file (usage: just validate <path>)
-[group("validator")]
+[group("utils")]
 validate PATH:
     {{ CONTAINER_RUNTIME }} run --rm -v "$(realpath {{ PATH }}):/data/$(basename {{ PATH }}):z,ro" {{ VALIDATOR_IMAGE }} "/data/$(basename {{ PATH }})"
+
+# Run pre-commit hooks
+[group("utils")]
+pre-commit:
+    uv run prek run --all-files
 
 # Clean up the project
 [confirm("Type 'yes' to confirm clean up! Type 'no' to cancel.")]

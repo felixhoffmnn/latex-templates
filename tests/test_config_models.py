@@ -83,7 +83,6 @@ class TestInvoiceConfig:
 class TestConfig:
     def _make_config_data(self, **overrides):
         data = {
-            "settings": {"open_pdf_viewer": False, "open_mail_client": False},
             "sender": {
                 "address": {"name": "Test", "street": "St 1", "zip": "12345", "city": "Berlin"},
                 "email": "test@example.com",

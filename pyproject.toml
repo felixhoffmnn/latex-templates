@@ -4,6 +4,7 @@ version = "0.4.0"
 description = "A collection of templates for letters and invoices."
 authors = [{ name = "Felix Hoffmann", email = "post@felix-hoffmann.dev" }]
 readme = "README.md"
+license = { file = "COPYING" }
 requires-python = ">=3.14"
 dependencies = [
     "drafthorse>=2025.2.0",
@@ -25,7 +26,7 @@ dev = [
     { include-group = "test" },
 ]
 test = ["pytest>=8.0"]
-lint = ["pre-commit>=4.0.1", "ruff>=0.7.2"]
+lint = ["prek>=0.3.6", "ruff>=0.7.2"]
 types = ["ty>=0.0.20", "types-pyyaml>=6.0.12.20240917"]
 
 [project.scripts]

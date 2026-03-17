@@ -80,16 +80,8 @@ class Sender(BaseModel):
     bank: Bank
 
 
-class Settings(BaseModel):
-    """Settings model to configure the template generation."""
-
-    open_pdf_viewer: bool
-    open_mail_client: bool
-
-
 class Config(BaseModel):
     """Config model for the config.yml file."""
 
-    settings: Settings
     sender: Sender
     invoice: Invoice

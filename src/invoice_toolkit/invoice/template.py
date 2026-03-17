@@ -14,13 +14,14 @@ import typst
 from invoice_toolkit.invoice import utils
 from invoice_toolkit.invoice.xrechnung import generate_xrechnung_xml
 from invoice_toolkit.settings import (
-    CONFIG_DEFAULT_FILE,
+    DATA_DIR,
     INVOICE_CUSTOMER_FILE,
-    INVOICE_DIR,
     INVOICE_HISTORY_FILE,
     OUT_DIR,
     PROJECT_ROOT,
     TMP_DIR,
+    resolve_config_path,
+    resolve_invoices_path,
 )
 from invoice_toolkit.utils import config_logging, execute_command, jinja_env, load_config, validate_paths
 
@@ -102,7 +103,7 @@ def store_invoice_parameter(invoice: Invoice):
 
 def archive_invoice(output_file: str, year: int):
     """Archive the invoice PDF and XML files."""
-    archive_dir = INVOICE_DIR / "archive" / str(year)
+    archive_dir = DATA_DIR / "archive" / str(year)
     archive_dir.mkdir(parents=True, exist_ok=True)
 
     for ext in (".pdf", ".xml"):
@@ -226,12 +227,14 @@ def _handle_post_generation(
     generated_pdf_file: Path,
     generated_xml_file: Path,
     dry_run: bool,
+    open_pdf: bool,
+    open_mail: bool,
 ):
     """Handle post-generation steps: PDF viewing, email, archiving."""
-    if config.settings.open_pdf_viewer:
+    if open_pdf:
         execute_command(["xdg-open", str(generated_pdf_file)])
 
-    if config.settings.open_mail_client:
+    if open_mail:
         thunderbird_command = get_thunderbird()
         if thunderbird_command:
             execute_command(
@@ -260,6 +263,8 @@ def create_invoice(
     customer_file: Path,
     dry_run: bool,
     verbose: bool,
+    open_pdf: bool,
+    open_mail: bool,
     output: Path | None = None,
 ):
     """Create one invoice."""
@@ -329,6 +334,8 @@ def create_invoice(
             generated_pdf_file,
             generated_xml_file,
             dry_run,
+            open_pdf=open_pdf,
+            open_mail=open_mail,
         )
     else:
         logger.info("Dry run mode enabled. Skipping post-generation steps.")
@@ -345,6 +352,8 @@ def create_invoices(
     dry_run: bool = False,
     verbose: bool = False,
     make_all: bool = False,
+    open_pdf: bool = True,
+    open_mail: bool = True,
 ):
     """Create multiple invoices.
 
@@ -353,13 +362,9 @@ def create_invoices(
     """
     config_logging(verbose)
 
-    if invoices_path is None:
-        logger.error("Missing required argument: invoices_path")
-        sys.exit(1)
-
-    invoices_path = Path(invoices_path)
+    invoices_path = Path(invoices_path) if invoices_path else resolve_invoices_path()
     customer_database = Path(customer_path) if customer_path else INVOICE_CUSTOMER_FILE
-    config_path = Path(config_path) if config_path else Path(os.getenv("CONFIG_PATH", str(CONFIG_DEFAULT_FILE)))
+    config_path = Path(config_path) if config_path else resolve_config_path()
 
     # Log the used files
     logger.debug(f"Using invoices file: {invoices_path}")
@@ -373,7 +378,7 @@ def create_invoices(
         (config_path, "config file"),
     ]
     if not dry_run:
-        paths_to_validate.insert(0, (INVOICE_DIR, "invoice data directory"))
+        paths_to_validate.insert(0, (DATA_DIR, "invoice data directory"))
 
     validate_paths(paths_to_validate)
 
@@ -397,4 +402,6 @@ def create_invoices(
             dry_run,
             verbose,
             output=Path(output) if output else None,
+            open_pdf=open_pdf,
+            open_mail=open_mail,
         )

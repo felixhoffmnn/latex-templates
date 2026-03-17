@@ -9,14 +9,13 @@ from invoice_toolkit.invoice.models.customer import Customer
 from invoice_toolkit.invoice.models.invoices import Invoice, Item
 from invoice_toolkit.invoice.template import _resolve_vat
 from invoice_toolkit.invoice.xrechnung import generate_xrechnung_xml
-from invoice_toolkit.models import Address, Bank, Config, Sender, Settings, Tax
+from invoice_toolkit.models import Address, Bank, Config, Sender, Tax
 from invoice_toolkit.models import Invoice as InvoiceConfig
 
 
 @pytest.fixture()
 def config():
     return Config(
-        settings=Settings(open_pdf_viewer=False, open_mail_client=False),
         sender=Sender(
             address=Address(name="Seller GmbH", street="Seller St 1", zip="12345", city="Berlin", country="DE"),
             email="seller@example.com",
