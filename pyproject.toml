@@ -9,7 +9,7 @@ requires-python = ">=3.14"
 dependencies = [
     "drafthorse>=2025.2.0",
     "email-validator>=2.2.0",
-    "fire>=0.7.0",
+    "typer>=0.15.0",
     "jinja2>=3.1.4",
     "phonenumbers>=8.13.48",
     "pydantic>=2.9.2",
@@ -30,7 +30,7 @@ lint = ["prek>=0.3.6", "ruff>=0.7.2"]
 types = ["ty>=0.0.20", "types-pyyaml>=6.0.12.20240917"]
 
 [project.scripts]
-invoice-toolkit = "invoice_toolkit.manage:main"
+invoice-toolkit = "invoice_cli.main:main"
 
 [build-system]
 requires = ["hatchling"]

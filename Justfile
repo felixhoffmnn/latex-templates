@@ -1,8 +1,8 @@
 set dotenv-load := true
 
 CONTAINER_RUNTIME := env("CONTAINER_RUNTIME", "podman")
-OPEN_PDF := env("OPEN_PDF", "true")
-OPEN_MAIL := env("OPEN_MAIL", "true")
+OPEN_PDF := if env("OPEN_PDF", "true") == "true" {"--open-pdf"} else {"--no-open-pdf"}
+OPEN_MAIL := if env("OPEN_MAIL", "true") == "true" {"--open-mail"} else {"--no-open-mail"}
 VALIDATOR_IMAGE := "ghcr.io/felixhoffmnn/invoice-toolkit/xrechnung-validator:latest"
 
 # Print a list of available commands
@@ -43,12 +43,12 @@ format:
 # Generate a new invoice (usage: just invoice <invoice_path> <flags>)
 [group("typst")]
 @invoice *CMD:
-    uv run invoice-toolkit invoice {{ CMD }} --open-pdf={{ OPEN_PDF }} --open-mail={{ OPEN_MAIL }}
+    uv run invoice-toolkit invoice {{ CMD }} {{ OPEN_PDF }} {{ OPEN_MAIL }}
 
 # Render a letter
 [group("typst")]
 @letter *FLAGS:
-    uv run invoice-toolkit letter {{ FLAGS }} --open-pdf={{ OPEN_PDF }} --open-mail={{ OPEN_MAIL }}
+    uv run invoice-toolkit letter {{ FLAGS }} {{ OPEN_PDF }}
 
 # Print customer-to-id mapping
 [group("utils")]
@@ -63,17 +63,17 @@ generate-examples: json-schema
 
     # Letter
     uv run invoice-toolkit letter examples/letter/letter.example.md \
-        --config-file examples/letter/config.example.yml \
+        --config examples/letter/config.example.yml \
         --output examples/letter/letter.example \
         --dry-run
 
     # Invoices
     for variant in vat-exempt vat; do
-        uv run invoice-toolkit invoice "examples/${variant}/invoices.example.yml" \
-            --config-path "examples/${variant}/config.example.yml" \
-            --customer-path "examples/${variant}/customer.example.csv" \
+        uv run invoice-toolkit invoice --invoices "examples/${variant}/invoices.example.yml" \
+            --config "examples/${variant}/config.example.yml" \
+            --customer "examples/${variant}/customer.example.csv" \
             --output "examples/${variant}/invoice.example" \
-            --dry-run --make-all
+            --dry-run --all
     done
 
     # Preview PNGs

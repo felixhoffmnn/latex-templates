@@ -1,92 +1,78 @@
 """Letter template rendering and PDF generation via Typst."""
 
+from __future__ import annotations
+
 import logging
-import sys
-from pathlib import Path
+import shutil
+from typing import TYPE_CHECKING
 
 import typst
 
 from invoice_toolkit.letter.utils import load_letter
-from invoice_toolkit.settings import (
-    OUT_DIR,
-    PROJECT_ROOT,
-    TMP_DIR,
-    resolve_config_path,
-)
-from invoice_toolkit.utils import config_logging, execute_command, jinja_env, load_config, validate_paths
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    import jinja2
+
+    from invoice_toolkit.models import Config
+    from invoice_toolkit.settings import ProjectPaths
 
 logger = logging.getLogger(__name__)
 
-LETTER_OUT_DIR = OUT_DIR / "letter"
-LETTER_TMP_DIR = TMP_DIR / "letter"
-
 
 def create_letter(
-    letter_file: Path | str | None = None,
-    config_file: Path | str | None = None,
-    output: Path | str | None = None,
-    dry_run: bool = False,
-    verbose: bool = False,
-    open_pdf: bool = True,
-):
-    """Create a letter.
+    letter_file: Path,
+    config: Config,
+    paths: ProjectPaths,
+    jinja_env: jinja2.Environment,
+    output: Path | None = None,
+) -> Path:
+    """Create a letter and return the generated PDF path.
 
-    This function will create a letter based on the given config and letter files.
+    Args:
+        letter_file: Path to the letter markdown file with YAML frontmatter.
+        config: Loaded Config object.
+        paths: Project paths configuration.
+        jinja_env: Jinja2 environment for template rendering.
+        output: Optional custom output path (without extension).
+
+    Returns:
+        Path to the generated PDF file.
     """
-    config_logging(verbose)
+    letter_out_dir = paths.out_dir / "letter"
+    letter_tmp_dir = paths.tmp_dir / "letter"
 
-    if letter_file is None:
-        logger.error("Missing required argument: letter_file")
-        sys.exit(1)
-
-    letter_file = Path(letter_file)
-    config_file = Path(config_file) if config_file else resolve_config_path()
-
-    validate_paths(
-        [
-            (letter_file, "letter file"),
-            (config_file, "config file"),
-        ]
-    )
-
-    config = load_config(config_file)
     frontmatter, content = load_letter(letter_file)
 
-    # Create output and tmp directory if they don't exist
-    LETTER_OUT_DIR.mkdir(parents=True, exist_ok=True)
-    LETTER_TMP_DIR.mkdir(parents=True, exist_ok=True)
+    letter_out_dir.mkdir(parents=True, exist_ok=True)
+    letter_tmp_dir.mkdir(parents=True, exist_ok=True)
 
     base_template = jinja_env.get_template("letter.typ.j2")
-    generated_typ_file = LETTER_TMP_DIR / "letter.typ"
-    generated_pdf_file = LETTER_OUT_DIR / "letter.pdf"
+    generated_typ_file = letter_tmp_dir / "letter.typ"
+    generated_pdf_file = letter_out_dir / "letter.pdf"
 
-    # Render the template
     rendered_template = base_template.render(
         config=config,
         letter=frontmatter,
         content=content,
     )
 
-    # Store typ file based on invoice number
-    with generated_typ_file.open("w") as f:
-        f.write(rendered_template)
-
-    # Execute the command to generate the PDF
     try:
-        typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root=str(PROJECT_ROOT))
+        with generated_typ_file.open("w") as f:
+            f.write(rendered_template)
+    except OSError as e:
+        raise OSError(f"Failed to write Typst file {generated_typ_file}: {e}") from e
+
+    try:
+        typst.compile(str(generated_typ_file), output=str(generated_pdf_file), root=str(paths.project_root))
     except Exception as e:
-        logger.error(f"Typst compilation failed for {generated_typ_file}: {e}")
-        sys.exit(1)
+        raise RuntimeError(f"Typst compilation failed for {generated_typ_file}: {e}") from e
 
     if output is not None:
-        Path(output).parent.mkdir(parents=True, exist_ok=True)
-        generated_pdf_file.rename(Path(f"{output}.pdf"))
-        return
+        output.parent.mkdir(parents=True, exist_ok=True)
+        final_path = output.with_suffix(".pdf")
+        shutil.move(str(generated_pdf_file), str(final_path))
+        return final_path
 
-    if not dry_run:
-        if open_pdf:
-            execute_command(["xdg-open", str(generated_pdf_file)])
-    else:
-        logger.info("Dry run mode enabled. Skipping post-generation steps.")
-        logger.debug(f"Rendered template saved to: {generated_typ_file}")
-        logger.debug(f"Output PDF saved to: {generated_pdf_file}")
+    return generated_pdf_file

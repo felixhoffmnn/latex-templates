@@ -12,7 +12,7 @@
     <ram:ID>RE0017</ram:ID>
     <ram:TypeCode>380</ram:TypeCode>
     <ram:IssueDateTime>
-      <udt:DateTimeString format="102">20260317</udt:DateTimeString>
+      <udt:DateTimeString format="102">20251215</udt:DateTimeString>
     </ram:IssueDateTime>
   </rsm:ExchangedDocument>
   <rsm:SupplyChainTradeTransaction>
@@ -35,8 +35,8 @@
       <ram:SpecifiedLineTradeSettlement>
         <ram:ApplicableTradeTax>
           <ram:TypeCode>VAT</ram:TypeCode>
-          <ram:CategoryCode>E</ram:CategoryCode>
-          <ram:RateApplicablePercent>0</ram:RateApplicablePercent>
+          <ram:CategoryCode>S</ram:CategoryCode>
+          <ram:RateApplicablePercent>7</ram:RateApplicablePercent>
         </ram:ApplicableTradeTax>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
           <ram:LineTotalAmount>3.5</ram:LineTotalAmount>
@@ -58,21 +58,21 @@
         </ram:NetPriceProductTradePrice>
       </ram:SpecifiedLineTradeAgreement>
       <ram:SpecifiedLineTradeDelivery>
-        <ram:BilledQuantity unitCode="HUR">1</ram:BilledQuantity>
+        <ram:BilledQuantity unitCode="HUR">2</ram:BilledQuantity>
       </ram:SpecifiedLineTradeDelivery>
       <ram:SpecifiedLineTradeSettlement>
         <ram:ApplicableTradeTax>
           <ram:TypeCode>VAT</ram:TypeCode>
-          <ram:CategoryCode>E</ram:CategoryCode>
-          <ram:RateApplicablePercent>0</ram:RateApplicablePercent>
+          <ram:CategoryCode>S</ram:CategoryCode>
+          <ram:RateApplicablePercent>19</ram:RateApplicablePercent>
         </ram:ApplicableTradeTax>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>50.0</ram:LineTotalAmount>
+          <ram:LineTotalAmount>100.0</ram:LineTotalAmount>
         </ram:SpecifiedTradeSettlementLineMonetarySummation>
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
     <ram:ApplicableHeaderTradeAgreement>
-      <ram:BuyerReference>04011000-12345-34</ram:BuyerReference>
+      <ram:BuyerReference>LEITWEG-12345</ram:BuyerReference>
       <ram:SellerTradeParty>
         <ram:Name>Musterfirma GmbH</ram:Name>
         <ram:SpecifiedLegalOrganization>
@@ -119,12 +119,12 @@
     <ram:ApplicableHeaderTradeDelivery>
       <ram:ActualDeliverySupplyChainEvent>
         <ram:OccurrenceDateTime>
-          <udt:DateTimeString format="102">20260317</udt:DateTimeString>
+          <udt:DateTimeString format="102">20251231</udt:DateTimeString>
         </ram:OccurrenceDateTime>
       </ram:ActualDeliverySupplyChainEvent>
     </ram:ApplicableHeaderTradeDelivery>
     <ram:ApplicableHeaderTradeSettlement>
-      <ram:PaymentReference>Rechnung RE0017 vom 17.03.2026</ram:PaymentReference>
+      <ram:PaymentReference>Rechnung RE0017 vom 15.12.2025</ram:PaymentReference>
       <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
       <ram:SpecifiedTradeSettlementPaymentMeans>
         <ram:TypeCode>58</ram:TypeCode>
@@ -137,29 +137,34 @@
         </ram:PayeeSpecifiedCreditorFinancialInstitution>
       </ram:SpecifiedTradeSettlementPaymentMeans>
       <ram:ApplicableTradeTax>
-        <ram:CalculatedAmount>0.0</ram:CalculatedAmount>
+        <ram:CalculatedAmount>0.24</ram:CalculatedAmount>
         <ram:TypeCode>VAT</ram:TypeCode>
-        <ram:ExemptionReason>Kein Ausweis von Umsatzsteuer, da Kleinunternehmer gemäß §19 UStG.</ram:ExemptionReason>
-        <ram:BasisAmount>53.5</ram:BasisAmount>
-        <ram:CategoryCode>E</ram:CategoryCode>
-        <ram:ExemptionReasonCode>vatex-eu-o</ram:ExemptionReasonCode>
-        <ram:RateApplicablePercent>0</ram:RateApplicablePercent>
+        <ram:BasisAmount>3.5</ram:BasisAmount>
+        <ram:CategoryCode>S</ram:CategoryCode>
+        <ram:RateApplicablePercent>7</ram:RateApplicablePercent>
+      </ram:ApplicableTradeTax>
+      <ram:ApplicableTradeTax>
+        <ram:CalculatedAmount>19.0</ram:CalculatedAmount>
+        <ram:TypeCode>VAT</ram:TypeCode>
+        <ram:BasisAmount>100.0</ram:BasisAmount>
+        <ram:CategoryCode>S</ram:CategoryCode>
+        <ram:RateApplicablePercent>19</ram:RateApplicablePercent>
       </ram:ApplicableTradeTax>
       <ram:SpecifiedTradePaymentTerms>
-        <ram:Description>Zahlbar bis zum 31.03.2026</ram:Description>
+        <ram:Description>Zahlbar bis zum 29.12.2025</ram:Description>
         <ram:DueDateDateTime>
-          <udt:DateTimeString format="102">20260331</udt:DateTimeString>
+          <udt:DateTimeString format="102">20251229</udt:DateTimeString>
         </ram:DueDateDateTime>
       </ram:SpecifiedTradePaymentTerms>
       <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
-        <ram:LineTotalAmount>53.5</ram:LineTotalAmount>
+        <ram:LineTotalAmount>103.5</ram:LineTotalAmount>
         <ram:ChargeTotalAmount>0.00</ram:ChargeTotalAmount>
         <ram:AllowanceTotalAmount>0.00</ram:AllowanceTotalAmount>
-        <ram:TaxBasisTotalAmount>53.5</ram:TaxBasisTotalAmount>
-        <ram:TaxTotalAmount currencyID="EUR">0.0</ram:TaxTotalAmount>
-        <ram:GrandTotalAmount>53.5</ram:GrandTotalAmount>
+        <ram:TaxBasisTotalAmount>103.5</ram:TaxBasisTotalAmount>
+        <ram:TaxTotalAmount currencyID="EUR">19.24</ram:TaxTotalAmount>
+        <ram:GrandTotalAmount>122.74</ram:GrandTotalAmount>
         <ram:TotalPrepaidAmount>0.00</ram:TotalPrepaidAmount>
-        <ram:DuePayableAmount>53.5</ram:DuePayableAmount>
+        <ram:DuePayableAmount>122.74</ram:DuePayableAmount>
       </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
     </ram:ApplicableHeaderTradeSettlement>
   </rsm:SupplyChainTradeTransaction>

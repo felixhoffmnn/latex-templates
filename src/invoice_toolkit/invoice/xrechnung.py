@@ -69,7 +69,8 @@ def _add_line_item(doc: Document, idx: int, item: Item, vat_exempt: bool):
     li.delivery.billed_quantity = (Decimal(str(item.quantity)), unit_code)
 
     li.settlement.trade_tax.type_code = "VAT"
-    assert item.vat_rate is not None
+    if item.vat_rate is None:
+        raise ValueError(f"Line item '{item.name}' has no VAT rate")
     if item.vat_rate > 0:
         li.settlement.trade_tax.category_code = "S"
         li.settlement.trade_tax.rate_applicable_percent = Decimal(str(item.vat_rate))
@@ -118,7 +119,8 @@ def _add_tax_summaries(doc: Document, invoice: Invoice, vat_exempt: bool):
     vat_groups: dict[int, dict[str, Decimal]] = {}
     for item in invoice.items:
         rate = item.vat_rate
-        assert rate is not None
+        if rate is None:
+            raise ValueError(f"Item '{item.name}' has no VAT rate in tax summary")
         if rate not in vat_groups:
             vat_groups[rate] = {"basis": Decimal("0"), "amount": Decimal("0")}
         vat_groups[rate]["basis"] += Decimal(str(item.total))
@@ -214,8 +216,16 @@ def generate_xrechnung_xml(
     _set_settlement(doc, invoice, config.sender, vat_exempt)
 
     # Serialize
-    xml_bytes = doc.serialize(schema=None)
-    output_path.write_bytes(xml_bytes)
+    try:
+        xml_bytes = doc.serialize(schema=None)
+    except Exception as e:
+        raise RuntimeError(f"Failed to serialize XRechnung XML: {e}") from e
+
+    try:
+        output_path.write_bytes(xml_bytes)
+    except OSError as e:
+        raise OSError(f"Failed to write XRechnung XML to {output_path}: {e}") from e
+
     logger.info(f"XRechnung XML generated: {output_path}")
 
     return output_path
