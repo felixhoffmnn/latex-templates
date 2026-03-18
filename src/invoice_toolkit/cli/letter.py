@@ -8,7 +8,7 @@ from typing import Annotated
 
 import typer
 
-from invoice_cli.utils import (
+from invoice_toolkit.cli.utils import (
     default_project_paths,
     execute_command,
     resolve_config_path,

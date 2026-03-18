@@ -6,9 +6,9 @@ import logging
 
 import typer
 
-from invoice_cli.invoice import invoice_command, print_customer_command
-from invoice_cli.letter import letter_command
-from invoice_cli.schemas import schemas_command
+from invoice_toolkit.cli.invoice import invoice_command, print_customer_command
+from invoice_toolkit.cli.letter import letter_command
+from invoice_toolkit.cli.schemas import schemas_command
 
 app = typer.Typer(help="Invoice Toolkit — generate invoices and letters from templates.")
 

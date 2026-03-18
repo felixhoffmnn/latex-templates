@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from invoice_toolkit.invoice.models.invoices import Invoice
     from invoice_toolkit.settings import ProjectPaths
 
-from invoice_cli.utils import (
+from invoice_toolkit.cli.utils import (
     compose_email,
     confirm,
     default_project_paths,

@@ -1,6 +1,6 @@
 """Tests for invoice_cli/invoice.py: _parse_selection."""
 
-from invoice_cli.invoice import _parse_selection
+from invoice_toolkit.cli.invoice import _parse_selection
 
 
 class TestParseSelection:

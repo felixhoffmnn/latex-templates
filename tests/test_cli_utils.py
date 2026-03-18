@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pytest
 from factories import make_config, make_customer, make_invoice
 
-from invoice_cli.utils import (
+from invoice_toolkit.cli.utils import (
     _find_yaml,
     compose_email,
     confirm,
@@ -174,7 +174,7 @@ class TestConfirm:
 
 class TestGetThunderbird:
     def test_bare_metal_found(self):
-        with patch("invoice_cli.utils.subprocess.run") as mock_run:
+        with patch("invoice_toolkit.cli.utils.subprocess.run") as mock_run:
             mock_run.return_value = None
             result = get_thunderbird()
         assert result == ["thunderbird"]
@@ -184,12 +184,12 @@ class TestGetThunderbird:
             if cmd[0] == "thunderbird":
                 raise FileNotFoundError
 
-        with patch("invoice_cli.utils.subprocess.run", side_effect=side_effect):
+        with patch("invoice_toolkit.cli.utils.subprocess.run", side_effect=side_effect):
             result = get_thunderbird()
         assert result == ["flatpak", "run", "org.mozilla.Thunderbird"]
 
     def test_not_found(self):
-        with patch("invoice_cli.utils.subprocess.run", side_effect=FileNotFoundError):
+        with patch("invoice_toolkit.cli.utils.subprocess.run", side_effect=FileNotFoundError):
             result = get_thunderbird()
         assert result is None
 
