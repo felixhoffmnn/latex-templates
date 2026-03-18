@@ -8,35 +8,25 @@ from invoice_toolkit.utils import _currency_filter, create_jinja_env, load_yaml_
 
 
 class TestCurrencyFilter:
-    def test_german_locale_default(self):
+    def test_default_locale(self):
         assert _currency_filter(1234.56) == "1.234,56"
 
-    def test_german_locale_explicit(self):
-        assert _currency_filter(1234.56, locale="de") == "1.234,56"
-
-    def test_german_locale_zero(self):
-        assert _currency_filter(0.0) == "0,00"
-
-    def test_german_locale_large_number(self):
-        assert _currency_filter(1000000.0) == "1.000.000,00"
-
-    def test_german_locale_small_decimal(self):
-        assert _currency_filter(0.99) == "0,99"
-
-    def test_german_locale_rounds_to_two_decimals(self):
-        assert _currency_filter(1.999) == "2,00"
-
-    def test_english_locale(self):
-        assert _currency_filter(1234.56, locale="en") == "1234.56"
-
-    def test_english_locale_zero(self):
-        assert _currency_filter(0.0, locale="en") == "0.00"
-
-    def test_english_locale_large_number(self):
-        assert _currency_filter(1000000.0, locale="en") == "1000000.00"
-
-    def test_integer_input(self):
-        assert _currency_filter(100) == "100,00"
+    @pytest.mark.parametrize(
+        ("value", "locale", "expected"),
+        [
+            pytest.param(1234.56, "de", "1.234,56", id="de_standard"),
+            pytest.param(0.0, "de", "0,00", id="de_zero"),
+            pytest.param(1000000.0, "de", "1.000.000,00", id="de_large"),
+            pytest.param(0.99, "de", "0,99", id="de_small_decimal"),
+            pytest.param(1.999, "de", "2,00", id="de_rounding"),
+            pytest.param(1234.56, "en", "1234.56", id="en_standard"),
+            pytest.param(0.0, "en", "0.00", id="en_zero"),
+            pytest.param(1000000.0, "en", "1000000.00", id="en_large"),
+            pytest.param(100, "de", "100,00", id="de_integer"),
+        ],
+    )
+    def test_currency_filter(self, value, locale, expected):
+        assert _currency_filter(value, locale=locale) == expected
 
 
 class TestCreateJinjaEnv:

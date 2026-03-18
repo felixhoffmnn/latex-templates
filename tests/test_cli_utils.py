@@ -1,6 +1,5 @@
 """Tests for invoice_cli/utils.py: path resolution, validate_paths, confirm, get_thunderbird, compose_email."""
 
-import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -51,24 +50,18 @@ class TestResolveInvoicesPath:
             result = resolve_invoices_path(tmp_path)
         assert result == Path("/custom/invoices.yml")
 
-    def test_yml_file_found(self, tmp_path):
+    def test_yml_file_found(self, tmp_path, env_cleanup):
         (tmp_path / "invoices.yml").touch()
-        with patch.dict("os.environ", {}, clear=True):
-            os.environ.pop("INVOICES_PATH", None)
-            result = resolve_invoices_path(tmp_path)
+        result = resolve_invoices_path(tmp_path)
         assert result == tmp_path / "invoices.yml"
 
-    def test_yaml_file_found(self, tmp_path):
+    def test_yaml_file_found(self, tmp_path, env_cleanup):
         (tmp_path / "invoices.yaml").touch()
-        with patch.dict("os.environ", {}, clear=True):
-            os.environ.pop("INVOICES_PATH", None)
-            result = resolve_invoices_path(tmp_path)
+        result = resolve_invoices_path(tmp_path)
         assert result == tmp_path / "invoices.yaml"
 
-    def test_fallback_default(self, tmp_path):
-        with patch.dict("os.environ", {}, clear=True):
-            os.environ.pop("INVOICES_PATH", None)
-            result = resolve_invoices_path(tmp_path)
+    def test_fallback_default(self, tmp_path, env_cleanup):
+        result = resolve_invoices_path(tmp_path)
         assert result == tmp_path / "invoices.yaml"
 
 
@@ -83,30 +76,24 @@ class TestResolveConfigPath:
             result = resolve_config_path(tmp_path / "data", tmp_path)
         assert result == Path("/custom/config.yml")
 
-    def test_data_dir_config_found(self, tmp_path):
+    def test_data_dir_config_found(self, tmp_path, env_cleanup):
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         (data_dir / "config.yml").touch()
-        with patch.dict("os.environ", {}, clear=True):
-            os.environ.pop("CONFIG_PATH", None)
-            result = resolve_config_path(data_dir, tmp_path)
+        result = resolve_config_path(data_dir, tmp_path)
         assert result == data_dir / "config.yml"
 
-    def test_project_root_config_found(self, tmp_path):
+    def test_project_root_config_found(self, tmp_path, env_cleanup):
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         (tmp_path / "config.yaml").touch()
-        with patch.dict("os.environ", {}, clear=True):
-            os.environ.pop("CONFIG_PATH", None)
-            result = resolve_config_path(data_dir, tmp_path)
+        result = resolve_config_path(data_dir, tmp_path)
         assert result == tmp_path / "config.yaml"
 
-    def test_fallback_default(self, tmp_path):
+    def test_fallback_default(self, tmp_path, env_cleanup):
         data_dir = tmp_path / "data"
         data_dir.mkdir()
-        with patch.dict("os.environ", {}, clear=True):
-            os.environ.pop("CONFIG_PATH", None)
-            result = resolve_config_path(data_dir, tmp_path)
+        result = resolve_config_path(data_dir, tmp_path)
         assert result == tmp_path / "config.yaml"
 
 
@@ -140,31 +127,27 @@ class TestValidatePaths:
 # confirm
 # ---------------------------------------------------------------------------
 
+_UNSET = object()
+
 
 class TestConfirm:
-    def test_yes_returns_true(self):
-        with patch("builtins.input", return_value="y"):
-            assert confirm("Continue?") is True
-
-    def test_no_returns_false(self):
-        with patch("builtins.input", return_value="n"):
-            assert confirm("Continue?") is False
-
-    def test_empty_with_default_true(self):
-        with patch("builtins.input", return_value=""):
-            assert confirm("Continue?", default=True) is True
-
-    def test_empty_with_default_false(self):
-        with patch("builtins.input", return_value=""):
-            assert confirm("Continue?", default=False) is False
-
-    def test_full_word_yes(self):
-        with patch("builtins.input", return_value="yes"):
-            assert confirm("Continue?") is True
-
-    def test_full_word_no(self):
-        with patch("builtins.input", return_value="no"):
-            assert confirm("Continue?") is False
+    @pytest.mark.parametrize(
+        ("user_input", "default", "expected"),
+        [
+            pytest.param("y", _UNSET, True, id="y"),
+            pytest.param("n", _UNSET, False, id="n"),
+            pytest.param("", True, True, id="empty_default_true"),
+            pytest.param("", False, False, id="empty_default_false"),
+            pytest.param("yes", _UNSET, True, id="yes"),
+            pytest.param("no", _UNSET, False, id="no"),
+        ],
+    )
+    def test_confirm(self, user_input, default, expected):
+        with patch("builtins.input", return_value=user_input):
+            if default is _UNSET:
+                assert confirm("Continue?") is expected
+            else:
+                assert confirm("Continue?", default=default) is expected
 
 
 # ---------------------------------------------------------------------------

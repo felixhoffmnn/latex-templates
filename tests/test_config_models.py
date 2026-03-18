@@ -12,22 +12,30 @@ class TestAddress:
         assert addr.name == "John"
         assert addr.zip == "12345"
 
-    def test_int_zip_padded(self):
-        addr = Address(name="John", street="Main St 1", zip=800, city="Berlin")
-        assert addr.zip == "00800"
+    @pytest.mark.parametrize(
+        ("zip_input", "expected"),
+        [
+            pytest.param(800, "00800", id="int_padded"),
+            pytest.param("0800", "00800", id="string_padded"),
+            pytest.param("12345", "12345", id="five_digit_unchanged"),
+        ],
+    )
+    def test_zip_padding(self, zip_input, expected):
+        addr = Address(name="John", street="Main St 1", zip=zip_input, city="Berlin")
+        assert addr.zip == expected
 
-    def test_string_zip_padded(self):
-        addr = Address(name="John", street="Main St 1", zip="0800", city="Berlin")
-        assert addr.zip == "00800"
-
-    def test_five_digit_zip_unchanged(self):
-        addr = Address(name="John", street="Main St 1", zip="12345", city="Berlin")
-        assert addr.zip == "12345"
-
-    def test_country_valid_values(self):
-        for country in ["DE", "US", "AT", "CH"]:
-            addr = Address(name="John", street="St 1", zip="12345", city="Berlin", country=country)
-            assert addr.country == country
+    @pytest.mark.parametrize(
+        "country",
+        [
+            pytest.param("DE", id="germany"),
+            pytest.param("US", id="usa"),
+            pytest.param("AT", id="austria"),
+            pytest.param("CH", id="switzerland"),
+        ],
+    )
+    def test_country_valid_values(self, country):
+        addr = Address(name="John", street="St 1", zip="12345", city="Berlin", country=country)
+        assert addr.country == country
 
     def test_country_invalid_rejected(self):
         with pytest.raises(ValidationError):
@@ -39,16 +47,16 @@ class TestAddress:
 
 
 class TestBank:
-    def test_iban_normalized(self):
-        bank = Bank(iban="DE89370400440532013000", bic="AAAAAAA1BBB", name="Test Bank")
-        assert bank.iban == "DE89 3704 0044 0532 0130 00"
-
-    def test_iban_with_spaces_normalized(self):
-        bank = Bank(iban="DE89 3704 0044 0532 0130 00", bic="AAAAAAA1BBB", name="Test Bank")
-        assert bank.iban == "DE89 3704 0044 0532 0130 00"
-
-    def test_iban_with_nonstandard_spacing(self):
-        bank = Bank(iban="DE89 37040044 0532013000", bic="AAAAAAA1BBB", name="Test Bank")
+    @pytest.mark.parametrize(
+        "raw_iban",
+        [
+            pytest.param("DE89370400440532013000", id="no_spaces"),
+            pytest.param("DE89 3704 0044 0532 0130 00", id="canonical_spacing"),
+            pytest.param("DE89 37040044 0532013000", id="nonstandard_spacing"),
+        ],
+    )
+    def test_iban_normalized(self, raw_iban):
+        bank = Bank(iban=raw_iban, bic="AAAAAAA1BBB", name="Test Bank")
         assert bank.iban == "DE89 3704 0044 0532 0130 00"
 
     def test_invalid_iban_rejected(self):
@@ -61,10 +69,17 @@ class TestBank:
 
 
 class TestInvoiceConfig:
-    def test_valid_vat_rates(self):
-        for rate in [0, 7, 19]:
-            inv = Invoice(VAT=rate, due_days=14)  # type: ignore[invalid-argument-type]
-            assert inv.default_vat_rate == rate
+    @pytest.mark.parametrize(
+        "rate",
+        [
+            pytest.param(0, id="zero"),
+            pytest.param(7, id="reduced"),
+            pytest.param(19, id="standard"),
+        ],
+    )
+    def test_valid_vat_rates(self, rate):
+        inv = Invoice(VAT=rate, due_days=14)  # type: ignore[invalid-argument-type]
+        assert inv.default_vat_rate == rate
 
     def test_invalid_vat_rate_rejected(self):
         with pytest.raises(ValidationError):

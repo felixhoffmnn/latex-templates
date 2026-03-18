@@ -30,17 +30,18 @@ class TestItem:
         assert item.vat_amount == 0.24
         assert item.gross_total == 3.74
 
-    def test_invalid_unit_rejected(self):
+    @pytest.mark.parametrize(
+        "overrides",
+        [
+            pytest.param({"unit": "Liter"}, id="invalid_unit"),
+            pytest.param({"price": -5.0}, id="negative_price"),
+            pytest.param({"quantity": 0}, id="zero_quantity"),
+        ],
+    )
+    def test_item_validation_rejected(self, overrides):
+        defaults = {"name": "Service", "quantity": 1, "unit": "Stück", "price": 10.0}
         with pytest.raises(ValidationError):
-            Item(name="Service", quantity=1, unit="Liter", price=10.0)
-
-    def test_negative_price_rejected(self):
-        with pytest.raises(ValidationError):
-            Item(name="Service", quantity=1, unit="Stück", price=-5.0)
-
-    def test_zero_quantity_rejected(self):
-        with pytest.raises(ValidationError):
-            Item(name="Service", quantity=0, unit="Stück", price=10.0)
+            Item(**(defaults | overrides))
 
 
 class TestInvoice:
@@ -89,10 +90,17 @@ class TestInvoice:
         with pytest.raises(ValidationError):
             Invoice(customer_id=999, items=[self._make_item()])
 
-    def test_status_literals(self):
-        for status in ["draft", "sent", "paid"]:
-            inv = Invoice(customer_id=10000, status=status, items=[self._make_item()])
-            assert inv.status == status
+    @pytest.mark.parametrize(
+        "status",
+        [
+            pytest.param("draft", id="draft"),
+            pytest.param("sent", id="sent"),
+            pytest.param("paid", id="paid"),
+        ],
+    )
+    def test_status_literals(self, status):
+        inv = Invoice(customer_id=10000, status=status, items=[self._make_item()])
+        assert inv.status == status
 
     def test_invalid_status_rejected(self):
         with pytest.raises(ValidationError):

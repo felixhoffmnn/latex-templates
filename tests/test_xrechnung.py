@@ -56,6 +56,17 @@ def invoice():
     return inv
 
 
+@pytest.fixture()
+def xrechnung_root(invoice, customer, config, tmp_path):
+    """Generate XRechnung XML and return the parsed root element."""
+    output = tmp_path / "test.xml"
+    result = generate_xrechnung_xml(invoice, customer, config, output, vat_exempt=False)
+    assert result == output
+    assert output.exists()
+    tree = ET.parse(output)
+    return tree.getroot()
+
+
 NS = {
     "rsm": "urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100",
     "ram": "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100",
@@ -64,59 +75,26 @@ NS = {
 
 
 class TestXRechnungGeneration:
-    def test_generates_valid_xml(self, invoice, customer, config, tmp_path):
-        output = tmp_path / "test.xml"
-        result = generate_xrechnung_xml(invoice, customer, config, output, vat_exempt=False)
+    def test_generates_valid_xml(self, xrechnung_root):
+        assert xrechnung_root is not None
 
-        assert result == output
-        assert output.exists()
-
-        # Should be parseable XML
-        tree = ET.parse(output)
-        root = tree.getroot()
-        assert root is not None
-
-    def test_invoice_number_in_header(self, invoice, customer, config, tmp_path):
-        output = tmp_path / "test.xml"
-        generate_xrechnung_xml(invoice, customer, config, output, vat_exempt=False)
-
-        tree = ET.parse(output)
-        root = tree.getroot()
-
-        header_id = root.find(".//rsm:ExchangedDocument/ram:ID", NS)
+    def test_invoice_number_in_header(self, xrechnung_root):
+        header_id = xrechnung_root.find(".//rsm:ExchangedDocument/ram:ID", NS)
         assert header_id is not None
         assert header_id.text == "RE0001"
 
-    def test_seller_name(self, invoice, customer, config, tmp_path):
-        output = tmp_path / "test.xml"
-        generate_xrechnung_xml(invoice, customer, config, output, vat_exempt=False)
-
-        tree = ET.parse(output)
-        root = tree.getroot()
-
-        seller_name = root.find(".//ram:ApplicableHeaderTradeAgreement/ram:SellerTradeParty/ram:Name", NS)
+    def test_seller_name(self, xrechnung_root):
+        seller_name = xrechnung_root.find(".//ram:ApplicableHeaderTradeAgreement/ram:SellerTradeParty/ram:Name", NS)
         assert seller_name is not None
         assert seller_name.text == "Seller GmbH"
 
-    def test_buyer_reference(self, invoice, customer, config, tmp_path):
-        output = tmp_path / "test.xml"
-        generate_xrechnung_xml(invoice, customer, config, output, vat_exempt=False)
-
-        tree = ET.parse(output)
-        root = tree.getroot()
-
-        buyer_ref = root.find(".//ram:ApplicableHeaderTradeAgreement/ram:BuyerReference", NS)
+    def test_buyer_reference(self, xrechnung_root):
+        buyer_ref = xrechnung_root.find(".//ram:ApplicableHeaderTradeAgreement/ram:BuyerReference", NS)
         assert buyer_ref is not None
         assert buyer_ref.text == "LEITWEG-123"
 
-    def test_line_items_count(self, invoice, customer, config, tmp_path):
-        output = tmp_path / "test.xml"
-        generate_xrechnung_xml(invoice, customer, config, output, vat_exempt=False)
-
-        tree = ET.parse(output)
-        root = tree.getroot()
-
-        line_items = root.findall(".//ram:IncludedSupplyChainTradeLineItem", NS)
+    def test_line_items_count(self, xrechnung_root):
+        line_items = xrechnung_root.findall(".//ram:IncludedSupplyChainTradeLineItem", NS)
         assert len(line_items) == 2
 
     def test_vat_exempt_generates_xml(self, customer, config, tmp_path):

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import csv
-import os
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
@@ -130,12 +129,10 @@ class TestGetInvoiceId:
         result = get_invoice_id(dry_run=False, history_file=csv_file)
         assert result == 6
 
-    def test_default_last_invoice_is_1(self, tmp_path):
+    def test_default_last_invoice_is_1(self, tmp_path, env_cleanup):
         csv_file = tmp_path / "invoice.csv"
         _write_csv(csv_file, [])
-        with patch.dict("os.environ", {}, clear=True):
-            os.environ.pop("LAST_INVOICE", None)
-            result = get_invoice_id(dry_run=False, history_file=csv_file)
+        result = get_invoice_id(dry_run=False, history_file=csv_file)
         assert result == 1
 
 
