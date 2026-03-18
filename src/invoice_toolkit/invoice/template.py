@@ -13,12 +13,10 @@ from typing import TYPE_CHECKING, Literal
 from invoice_toolkit.invoice import utils
 from invoice_toolkit.invoice.utils import group_items_by_vat
 from invoice_toolkit.invoice.xrechnung import generate_xrechnung_xml
-from invoice_toolkit.utils import render_typst_to_pdf
+from invoice_toolkit.utils import build_sender_data, compile_template
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    import jinja2
 
     from invoice_toolkit.invoice.models.customer import Customer
     from invoice_toolkit.invoice.models.invoices import Invoice
@@ -171,13 +169,65 @@ def _prepare_vat_context(invoice: Invoice, vat_exempt: bool) -> dict:
     }
 
 
+def _build_invoice_data(invoice: Invoice, config: Config, customer: Customer, vat_context: dict) -> dict:
+    """Serialize all template data to a JSON-serializable dict."""
+    sender_data = build_sender_data(config.sender)
+
+    items = [
+        {
+            "name": item.name,
+            "description": item.description,
+            "quantity": item.quantity,
+            "unit": item.unit,
+            "price": item.price,
+            "total": item.total,
+            "vat_rate": item.vat_rate,
+            "vat_amount": item.vat_amount,
+            "gross_total": item.gross_total,
+        }
+        for item in invoice.items
+    ]
+
+    # Convert vat_groups keys to strings for JSON serialization
+    vat_groups = {str(k): v for k, v in vat_context["vat_groups"].items()}
+
+    recipient = {
+        "name": customer.address.name,
+        "company": customer.company,
+        "extra": customer.address.extra,
+        "street": customer.address.street,
+        "zip": customer.address.zip,
+        "city": customer.address.city,
+    }
+
+    return {
+        "config": sender_data,
+        "invoice": {
+            "invoice_number": invoice.invoice_number,
+            "date": invoice.date.strftime("%d.%m.%Y"),
+            "start_date": invoice.start_date.strftime("%d.%m.%Y") if invoice.start_date else None,
+            "end_date": invoice.end_date.strftime("%d.%m.%Y") if invoice.end_date else None,
+            "due_date": invoice.due_date.strftime("%d.%m.%Y") if invoice.due_date else None,
+            "customer_id": customer.customer_id,
+            "items": items,
+            "total": invoice.total,
+            "total_vat": invoice.total_vat,
+            "total_gross": invoice.total_gross,
+        },
+        "recipient": recipient,
+        "additional": {"purpose": f"Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}"},
+        "has_vat": vat_context["has_vat"],
+        "vat_groups": vat_groups,
+        "display_total": vat_context["display_total"],
+    }
+
+
 def create_invoice(
     invoice: Invoice,
     config: Config,
     customer_file: Path,
     dry_run: bool,
     paths: ProjectPaths,
-    jinja_env: jinja2.Environment,
     output: Path | None = None,
 ) -> InvoiceResult | None:
     """Create one invoice and return the result.
@@ -189,7 +239,6 @@ def create_invoice(
         return None
 
     invoice_out_dir = paths.out_dir / "invoice"
-    invoice_tmp_dir = paths.tmp_dir / "invoice"
 
     customer = utils.load_customer(customer_file, invoice.customer_id)
 
@@ -200,43 +249,17 @@ def create_invoice(
         invoice.due_date = invoice.date + datetime.timedelta(days=config.invoice.due_days)
 
     invoice_out_dir.mkdir(parents=True, exist_ok=True)
-    invoice_tmp_dir.mkdir(parents=True, exist_ok=True)
 
     _resolve_vat(invoice, config.invoice.vat_exempt, config.invoice.default_vat_rate)
     vat_context = _prepare_vat_context(invoice, config.invoice.vat_exempt)
 
-    template = jinja_env.get_template("invoice.typ.j2")
-    rendered_template = template.render(
-        config=config,
-        customer=customer,
-        recipient={
-            "name": customer.address.name,
-            "company": customer.company,
-            "extra": customer.address.extra,
-            "street": customer.address.street,
-            "zip": customer.address.zip,
-            "city": customer.address.city,
-        },
-        invoice=invoice.model_copy(
-            update={
-                "date": invoice.date.strftime("%d.%m.%Y"),
-                "start_date": invoice.start_date.strftime("%d.%m.%Y") if invoice.start_date else None,
-                "end_date": invoice.end_date.strftime("%d.%m.%Y") if invoice.end_date else None,
-                "due_date": invoice.due_date.strftime("%d.%m.%Y"),
-            }
-        ),
-        additional={"purpose": f"Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}"},
-        **vat_context,
-    )
+    data = _build_invoice_data(invoice, config, customer, vat_context)
 
     output_file = f"{invoice.invoice_number}_{invoice.date.strftime('%Y%m%d')}_{customer.customer_id}"
-    generated_typ_file = invoice_tmp_dir / (output_file + ".typ")
     generated_pdf_file = invoice_out_dir / (output_file + ".pdf")
     generated_xml_file = invoice_out_dir / (output_file + ".xml")
 
-    render_typst_to_pdf(
-        rendered_template, generated_typ_file, generated_pdf_file, paths.project_root, paths.template_dir
-    )
+    compile_template("invoice.typ", data, generated_pdf_file, paths.template_dir)
 
     generate_xrechnung_xml(invoice, customer, config, generated_xml_file, config.invoice.vat_exempt)
 
@@ -272,7 +295,6 @@ def create_invoices(
     customer_file: Path,
     dry_run: bool,
     paths: ProjectPaths,
-    jinja_env: jinja2.Environment,
     output: Path | None = None,
 ) -> list[InvoiceResult]:
     """Create multiple invoices from a pre-selected list.
@@ -291,7 +313,6 @@ def create_invoices(
             customer_file,
             dry_run,
             paths,
-            jinja_env,
             output=output,
         )
         if result is not None:

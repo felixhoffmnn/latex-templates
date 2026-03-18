@@ -7,12 +7,10 @@ import shutil
 from typing import TYPE_CHECKING
 
 from invoice_toolkit.letter.utils import load_letter
-from invoice_toolkit.utils import render_typst_to_pdf
+from invoice_toolkit.utils import build_sender_data, compile_template
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    import jinja2
 
     from invoice_toolkit.models import Config
     from invoice_toolkit.settings import ProjectPaths
@@ -24,7 +22,6 @@ def create_letter(
     letter_file: Path,
     config: Config,
     paths: ProjectPaths,
-    jinja_env: jinja2.Environment,
     output: Path | None = None,
 ) -> Path:
     """Create a letter and return the generated PDF path.
@@ -33,34 +30,41 @@ def create_letter(
         letter_file: Path to the letter markdown file with YAML frontmatter.
         config: Loaded Config object.
         paths: Project paths configuration.
-        jinja_env: Jinja2 environment for template rendering.
         output: Optional custom output path (without extension).
 
     Returns:
         Path to the generated PDF file.
     """
     letter_out_dir = paths.out_dir / "letter"
-    letter_tmp_dir = paths.tmp_dir / "letter"
 
     frontmatter, content = load_letter(letter_file)
 
     letter_out_dir.mkdir(parents=True, exist_ok=True)
-    letter_tmp_dir.mkdir(parents=True, exist_ok=True)
 
-    base_template = jinja_env.get_template("letter.typ.j2")
-    generated_typ_file = letter_tmp_dir / "letter.typ"
     generated_pdf_file = letter_out_dir / "letter.pdf"
 
-    rendered_template = base_template.render(
-        config=config,
-        letter=frontmatter,
-        recipient=frontmatter.recipient,
-        content=content,
-    )
+    sender_data = build_sender_data(config.sender)
 
-    render_typst_to_pdf(
-        rendered_template, generated_typ_file, generated_pdf_file, paths.project_root, paths.template_dir
-    )
+    recipient = {
+        "name": frontmatter.recipient.name,
+        "extra": frontmatter.recipient.extra,
+        "street": frontmatter.recipient.street,
+        "zip": frontmatter.recipient.zip,
+        "city": frontmatter.recipient.city,
+    }
+
+    data = {
+        "config": sender_data,
+        "letter": {
+            "subject": frontmatter.subject,
+            "opening": frontmatter.opening,
+            "closing": frontmatter.closing,
+        },
+        "recipient": recipient,
+        "content": content,
+    }
+
+    compile_template("letter.typ", data, generated_pdf_file, paths.template_dir)
 
     if output is not None:
         output.parent.mkdir(parents=True, exist_ok=True)

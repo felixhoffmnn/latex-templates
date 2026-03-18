@@ -2,7 +2,6 @@
 
 from typing import TYPE_CHECKING
 
-import pypandoc
 import yaml
 
 from invoice_toolkit.letter.models.letter import Letter
@@ -15,8 +14,17 @@ def load_letter(file: Path) -> tuple[Letter, str]:
     """Load letter file with YAML frontmatter and Markdown body.
 
     Raises OSError if the file cannot be read, ValueError for invalid
-    frontmatter or YAML, and RuntimeError if pandoc conversion fails.
+    frontmatter or YAML, ImportError if pypandoc is missing, and
+    RuntimeError if pandoc conversion fails.
     """
+    try:
+        import pypandoc
+    except ImportError as e:
+        raise ImportError(
+            "The 'pypandoc-binary' package is required for letter generation. "
+            "Install it with: pip install invoice-toolkit[letter]"
+        ) from e
+
     try:
         content = file.read_text(encoding="utf-8")
     except OSError as e:

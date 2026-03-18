@@ -1,58 +1,68 @@
-"""Tests for invoice_toolkit/utils.py: _currency_filter, create_jinja_env, load_yaml_model."""
+"""Tests for invoice_toolkit/utils.py: build_sender_data, load_yaml_model."""
 
 import pytest
 import yaml
 
 from invoice_toolkit.models import Config
-from invoice_toolkit.utils import _currency_filter, create_jinja_env, load_yaml_model
+from invoice_toolkit.utils import build_sender_data, load_yaml_model
 
 
-class TestCurrencyFilter:
-    def test_default_locale(self):
-        assert _currency_filter(1234.56) == "1.234,56"
+class TestBuildSenderData:
+    def _make_config(self):
+        return Config(
+            sender={  # type: ignore[invalid-argument-type]
+                "address": {"name": "Test User", "street": "St 1", "zip": "12345", "city": "Berlin"},
+                "email": "test@example.com",
+                "website": "https://example.com",
+                "phone": "+49 176 12345678",
+                "tax": {"number": "12 345 6789 0", "office": "Berlin"},
+                "bank": {"name": "Test Bank", "iban": "DE89370400440532013000", "bic": "AAAAAAA1BBB"},
+            },
+            invoice={"VAT": 0, "due_days": 14},  # type: ignore[invalid-argument-type]
+        )
 
-    @pytest.mark.parametrize(
-        ("value", "locale", "expected"),
-        [
-            pytest.param(1234.56, "de", "1.234,56", id="de_standard"),
-            pytest.param(0.0, "de", "0,00", id="de_zero"),
-            pytest.param(1000000.0, "de", "1.000.000,00", id="de_large"),
-            pytest.param(0.99, "de", "0,99", id="de_small_decimal"),
-            pytest.param(1.999, "de", "2,00", id="de_rounding"),
-            pytest.param(1234.56, "en", "1234.56", id="en_standard"),
-            pytest.param(0.0, "en", "0.00", id="en_zero"),
-            pytest.param(1000000.0, "en", "1000000.00", id="en_large"),
-            pytest.param(100, "de", "100,00", id="de_integer"),
-        ],
-    )
-    def test_currency_filter(self, value, locale, expected):
-        assert _currency_filter(value, locale=locale) == expected
+    def test_sender_keys(self):
+        config = self._make_config()
+        result = build_sender_data(config.sender)
+        assert set(result.keys()) == {"sender", "tax", "bank"}
 
+    def test_sender_fields(self):
+        config = self._make_config()
+        result = build_sender_data(config.sender)
+        sender = result["sender"]
+        assert sender["name"] == "Test User"
+        assert sender["street"] == "St 1"
+        assert sender["zip"] == "12345"
+        assert sender["city"] == "Berlin"
 
-class TestCreateJinjaEnv:
-    def test_returns_environment(self, tmp_path):
-        env = create_jinja_env(tmp_path)
-        assert env is not None
+    def test_phone_cleanup(self):
+        config = self._make_config()
+        result = build_sender_data(config.sender)
+        phone = result["sender"]["phone"]
+        assert "tel:" not in phone
+        assert "-" not in phone
 
-    def test_trim_blocks_enabled(self, tmp_path):
-        env = create_jinja_env(tmp_path)
-        assert env.trim_blocks is True
+    def test_email_is_str(self):
+        config = self._make_config()
+        result = build_sender_data(config.sender)
+        assert isinstance(result["sender"]["email"], str)
 
-    def test_autoescape_disabled(self, tmp_path):
-        env = create_jinja_env(tmp_path)
-        assert env.autoescape is False
+    def test_website_is_str(self):
+        config = self._make_config()
+        result = build_sender_data(config.sender)
+        assert isinstance(result["sender"]["website"], str)
 
-    def test_currency_filter_registered(self, tmp_path):
-        env = create_jinja_env(tmp_path)
-        assert "currency" in env.filters
-        currency_filter = env.filters["currency"]
-        assert currency_filter(1234.56) == "1.234,56"  # type: ignore[call-arg]
+    def test_tax_fields(self):
+        config = self._make_config()
+        result = build_sender_data(config.sender)
+        assert result["tax"]["office"] == "Berlin"
+        assert result["tax"]["number"] == "12 345 6789 0"
 
-    def test_template_rendering(self, tmp_path):
-        (tmp_path / "test.txt").write_text("Price: {{ value | currency }}")
-        env = create_jinja_env(tmp_path)
-        template = env.get_template("test.txt")
-        assert template.render(value=42.5) == "Price: 42,50"
+    def test_bank_fields(self):
+        config = self._make_config()
+        result = build_sender_data(config.sender)
+        assert result["bank"]["name"] == "Test Bank"
+        assert result["bank"]["bic"] == "AAAAAAA1BBB"
 
 
 class TestLoadConfig:

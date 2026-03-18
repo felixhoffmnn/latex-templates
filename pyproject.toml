@@ -7,19 +7,23 @@ readme = "README.md"
 license = { file = "COPYING" }
 requires-python = ">=3.14"
 dependencies = [
-    "drafthorse>=2025.2.0",
     "email-validator>=2.2.0",
-    "jinja2>=3.1.4",
     "phonenumbers>=8.13.48",
     "pydantic>=2.9.2",
     "pydantic-extra-types>=2.9.0",
-    "pypandoc-binary>=1.15",
     "pyyaml>=6.0.2",
     "typst==0.13.2",
 ]
 
 [project.optional-dependencies]
 cli = ["typer>=0.15.0"]
+letter = ["pypandoc-binary>=1.15"]
+xrechnung = ["drafthorse>=2025.2.0"]
+all = [
+    "invoice-toolkit[cli]",
+    "invoice-toolkit[letter]",
+    "invoice-toolkit[xrechnung]",
+]
 
 [dependency-groups]
 dev = [
@@ -68,6 +72,8 @@ extend-select = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D101", "D102", "D103", "PLR2004"]
+"src/invoice_toolkit/invoice/xrechnung.py" = ["PLC0415"]
+"src/invoice_toolkit/letter/utils.py" = ["PLC0415"]
 
 [tool.ruff.lint.pylint]
 max-args = 10

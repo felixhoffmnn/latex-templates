@@ -16,7 +16,7 @@ from invoice_toolkit.cli.utils import (
 )
 from invoice_toolkit.letter.template import create_letter
 from invoice_toolkit.models import Config
-from invoice_toolkit.utils import create_jinja_env, load_yaml_model
+from invoice_toolkit.utils import load_yaml_model
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,6 @@ def letter_command(
 ):
     """Create a letter."""
     paths = default_project_paths()
-    jinja_env = create_jinja_env(paths.template_dir)
 
     resolved_config = config_file or resolve_config_path(paths.data_dir, paths.project_root)
 
@@ -51,7 +50,6 @@ def letter_command(
             letter_file=letter_file,
             config=config,
             paths=paths,
-            jinja_env=jinja_env,
             output=output,
         )
     except (OSError, RuntimeError, ValueError) as e:

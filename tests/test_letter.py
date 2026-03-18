@@ -120,7 +120,7 @@ class TestLoadLetter:
         letter_file = tmp_path / "letter.md"
         self._write_letter(letter_file, self._valid_frontmatter(), "Hello **world**")
 
-        with patch("invoice_toolkit.letter.utils.pypandoc.convert_text", return_value="Hello *world*"):
+        with patch("pypandoc.convert_text", return_value="Hello *world*"):
             letter, content = load_letter(letter_file)
 
         assert letter.subject == "Kündigung"
@@ -150,7 +150,7 @@ class TestLoadLetter:
         self._write_letter(letter_file, self._valid_frontmatter(), "some body")
 
         with (
-            patch("invoice_toolkit.letter.utils.pypandoc.convert_text", side_effect=RuntimeError("pandoc failed")),
+            patch("pypandoc.convert_text", side_effect=RuntimeError("pandoc failed")),
             pytest.raises(RuntimeError, match="Pandoc conversion failed"),
         ):
             load_letter(letter_file)

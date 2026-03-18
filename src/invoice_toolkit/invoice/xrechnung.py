@@ -4,16 +4,12 @@ import logging
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from drafthorse.models.accounting import ApplicableTradeTax
-from drafthorse.models.document import Document
-from drafthorse.models.party import TaxRegistration
-from drafthorse.models.payment import PaymentMeans, PaymentTerms
-from drafthorse.models.tradelines import LineItem
-
 from invoice_toolkit.invoice.utils import group_items_by_vat
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from drafthorse.models.document import Document
 
     from invoice_toolkit.invoice.models.customer import Customer
     from invoice_toolkit.invoice.models.invoices import Invoice, Item
@@ -30,6 +26,8 @@ UNIT_CODE_MAP = {
 
 def _set_seller(doc: Document, sender: Sender):
     """Set seller (BG-4) trade party on the document."""
+    from drafthorse.models.party import TaxRegistration
+
     seller = doc.trade.agreement.seller
     seller.name = sender.address.name
     seller.address.line_one = sender.address.street
@@ -59,6 +57,8 @@ def _set_buyer(doc: Document, customer: Customer):
 
 def _add_line_item(doc: Document, idx: int, item: Item, vat_exempt: bool):
     """Add a single line item to the document."""
+    from drafthorse.models.tradelines import LineItem
+
     li = LineItem()
     li.document.line_id = str(idx)
     li.product.name = item.name
@@ -89,6 +89,8 @@ def _add_line_item(doc: Document, idx: int, item: Item, vat_exempt: bool):
 
 def _set_settlement(doc: Document, invoice: Invoice, sender: Sender, vat_exempt: bool):
     """Set settlement: payment means, terms, tax summaries, and monetary summation."""
+    from drafthorse.models.payment import PaymentMeans, PaymentTerms
+
     doc.trade.settlement.currency_code = "EUR"
     doc.trade.settlement.payment_reference = (
         f"Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}"
@@ -118,6 +120,8 @@ def _set_settlement(doc: Document, invoice: Invoice, sender: Sender, vat_exempt:
 
 def _add_tax_summaries(doc: Document, invoice: Invoice, vat_exempt: bool):
     """Add document-level tax summaries grouped by VAT rate."""
+    from drafthorse.models.accounting import ApplicableTradeTax
+
     for rate, group in sorted(group_items_by_vat(invoice.items).items()):
         tax = ApplicableTradeTax()
         tax.calculated_amount = Decimal(str(group.amount))
@@ -179,6 +183,14 @@ def generate_xrechnung_xml(
     Path
         The path to the generated XML file.
     """
+    try:
+        from drafthorse.models.document import Document
+    except ImportError as e:
+        raise ImportError(
+            "The 'drafthorse' package is required for XRechnung XML generation. "
+            "Install it with: pip install invoice-toolkit[xrechnung]"
+        ) from e
+
     doc = Document()
 
     # Context: XRechnung 3.0 CII profile

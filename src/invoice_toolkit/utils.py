@@ -1,14 +1,17 @@
-"""Shared utilities for configuration and Jinja environment."""
+"""Shared utilities for configuration and template compilation."""
 
+import json
 import logging
-import shutil
 from importlib.resources import files
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-import jinja2
 import typst
 import yaml
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from invoice_toolkit.models import Sender
 
 logger = logging.getLogger("invoice_toolkit")
 
@@ -18,41 +21,46 @@ def bundled_template_dir() -> Path:
     return Path(str(files("invoice_toolkit").joinpath("templates")))
 
 
-def _currency_filter(value, locale="de"):
-    if locale == "de":
-        return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    return f"{value:.2f}"
-
-
-def create_jinja_env(template_dir: Path) -> jinja2.Environment:
-    """Create a Jinja2 environment rooted at *template_dir*."""
-    env = jinja2.Environment(
-        trim_blocks=True,
-        autoescape=False,
-        loader=jinja2.FileSystemLoader(str(template_dir)),
-    )
-    env.filters["currency"] = _currency_filter
-    return env
-
-
-def render_typst_to_pdf(rendered: str, typ_path: Path, pdf_path: Path, project_root: Path, template_dir: Path) -> None:
-    """Write a rendered Typst source to *typ_path* and compile it to *pdf_path*.
-
-    Copies ``base.typ`` from *template_dir* next to *typ_path* so the
-    ``#import "base.typ"`` directive in the rendered template resolves correctly.
-    """
+def compile_template(template_name: str, data: dict, pdf_path: Path, template_dir: Path) -> None:
+    """Compile a Typst template to PDF, passing *data* as JSON via ``sys.inputs``."""
     try:
-        with typ_path.open("w") as f:
-            f.write(rendered)
-    except OSError as e:
-        raise OSError(f"Failed to write Typst file {typ_path}: {e}") from e
-
-    shutil.copy2(template_dir / "base.typ", typ_path.parent / "base.typ")
-
-    try:
-        typst.compile(str(typ_path), output=str(pdf_path), root=str(project_root))
+        typst.compile(
+            str(template_dir / template_name),
+            output=str(pdf_path),
+            root=str(template_dir),
+            sys_inputs={"data": json.dumps(data, ensure_ascii=False)},
+        )
     except Exception as e:
-        raise RuntimeError(f"Typst compilation failed for {typ_path}: {e}") from e
+        raise RuntimeError(f"Typst compilation failed for {template_name}: {e}") from e
+
+
+def build_sender_data(sender: Sender) -> dict:
+    """Serialize a Sender model into the dict expected by Typst templates.
+
+    Returns a flat structure with ``sender``, ``tax``, and ``bank`` keys
+    containing only plain strings (no Pydantic special types).
+    """
+    phone = str(sender.phone).replace("tel:", "").replace("-", " ")
+    return {
+        "sender": {
+            "name": sender.address.name,
+            "street": sender.address.street,
+            "zip": sender.address.zip,
+            "city": sender.address.city,
+            "phone": phone,
+            "email": str(sender.email),
+            "website": str(sender.website),
+        },
+        "tax": {
+            "office": sender.tax.office,
+            "number": sender.tax.number,
+        },
+        "bank": {
+            "name": sender.bank.name,
+            "iban": sender.bank.iban,
+            "bic": sender.bank.bic,
+        },
+    }
 
 
 def load_yaml_model[T: BaseModel](file: Path, model_cls: type[T]) -> T:

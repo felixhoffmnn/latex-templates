@@ -12,7 +12,7 @@
     <ram:ID>RE0017</ram:ID>
     <ram:TypeCode>380</ram:TypeCode>
     <ram:IssueDateTime>
-      <udt:DateTimeString format="102">20260317</udt:DateTimeString>
+      <udt:DateTimeString format="102">20260318</udt:DateTimeString>
     </ram:IssueDateTime>
   </rsm:ExchangedDocument>
   <rsm:SupplyChainTradeTransaction>
@@ -119,12 +119,12 @@
     <ram:ApplicableHeaderTradeDelivery>
       <ram:ActualDeliverySupplyChainEvent>
         <ram:OccurrenceDateTime>
-          <udt:DateTimeString format="102">20260317</udt:DateTimeString>
+          <udt:DateTimeString format="102">20260318</udt:DateTimeString>
         </ram:OccurrenceDateTime>
       </ram:ActualDeliverySupplyChainEvent>
     </ram:ApplicableHeaderTradeDelivery>
     <ram:ApplicableHeaderTradeSettlement>
-      <ram:PaymentReference>Rechnung RE0017 vom 17.03.2026</ram:PaymentReference>
+      <ram:PaymentReference>Rechnung RE0017 vom 18.03.2026</ram:PaymentReference>
       <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
       <ram:SpecifiedTradeSettlementPaymentMeans>
         <ram:TypeCode>58</ram:TypeCode>
@@ -146,9 +146,9 @@
         <ram:RateApplicablePercent>0</ram:RateApplicablePercent>
       </ram:ApplicableTradeTax>
       <ram:SpecifiedTradePaymentTerms>
-        <ram:Description>Zahlbar bis zum 31.03.2026</ram:Description>
+        <ram:Description>Zahlbar bis zum 01.04.2026</ram:Description>
         <ram:DueDateDateTime>
-          <udt:DateTimeString format="102">20260331</udt:DateTimeString>
+          <udt:DateTimeString format="102">20260401</udt:DateTimeString>
         </ram:DueDateDateTime>
       </ram:SpecifiedTradePaymentTerms>
       <ram:SpecifiedTradeSettlementHeaderMonetarySummation>

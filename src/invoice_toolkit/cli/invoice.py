@@ -34,7 +34,7 @@ from invoice_toolkit.invoice.template import (
     store_invoice_parameter,
 )
 from invoice_toolkit.models import Config
-from invoice_toolkit.utils import create_jinja_env, load_yaml_model
+from invoice_toolkit.utils import load_yaml_model
 
 logger = logging.getLogger(__name__)
 
@@ -168,7 +168,6 @@ def invoice_command(
 ):
     """Create one or more invoices."""
     paths = default_project_paths()
-    jinja_env = create_jinja_env(paths.template_dir)
 
     resolved_invoices = invoices_path or resolve_invoices_path(paths.data_dir)
     customer_database = customer_path or paths.invoice_customer_file
@@ -206,7 +205,6 @@ def invoice_command(
             customer_database,
             dry_run=dry_run,
             paths=paths,
-            jinja_env=jinja_env,
             output=output,
         )
     except (OSError, RuntimeError, ValueError) as e:
