@@ -234,7 +234,9 @@ def create_invoice(
     generated_pdf_file = invoice_out_dir / (output_file + ".pdf")
     generated_xml_file = invoice_out_dir / (output_file + ".xml")
 
-    render_typst_to_pdf(rendered_template, generated_typ_file, generated_pdf_file, paths.project_root)
+    render_typst_to_pdf(
+        rendered_template, generated_typ_file, generated_pdf_file, paths.project_root, paths.template_dir
+    )
 
     generate_xrechnung_xml(invoice, customer, config, generated_xml_file, config.invoice.vat_exempt)
 

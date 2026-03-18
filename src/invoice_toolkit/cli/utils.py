@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from invoice_toolkit.settings import ProjectPaths
+from invoice_toolkit.utils import bundled_template_dir
 
 if TYPE_CHECKING:
     from invoice_toolkit.invoice.models.customer import Customer
@@ -75,12 +76,14 @@ def default_project_paths() -> ProjectPaths:
     """Construct a ProjectPaths with CWD-based defaults."""
     project_root = Path.cwd().resolve()
     data_dir = Path(os.getenv("DATA_DIR", str(project_root / "data")))
+    cwd_template_dir = project_root / "template"
+    template_dir = cwd_template_dir if cwd_template_dir.is_dir() else bundled_template_dir()
     return ProjectPaths(
         project_root=project_root,
         data_dir=data_dir,
         out_dir=project_root / "out",
         tmp_dir=project_root / "tmp",
-        template_dir=project_root / "template",
+        template_dir=template_dir,
         invoice_history_file=data_dir / "invoice.csv",
         invoice_customer_file=data_dir / "customer.csv",
     )

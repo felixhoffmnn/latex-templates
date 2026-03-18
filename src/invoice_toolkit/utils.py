@@ -1,17 +1,21 @@
 """Shared utilities for configuration and Jinja environment."""
 
 import logging
-from typing import TYPE_CHECKING
+import shutil
+from importlib.resources import files
+from pathlib import Path
 
 import jinja2
 import typst
 import yaml
 from pydantic import BaseModel
 
-if TYPE_CHECKING:
-    from pathlib import Path
-
 logger = logging.getLogger("invoice_toolkit")
+
+
+def bundled_template_dir() -> Path:
+    """Return the path to the templates bundled inside the installed package."""
+    return Path(str(files("invoice_toolkit").joinpath("templates")))
 
 
 def _currency_filter(value, locale="de"):
@@ -31,13 +35,19 @@ def create_jinja_env(template_dir: Path) -> jinja2.Environment:
     return env
 
 
-def render_typst_to_pdf(rendered: str, typ_path: Path, pdf_path: Path, project_root: Path) -> None:
-    """Write a rendered Typst source to *typ_path* and compile it to *pdf_path*."""
+def render_typst_to_pdf(rendered: str, typ_path: Path, pdf_path: Path, project_root: Path, template_dir: Path) -> None:
+    """Write a rendered Typst source to *typ_path* and compile it to *pdf_path*.
+
+    Copies ``base.typ`` from *template_dir* next to *typ_path* so the
+    ``#import "base.typ"`` directive in the rendered template resolves correctly.
+    """
     try:
         with typ_path.open("w") as f:
             f.write(rendered)
     except OSError as e:
         raise OSError(f"Failed to write Typst file {typ_path}: {e}") from e
+
+    shutil.copy2(template_dir / "base.typ", typ_path.parent / "base.typ")
 
     try:
         typst.compile(str(typ_path), output=str(pdf_path), root=str(project_root))

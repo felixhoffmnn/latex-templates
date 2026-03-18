@@ -58,7 +58,9 @@ def create_letter(
         content=content,
     )
 
-    render_typst_to_pdf(rendered_template, generated_typ_file, generated_pdf_file, paths.project_root)
+    render_typst_to_pdf(
+        rendered_template, generated_typ_file, generated_pdf_file, paths.project_root, paths.template_dir
+    )
 
     if output is not None:
         output.parent.mkdir(parents=True, exist_ok=True)
