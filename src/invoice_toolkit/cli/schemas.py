@@ -26,4 +26,5 @@ def schemas_command():
     for schema in schemas:
         with (schema_dir / f"{schema.__name__.lower()}.json").open("w") as f:
             json.dump(schema.model_json_schema(), f, indent=2)
+            f.write("\n")
         logger.info(f"Generated schema for {schema.__name__}")
