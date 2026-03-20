@@ -1,4 +1,4 @@
-"""Tests for invoice_cli/utils.py: path resolution, validate_paths, confirm, get_thunderbird, compose_email."""
+"""Tests for invoice_toolkit/cli/utils.py: path resolution, validate_paths, confirm, get_thunderbird, compose_email."""
 
 from pathlib import Path
 from unittest.mock import patch

@@ -55,6 +55,7 @@ def _parse_selection(raw: str, max_index: int) -> list[int] | None:
             try:
                 start, end = int(bounds[0].strip()), int(bounds[1].strip())
             except ValueError:
+                logger.warning(f"Ignoring invalid range segment: '{part}'")
                 continue
             for i in range(start, end + 1):
                 if 0 <= i <= max_index and i not in seen:
@@ -64,6 +65,7 @@ def _parse_selection(raw: str, max_index: int) -> list[int] | None:
             try:
                 i = int(part)
             except ValueError:
+                logger.warning(f"Ignoring invalid selection segment: '{part}'")
                 continue
             if 0 <= i <= max_index and i not in seen:
                 seen.add(i)
@@ -157,7 +159,6 @@ def invoice_command(
         Path | None, typer.Option("--output", "-o", help="Custom output path (without extension).")
     ] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Generate without archiving or sending.")] = False,
-    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable debug logging.")] = False,
     make_all: Annotated[
         bool, typer.Option("--all", help="Generate all invoices without interactive selection.")
     ] = False,
@@ -236,6 +237,6 @@ def print_customer_command(
             parsed_file = csv.DictReader(f)
             for customer in parsed_file:
                 print(f"{customer['name']}: {customer['customer_id']}")
-    except (OSError, csv.Error) as e:
+    except (OSError, csv.Error, KeyError) as e:
         logger.error(f"Failed to read customer file {file}: {e}")
         sys.exit(1)

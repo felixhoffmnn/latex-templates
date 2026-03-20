@@ -6,9 +6,9 @@ from invoice_toolkit.models import Address
 
 
 class Location(BaseModel):
-    """References are used to add additional information to the letter.
+    """A key-value pair displayed in the letter's information block.
 
-    For example, the reference could be a customer number or a project name.
+    For example, a customer number or a project name.
     """
 
     key: str
@@ -16,7 +16,7 @@ class Location(BaseModel):
 
 
 class Letter(BaseModel):
-    """Addressee model for a letter."""
+    """Letter frontmatter model containing recipient, subject, and formatting options."""
 
     recipient: Address
     location: list[Location] | None = None

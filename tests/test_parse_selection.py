@@ -1,4 +1,4 @@
-"""Tests for invoice_cli/invoice.py: _parse_selection."""
+"""Tests for invoice_toolkit/cli/invoice.py: _parse_selection."""
 
 import pytest
 

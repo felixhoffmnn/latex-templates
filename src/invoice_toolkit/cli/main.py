@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Annotated
 
 import typer
 
@@ -14,10 +15,12 @@ app = typer.Typer(help="Invoice Toolkit — generate invoices and letters from t
 
 
 @app.callback()
-def _config_logging():
-    """Configure the logging level based on the debug flag."""
+def _config_logging(
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable debug logging.")] = False,
+):
+    """Configure root logging level."""
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.DEBUG if verbose else logging.INFO,
         format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )

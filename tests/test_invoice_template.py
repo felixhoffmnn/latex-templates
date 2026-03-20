@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import csv
+from itertools import count
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 from factories import make_invoice as _base_make_invoice
 
-import invoice_toolkit.invoice.template as tpl
 from invoice_toolkit.invoice.template import (
     archive_invoice,
     get_invoice_id,
@@ -99,18 +99,14 @@ class TestGetInvoiceId:
         assert csv_file.exists()
 
     def test_dry_run_increments_counter(self, tmp_path):
-        tpl._dry_run_counter = 0
         csv_file = tmp_path / "invoice.csv"
+        counter = count(1)
 
-        with patch.dict("os.environ", {"LAST_INVOICE": "1"}):
-            first = get_invoice_id(dry_run=True, history_file=csv_file)
-            second = get_invoice_id(dry_run=True, history_file=csv_file)
+        first = get_invoice_id(dry_run=True, history_file=csv_file, _counter=counter)
+        second = get_invoice_id(dry_run=True, history_file=csv_file, _counter=counter)
 
         assert first == 1
         assert second == 2
-
-        # Reset to avoid leaking state
-        tpl._dry_run_counter = 0
 
     def test_last_invoice_env_var_override(self, tmp_path):
         csv_file = tmp_path / "invoice.csv"

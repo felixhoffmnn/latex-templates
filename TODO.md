@@ -17,7 +17,6 @@ This file tracks planned features and improvements. Items are grouped by categor
 - Extract the cli into a separate package
 - Extract the core logic into a separate package
 - Publish the packages on Github
-- Make fire dependency optional and only use it in the cli package
 - Evaluate all the other dependencies and make them optional if they are only used in specific parts of the codebase
 
 ## ty Typechecking

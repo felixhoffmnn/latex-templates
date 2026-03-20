@@ -37,8 +37,9 @@ def compile_template(template_name: str, data: dict, pdf_path: Path, template_di
 def build_sender_data(sender: Sender) -> dict:
     """Serialize a Sender model into the dict expected by Typst templates.
 
-    Returns a flat structure with ``sender``, ``tax``, and ``bank`` keys
-    containing only plain strings (no Pydantic special types).
+    Returns a nested dict with top-level ``sender``, ``tax``, and ``bank``
+    keys, each mapping to a dict of plain string values (no Pydantic special
+    types).
     """
     phone = str(sender.phone).replace("tel:", "").replace("-", " ")
     return {

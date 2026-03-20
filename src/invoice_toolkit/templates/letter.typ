@@ -61,6 +61,9 @@
 
 #letter.opening
 
+// NOTE: content comes from the user's local Markdown file, converted to Typst
+// markup by pypandoc.  #eval executes arbitrary Typst code — only process
+// trusted input.
 #eval(content, mode: "markup")
 
 #letter.closing

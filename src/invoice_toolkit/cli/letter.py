@@ -28,7 +28,6 @@ def letter_command(
         Path | None, typer.Option("--output", "-o", help="Custom output path (without extension).")
     ] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Generate without opening.")] = False,
-    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable debug logging.")] = False,
     open_pdf: Annotated[bool, typer.Option("--open-pdf/--no-open-pdf", help="Open the generated PDF.")] = True,
 ):
     """Create a letter."""

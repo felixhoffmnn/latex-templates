@@ -8,6 +8,7 @@ import logging
 import os
 import shutil
 from dataclasses import dataclass
+from itertools import count
 from typing import TYPE_CHECKING, Literal
 
 from invoice_toolkit.invoice import utils
@@ -16,6 +17,7 @@ from invoice_toolkit.invoice.xrechnung import generate_xrechnung_xml
 from invoice_toolkit.utils import build_sender_data, compile_template
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
     from invoice_toolkit.invoice.models.customer import Customer
@@ -24,9 +26,6 @@ if TYPE_CHECKING:
     from invoice_toolkit.settings import ProjectPaths
 
 logger = logging.getLogger(__name__)
-
-# Counter used to generate unique IDs in dry-run mode across a batch
-_dry_run_counter = 0
 
 
 @dataclass(frozen=True)
@@ -54,15 +53,14 @@ def setup_csv_archive(file: Path):
             raise OSError(f"Failed to create CSV archive {file}: {e}") from e
 
 
-def get_invoice_id(dry_run: bool, history_file: Path) -> int:
+def get_invoice_id(dry_run: bool, history_file: Path, _counter: Iterator[int] | None = None) -> int:
     """Access the archive csv file and return the next invoice id."""
-    global _dry_run_counter  # noqa: PLW0603
-
     custom_last_invoice = int(os.environ.get("LAST_INVOICE", "1"))
 
     if dry_run:
-        _dry_run_counter += 1
-        return custom_last_invoice + _dry_run_counter - 1
+        if _counter is not None:
+            return next(_counter)
+        return custom_last_invoice
 
     setup_csv_archive(history_file)
 
@@ -229,10 +227,14 @@ def create_invoice(
     dry_run: bool,
     paths: ProjectPaths,
     output: Path | None = None,
+    _dry_run_counter: Iterator[int] | None = None,
 ) -> InvoiceResult | None:
     """Create one invoice and return the result.
 
     Returns None if the invoice is skipped (already sent/paid).
+    For batched dry-run usage, pass a shared counter (e.g.
+    ``itertools.count(start)``) via *_dry_run_counter* to get
+    incrementing invoice IDs across calls.
     """
     if invoice.status in ["sent", "paid"]:
         logger.info("Skipping invoice because it has already been sent or paid.")
@@ -242,7 +244,7 @@ def create_invoice(
 
     customer = utils.load_customer(customer_file, invoice.customer_id)
 
-    invoice.invoice_id = get_invoice_id(dry_run, paths.invoice_history_file)
+    invoice.invoice_id = get_invoice_id(dry_run, paths.invoice_history_file, _counter=_dry_run_counter)
     invoice.invoice_number = f"RE{invoice.invoice_id:04d}"
 
     if invoice.due_date is None:
@@ -301,8 +303,8 @@ def create_invoices(
 
     Returns a list of InvoiceResult for each successfully generated invoice.
     """
-    global _dry_run_counter  # noqa: PLW0603
-    _dry_run_counter = 0
+    custom_last_invoice = int(os.environ.get("LAST_INVOICE", "1"))
+    dry_run_counter = count(custom_last_invoice) if dry_run else None
 
     results: list[InvoiceResult] = []
 
@@ -314,6 +316,7 @@ def create_invoices(
             dry_run,
             paths,
             output=output,
+            _dry_run_counter=dry_run_counter,
         )
         if result is not None:
             results.append(result)
