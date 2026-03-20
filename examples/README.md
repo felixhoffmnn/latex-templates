@@ -16,6 +16,16 @@ The second file contains information about your customers (see [vat-exempt/custo
 
 Lastly, create a file containing the invoices you want to generate (see [vat-exempt/invoices.example.yml](vat-exempt/invoices.example.yml) or [vat/invoices.example.yml](vat/invoices.example.yml)). Please create a copy named `invoice.yml`[^2].
 
+## Schema validation
+
+For IDE autocompletion and validation, each example YAML file includes a schema comment on the first line:
+
+```yaml
+# yaml-language-server: $schema=../../schema/config.json
+```
+
+See the [`schema/`](../schema/) directory for all available schemas.
+
 [^1]: I suggest to place the file in the root directory of the repository.
 
 [^2]: Because this file contains sensitive information, I suggest to place it outside of the repository. You can specify the location of the file using the `DATA_DIR` environment variable. Alternatively, it will default to the `data` directory.

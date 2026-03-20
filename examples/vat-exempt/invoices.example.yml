@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../schema/invoices.json
 .item-cake: &item-cake
   name: "Kleiner Kuchen"
   quantity: 1

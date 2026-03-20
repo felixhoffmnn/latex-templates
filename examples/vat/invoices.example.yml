@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../schema/invoices.json
 .item-consultation-vat: &item-consultation-vat
   name: "Beratung"
   description: "Beratung für die Website"

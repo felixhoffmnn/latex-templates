@@ -7,9 +7,5 @@
   },
   "[toml]": {
     "editor.defaultFormatter": "tamasfe.even-better-toml"
-  },
-  "yaml.schemas": {
-    "schema/invoices.json": "**/invoices*.yml",
-    "schema/config.json": "**/config*.yml"
   }
 }

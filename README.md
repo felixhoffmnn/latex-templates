@@ -42,6 +42,53 @@ just letter [letter-path]
 
 Omit the path argument to generate the bundled example. Run `just --list` to see all available commands.
 
+## Usage
+
+The toolkit can be used directly via [`uvx`](https://docs.astral.sh/uv/) without cloning the repository:
+
+### Generating invoices
+
+```bash
+uvx --extra cli invoice-toolkit toolkit invoice \
+    --invoices invoices.yml \
+    --config config.yml \
+    --customer customer.csv
+```
+
+### Generating letters
+
+```bash
+uvx --extra cli invoice-toolkit toolkit letter letter.md --config config.yml
+```
+
+### Generating JSON schemas
+
+```bash
+uvx --extra cli invoice-toolkit toolkit schemas
+```
+
+### YAML schema validation
+
+For IDE autocompletion and validation, add a schema comment as the first line of your YAML files. You can reference the schemas locally or via GitHub:
+
+```yaml
+# Local (cloned repo)
+# yaml-language-server: $schema=../../schema/config.json
+
+# GitHub (without cloning)
+# yaml-language-server: $schema=https://raw.githubusercontent.com/felixhoffmnn/invoice-toolkit/main/schema/config.json
+```
+
+The `schema/` directory contains pre-generated JSON schemas for all configuration models (`config.json`, `invoices.json`, `customer.json`). These are compatible with the [YAML Language Server](https://github.com/redhat-developer/yaml-language-server) used by VS Code and other editors.
+
+Available schemas:
+
+| Schema   | Local path             | GitHub URL                                                                                 |
+| -------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+| Config   | `schema/config.json`   | `https://raw.githubusercontent.com/felixhoffmnn/invoice-toolkit/main/schema/config.json`   |
+| Invoices | `schema/invoices.json` | `https://raw.githubusercontent.com/felixhoffmnn/invoice-toolkit/main/schema/invoices.json` |
+| Customer | `schema/customer.json` | `https://raw.githubusercontent.com/felixhoffmnn/invoice-toolkit/main/schema/customer.json` |
+
 ## License
 
 This project is licensed under the GNU GPLv3 License - see the [COPYING](COPYING) file for details.

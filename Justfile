@@ -62,7 +62,7 @@ format:
 
 # Generate examples and previews for the templates
 [group("utils")]
-generate-examples: json-schema
+generate-examples:
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -103,4 +103,3 @@ pre-commit:
 clean:
     -rm template/*.{bak*,log}
     -rm -r {out,tmp}
-    -find schema -mindepth 1 ! -name '.gitignore' -delete

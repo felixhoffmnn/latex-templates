@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../schema/config.json
 sender:
   address:
     name: "Musterfirma GmbH"

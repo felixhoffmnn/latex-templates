@@ -11,8 +11,4 @@ AGENTS.md
 out/
 tmp/
 
-template/*
-!template/*.typ.j2
-!template/*.typ
-
 config.yml
