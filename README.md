@@ -1,65 +1,93 @@
-# Latex Templates
+# Invoice Toolkit
 
-This project is intended to be a **collection of templates** for invoices and letters. While there are many tools and templates out there, I found it difficult to find a _simple template_ that I could _easily modify_ to my needs. The goal of this project is to provide a simple template that can be easily modified to suit also your needs.
+This project is a **toolkit for generating invoices and letters** from simple configuration files. While there are many tools and templates out there, I found it difficult to find a _simple template_ that I could _easily modify_ to my needs. The goal of this project is to provide simple templates that can be easily modified to suit also your needs.
 
 ## Preview
 
-| Letter Template                                                                | Invoice Template                                                                  |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
-| [![Letter Template](examples/letter.preview.png)](examples/letter.example.pdf) | [![Invoice Template](examples/invoice.preview.png)](examples/invoice.example.pdf) |
+| Letter Template                                                                              | Invoice Template (no VAT)                                                                                        | Invoice Template (with VAT)                                                                          |
+| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| [![Letter Template](examples/letter/letter.preview.png)](examples/letter/letter.example.pdf) | [![Invoice Template (no VAT)](examples/vat-exempt/invoice.preview.png)](examples/vat-exempt/invoice.example.pdf) | [![Invoice Template (with VAT)](examples/vat/invoice.preview.png)](examples/vat/invoice.example.pdf) |
 
 ## Invoice and Letter Template
 
 **Features:**
 
-- [x] Invoice Template
-- [x] Letter Template
-- [ ] Support for multiple languages
-  - Currently only german is supported.
-- [ ] Support for multiple currencies
-- [ ] Add support for XRechnung
-- [ ] Migrate to typst for faster rendering
-- [x] Type validation using [pydantic](https://docs.pydantic.dev)
-- [x] Support schema validation for VSCode (schemas are located in the `schemas` directory)
-- [x] QR Code generation for bank transfer using [qrbill](https://ctan.org/pkg/qrbill)
-- [ ] Support `VAT > 0` (currently only `VAT = 0` is supported)
-- [x] Support multiple pages for invoices
-- [x] Easy interaction using [just](https://just.systems/man/en/)
-- [x] Using a `texlive/texlive:latest-full` container for building the templates
-- [x] Python dependency management using [uv](https://docs.astral.sh/uv/)
-- [x] Keep track of the amount of invoices (using a `csv` file)
-- [x] Open Thunderbird with the generated pdf as attachment
+- Invoice Template
+- Letter Template
+- Migrate to typst for faster rendering
+- Type validation using [pydantic](https://docs.pydantic.dev)
+- Support schema validation for VSCode (schemas are located in the `schema` directory)
+- QR Code generation for bank transfer using [tiaoma](https://typst.app/universe/package/tiaoma)
+- Support multiple pages for invoices
+- Easy interaction using [just](https://just.systems/man/en/)
+- Python dependency management using [uv](https://docs.astral.sh/uv/)
+- Keep track of the amount of invoices (using a `csv` file)
+- Open Thunderbird with the generated pdf as attachment
   - Requires Thunderbird to be installed as a `flatpak` package
-  - Additionally, you need to allow Thunberbird to access the output directory (**Note:** This is a security risk, as it allows Thunderbird to access all files in the output directory)
-  - Alternatively you can disable this feature by setting `OPEN_MAIL` to `false` in the `.env` file
+  - Additionally, you need to allow Thunderbird to access the output directory
+  - You can disable this feature by setting `settings.open_mail_client` to `false` in `config.yml`
 
 ## Getting Started
 
-> :warning: You will need to have [podman](https://podman.io) or [docker](https://www.docker.com) installed on your system
-
 You can either just clone this repository or create a fork of it. First of all, you need to install the dependencies using **[uv](https://github.com/astral-sh/uv)** (if you haven't heard of it, you should google it, and follow a tutorial on how to use it). Additionally I suggest using **[just](https://just.systems/man/en/)**.
 
-For initial testing, I created some example configuration files. If you want **to customize the templates** to your needs, **see this [file](examples/README.md)**.
+For initial testing, I created some example configuration files. If you want **to customize the templates** to your needs, **see [examples/README.md](examples/README.md)**.
 
-Following, you should be able to create your first invoice by running the following command:
-
-```bash
-just invoice <invoice-path>
-
-# If you just want to generate the example invoice
-just invoice
-```
-
-or if you want to create a letter:
+Following, you should be able to create your first invoice or letter:
 
 ```bash
-just letter <letter-path>
-
-# If you just want to generate the example letter
-just letter
+just invoice [invoice-path]
+just letter [letter-path]
 ```
 
-You can view all available commands by running `just --list` (or just `just`).
+Omit the path argument to generate the bundled example. Run `just --list` to see all available commands.
+
+## Usage
+
+The toolkit can be used directly via [`uvx`](https://docs.astral.sh/uv/) without cloning the repository:
+
+### Generating invoices
+
+```bash
+uvx --extra cli invoice-toolkit toolkit invoice \
+    --invoices invoices.yml \
+    --config config.yml \
+    --customer customer.csv
+```
+
+### Generating letters
+
+```bash
+uvx --extra cli invoice-toolkit toolkit letter letter.md --config config.yml
+```
+
+### Generating JSON schemas
+
+```bash
+uvx --extra cli invoice-toolkit toolkit schemas
+```
+
+### YAML schema validation
+
+For IDE autocompletion and validation, add a schema comment as the first line of your YAML files. You can reference the schemas locally or via GitHub:
+
+```yaml
+# Local (cloned repo)
+# yaml-language-server: $schema=../../schema/config.json
+
+# GitHub (without cloning)
+# yaml-language-server: $schema=https://raw.githubusercontent.com/felixhoffmnn/invoice-toolkit/main/schema/config.json
+```
+
+The `schema/` directory contains pre-generated JSON schemas for all configuration models (`config.json`, `invoices.json`, `customer.json`). These are compatible with the [YAML Language Server](https://github.com/redhat-developer/yaml-language-server) used by VS Code and other editors.
+
+Available schemas:
+
+| Schema   | Local path             | GitHub URL                                                                                 |
+| -------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+| Config   | `schema/config.json`   | `https://raw.githubusercontent.com/felixhoffmnn/invoice-toolkit/main/schema/config.json`   |
+| Invoices | `schema/invoices.json` | `https://raw.githubusercontent.com/felixhoffmnn/invoice-toolkit/main/schema/invoices.json` |
+| Customer | `schema/customer.json` | `https://raw.githubusercontent.com/felixhoffmnn/invoice-toolkit/main/schema/customer.json` |
 
 ## License
 

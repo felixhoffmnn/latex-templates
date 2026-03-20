@@ -4,14 +4,11 @@ __pycache__/
 .mypy_cache/
 .env
 
-data/
+.claude/
+CLAUDE.md
+AGENTS.md
+
 out/
 tmp/
-schema/
-
-template/*
-!template/*.tex.j2
-!template/*.tex
-!template/*.cls
 
 config.yml

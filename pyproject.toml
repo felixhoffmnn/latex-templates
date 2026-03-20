@@ -1,34 +1,54 @@
 [project]
-name = "latex_templates"
-version = "0.3.0"
-description = "A collection of LaTeX templates."
+name = "invoice-toolkit"
+version = "0.4.0"
+description = "A collection of templates for letters and invoices."
 authors = [{ name = "Felix Hoffmann", email = "post@felix-hoffmann.dev" }]
 readme = "README.md"
-requires-python = ">=3.12"
+license = { file = "COPYING" }
+requires-python = ">=3.14"
 dependencies = [
     "email-validator>=2.2.0",
-    "fire>=0.7.0",
-    "jinja2>=3.1.4",
-    "loguru>=0.7.2",
     "phonenumbers>=8.13.48",
     "pydantic>=2.9.2",
     "pydantic-extra-types>=2.9.0",
-    "pylatex>=1.4.2",
-    "pypandoc-binary>=1.15",
     "pyyaml>=6.0.2",
+    "typst==0.13.2",
+]
+
+[project.optional-dependencies]
+cli = ["typer>=0.15.0"]
+letter = ["pypandoc-binary>=1.15"]
+xrechnung = ["drafthorse>=2025.2.0"]
+all = [
+    "invoice-toolkit[cli]",
+    "invoice-toolkit[letter]",
+    "invoice-toolkit[xrechnung]",
 ]
 
 [dependency-groups]
-types = ["types-pyyaml>=6.0.12.20240917"]
-dev = ["pre-commit>=4.0.1", "ruff>=0.7.2"]
+dev = [
+    { include-group = "lint" },
+    { include-group = "types" },
+    { include-group = "test" },
+]
+test = ["pytest>=8.0"]
+lint = ["prek>=0.3.6", "ruff>=0.7.2"]
+types = ["ty>=0.0.20", "types-pyyaml>=6.0.12.20240917"]
 
-[tool.uv]
-default-groups = ["dev", "types"]
+[project.scripts]
+toolkit = "invoice_toolkit.cli.main:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff]
+target-version = "py314"
 line-length = 120
 
 [tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 docstring-code-format = true
 
 [tool.ruff.lint]
@@ -49,21 +69,24 @@ extend-select = [
     "UP",  # pyupgrade
     "RUF", # ruff
 ]
-ignore = [
-    "D100", # Missing docstring in public module
-    "D102", # Missing docstring in public method
-    "D104", # Missing docstring in public package
-]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D101", "D102", "D103", "PLR2004"]
+"src/invoice_toolkit/invoice/xrechnung.py" = ["PLC0415"]
+"src/invoice_toolkit/letter/utils.py" = ["PLC0415"]
 
 [tool.ruff.lint.pylint]
 max-args = 10
 
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = ["pydantic.BaseModel"]
+
 [tool.ruff.lint.pydocstyle]
-convention = "numpy"
+convention = "google"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[tool.ty.environment]
+extra-paths = ["tests"]

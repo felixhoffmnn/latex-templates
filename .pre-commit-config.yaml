@@ -1,15 +1,47 @@
 repos:
-  - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.7.8
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
     hooks:
-      # Update the uv lockfile
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.3
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.22
+    hooks:
+      - id: mdformat
+        args:
+          - --wrap=no
+        additional_dependencies:
+          - mdformat-gfm # GitHub Flavored Markdown
+          - mdformat-tables # Better table formatting
+          - mdformat-frontmatter # Support for YAML front matter
+          - mdformat-footnote # Better footnote formatting
+          - mdformat-simple-breaks # Better handling thematic breaks
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.10.9
+    hooks:
       - id: uv-lock
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    # Ruff version.
-    rev: v0.11.11
+    rev: v0.15.5
     hooks:
-      # Lint
-      - id: ruff
+      - id: ruff-check
         args: [--fix]
-      # Format
       - id: ruff-format
+  - repo: local
+    hooks:
+      - id: ty-typecheck
+        name: Type checking with ty
+        entry: uv run ty check .
+        language: system
+        pass_filenames: false

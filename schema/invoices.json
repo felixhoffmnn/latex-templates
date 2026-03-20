@@ -1,0 +1,235 @@
+{
+  "$defs": {
+    "Invoice": {
+      "description": "Invoice model for an invoice file.",
+      "properties": {
+        "customer_id": {
+          "minimum": 10000,
+          "title": "Customer Id",
+          "type": "integer"
+        },
+        "invoice_id": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invoice Id"
+        },
+        "invoice_number": {
+          "anyOf": [
+            {
+              "pattern": "^RE\\d{4,}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Invoice Number"
+        },
+        "date": {
+          "format": "date",
+          "title": "Date",
+          "type": "string"
+        },
+        "start_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start Date"
+        },
+        "end_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End Date"
+        },
+        "due_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due Date"
+        },
+        "status": {
+          "default": "draft",
+          "enum": [
+            "draft",
+            "sent",
+            "paid"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "buyer_reference": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Buyer Reference"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/Item"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "total": {
+          "default": 0.0,
+          "minimum": 0,
+          "title": "Total",
+          "type": "number"
+        },
+        "total_vat": {
+          "default": 0.0,
+          "minimum": 0,
+          "title": "Total Vat",
+          "type": "number"
+        },
+        "total_gross": {
+          "default": 0.0,
+          "minimum": 0,
+          "title": "Total Gross",
+          "type": "number"
+        }
+      },
+      "required": [
+        "customer_id",
+        "items"
+      ],
+      "title": "Invoice",
+      "type": "object"
+    },
+    "Item": {
+      "description": "Item model for an invoice file.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "quantity": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Quantity",
+          "type": "integer"
+        },
+        "unit": {
+          "enum": [
+            "Stunde",
+            "St\u00fcck",
+            "Monat"
+          ],
+          "title": "Unit",
+          "type": "string"
+        },
+        "price": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Price",
+          "type": "number"
+        },
+        "total": {
+          "default": 0.0,
+          "minimum": 0,
+          "title": "Total",
+          "type": "number"
+        },
+        "vat_rate": {
+          "anyOf": [
+            {
+              "enum": [
+                0,
+                7,
+                19
+              ],
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vat Rate"
+        },
+        "vat_amount": {
+          "default": 0.0,
+          "minimum": 0,
+          "title": "Vat Amount",
+          "type": "number"
+        },
+        "gross_total": {
+          "default": 0.0,
+          "minimum": 0,
+          "title": "Gross Total",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "unit"
+      ],
+      "title": "Item",
+      "type": "object"
+    }
+  },
+  "description": "Invoices model for an invoice file.",
+  "properties": {
+    "invoices": {
+      "items": {
+        "$ref": "#/$defs/Invoice"
+      },
+      "title": "Invoices",
+      "type": "array"
+    }
+  },
+  "required": [
+    "invoices"
+  ],
+  "title": "Invoices",
+  "type": "object"
+}

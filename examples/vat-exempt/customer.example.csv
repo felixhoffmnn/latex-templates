@@ -1,0 +1,2 @@
+customer_id,name,company,email,phone,url,buyer_reference,street,zip,city
+10000,Max Mustermann,,max@mustermann.de,+49 176 12345678,,04011000-12345-34,Musterstraße 1,12345,Musterstadt

@@ -1,68 +1,105 @@
-set dotenv-load
+set dotenv-load := true
 
-uid := `id -u`
-gid := `id -g`
-
-invoice_path := join(env_var_or_default("INVOICE_DIR", "data/"), "customer.csv")
-
-container_runtime := env_var_or_default("CONTAINER_RUNTIME", "podman")
-latex_run := container_runtime + " run --rm -it -v " + justfile_directory() + ":/workdir:z -w /workdir --userns keep-id:uid=" + uid + ",gid=" + gid + " texlive/texlive:latest-full"
+CONTAINER_RUNTIME := env("CONTAINER_RUNTIME", "podman")
+OPEN_PDF := if env("OPEN_PDF", "true") == "true" {"--open-pdf"} else {"--no-open-pdf"}
+OPEN_MAIL := if env("OPEN_MAIL", "true") == "true" {"--open-mail"} else {"--no-open-mail"}
+VALIDATOR_IMAGE := "ghcr.io/felixhoffmnn/invoice-toolkit/xrechnung-validator:latest"
 
 # Print a list of available commands
-@help:
+[private]
+@default:
     just --list
 
-# Install dependencies
+# Install dependencies, bootstrap config, and generate schemas
 [group("dev")]
-@install:
+setup:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
     uv sync
-    uv run pre-commit install
+    uv run prek install
+
+    # Bootstrap .env from example if missing
+    if [ ! -f .env ]; then
+        cp .env.example .env
+        echo "Created .env from .env.example"
+    fi
+
+# Run tests
+[group("dev")]
+test:
+    uv run pytest
 
 # Check python code for type hints and linting
 [group("dev")]
 check:
-    -uv run ruff check ./src
+    -uv run ruff check
 
-# Format python and tex files
+# Format python files
 [group("dev")]
 format:
-    -uv run ruff format ./src
-    -{{ latex_run }} latexindent -s -w ./template/*.{tex.j2,tex,cls}
+    -uv run ruff format
 
 # Generate json schemas for pydantic
 [group("dev")]
-json-schema:
-    uv run python src/manage.py schemas
+@json-schema:
+    uv run --extra cli toolkit schemas
 
 # Generate a new invoice (usage: just invoice <invoice_path> <flags>)
-[group("latex")]
-@invoice *COMMANDS: json-schema
-    uv run python src/manage.py invoice {{ COMMANDS }}
+[group("typst")]
+@invoice *CMD:
+    uv run --extra cli toolkit invoice {{ CMD }} {{ OPEN_PDF }} {{ OPEN_MAIL }}
 
 # Render a letter
-[group("latex")]
+[group("typst")]
 @letter *FLAGS:
-    uv run python src/manage.py letter {{ FLAGS }}
+    uv run --extra cli toolkit letter {{ FLAGS }} {{ OPEN_PDF }}
 
 # Print customer-to-id mapping
 [group("utils")]
 @print-customer:
-    uv run python src/manage.py print-customer
+    uv run --extra cli toolkit print-customer
 
-# Generate a preview for the templates
+# Generate examples and previews for the templates
 [group("utils")]
-@generate-preview:
-    -pdftoppm -f 1 -l 1 -r 150 -png "examples/invoice.example.pdf" > "examples/invoice.preview.png"
-    -pdftoppm -f 1 -l 1 -r 150 -png "examples/letter.example.pdf" > "examples/letter.preview.png"
+generate-examples:
+    #!/usr/bin/env bash
+    set -euo pipefail
 
-# Link files outside the project
+    # Letter
+    uv run --extra cli toolkit letter examples/letter/letter.example.md \
+        --config examples/letter/config.example.yml \
+        --output examples/letter/letter.example \
+        --dry-run
+
+    # Invoices
+    for variant in vat-exempt vat; do
+        uv run --extra cli toolkit invoice --invoices "examples/${variant}/invoices.example.yml" \
+            --config "examples/${variant}/config.example.yml" \
+            --customer "examples/${variant}/customer.example.csv" \
+            --output "examples/${variant}/invoice.example" \
+            --dry-run --all
+    done
+
+    # Preview PNGs
+    for pdf in examples/*/*.example.pdf; do
+        name=$(basename "$pdf" .example.pdf)
+        pdftoppm -f 1 -l 1 -r 150 -png "$pdf" > "$(dirname "$pdf")/${name}.preview.png"
+    done
+
+# Validate a XRechnung XML file (usage: just validate <path>)
 [group("utils")]
-link-files:
-    {{ path_exists(invoice_path) }}
-    -ln -s {{ invoice_path }} data/customer.csv
+validate PATH:
+    {{ CONTAINER_RUNTIME }} run --rm -v "$(realpath {{ PATH }}):/data/$(basename {{ PATH }}):z,ro" {{ VALIDATOR_IMAGE }} "/data/$(basename {{ PATH }})"
+
+# Run pre-commit hooks
+[group("utils")]
+pre-commit:
+    uv run prek run --all-files
 
 # Clean up the project
-[group("utils"), confirm("Type 'yes' to confirm clean up! Type 'no' to cancel.")]
+[confirm("Type 'yes' to confirm clean up! Type 'no' to cancel.")]
+[group("utils")]
 clean:
     -rm template/*.{bak*,log}
     -rm -r {out,tmp}

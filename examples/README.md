@@ -1,8 +1,31 @@
-# Configuration Files
+# Example Files
 
-Within this directory, you can find some example configuration files. These files contain information, which is used to generate the invoice. The following sections will explain the different configuration files.
+This directory contains example configurations organized into subfolders by scenario:
 
-The first configuration file contains your personal information, and some settings for the template (an example file is located at [config.example.yml](config.example.yml)). Please create a copy of the file and name it `config.yml`[^1]. The second file contains the information about you customers (an example file is located at [customer.example.csv](customer.example.csv)). Please create a copy of the file and name it `customer.csv`[^2]. Lastly, you will have to create a file containing your invoices you want to create (an example file is located at [invoices.example.yml](invoices.example.yml)). Please create a copy of the file and name it `invoice.yml`[^2].
+- **[vat-exempt/](vat-exempt/)** — Invoice without VAT (Kleinunternehmer §19 UStG)
+- **[vat/](vat/)** — Invoice with VAT (7% and 19% rates)
+- **[letter/](letter/)** — Letter template
+
+Each subfolder is self-contained with its own `config.example.yml`, data files, and generated output (PDF, XML, preview PNG).
+
+## Getting started
+
+The first configuration file contains your personal information and settings for the template (see [vat-exempt/config.example.yml](vat-exempt/config.example.yml) for an example). Please create a copy named `config.yml` in the project root[^1].
+
+The second file contains information about your customers (see [vat-exempt/customer.example.csv](vat-exempt/customer.example.csv)). Please create a copy named `customer.csv`[^2].
+
+Lastly, create a file containing the invoices you want to generate (see [vat-exempt/invoices.example.yml](vat-exempt/invoices.example.yml) or [vat/invoices.example.yml](vat/invoices.example.yml)). Please create a copy named `invoice.yml`[^2].
+
+## Schema validation
+
+For IDE autocompletion and validation, each example YAML file includes a schema comment on the first line:
+
+```yaml
+# yaml-language-server: $schema=../../schema/config.json
+```
+
+See the [`schema/`](../schema/) directory for all available schemas.
 
 [^1]: I suggest to place the file in the root directory of the repository.
-[^2]: Because this file contains sensitive information, I suggest to place it outside of the repository. You can specify the location of the file using the `INVOICE_PATH` environment variable. Alternatively, it will default to the `data` directory.
+
+[^2]: Because this file contains sensitive information, I suggest to place it outside of the repository. You can specify the location of the file using the `DATA_DIR` environment variable. Alternatively, it will default to the `data` directory.

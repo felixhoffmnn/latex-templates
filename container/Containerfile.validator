@@ -1,0 +1,19 @@
+FROM docker.io/library/eclipse-temurin:21-jre-alpine
+
+ARG VALIDATOR_VERSION=1.6.2
+ARG XRECHNUNG_VERSION=3.0.2
+ARG XRECHNUNG_DATE=2026-01-31
+
+WORKDIR /opt/validator
+
+# Download KoSIT validator
+ADD https://github.com/itplr-kosit/validator/releases/download/v${VALIDATOR_VERSION}/validator-${VALIDATOR_VERSION}-standalone.jar validationtool.jar
+
+# Download XRechnung validation configuration
+ADD https://github.com/itplr-kosit/validator-configuration-xrechnung/releases/download/v${XRECHNUNG_DATE}/xrechnung-${XRECHNUNG_VERSION}-validator-configuration-${XRECHNUNG_DATE}.zip /tmp/config.zip
+RUN unzip /tmp/config.zip -d /opt/validator/config && \
+    rm /tmp/config.zip
+
+ENTRYPOINT ["java", "-jar", "validationtool.jar", \
+    "-s", "config/scenarios.xml", \
+    "-r", "config"]
