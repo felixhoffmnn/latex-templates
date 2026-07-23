@@ -1,8 +1,5 @@
-"""Invoice subcommands and post-generation orchestration."""
-
 from __future__ import annotations
 
-import csv
 import logging
 import subprocess
 import sys
@@ -17,9 +14,7 @@ if TYPE_CHECKING:
 
 from invoice_toolkit.cli.utils import (
     compose_email,
-    confirm,
     default_project_paths,
-    execute_command,
     get_thunderbird,
     resolve_config_path,
     resolve_invoices_path,
@@ -115,11 +110,10 @@ def select_invoice(invoices: list[Invoice], customer_file: Path) -> list[Invoice
     return [drafts[i] for i in indices]
 
 
-def _handle_post_generation(result: InvoiceResult, dry_run: bool, open_pdf: bool, open_mail: bool, paths: ProjectPaths):
-    """Handle post-generation steps: PDF viewing, email, archiving."""
+def _handle_post_generation(result: InvoiceResult, open_pdf: bool, open_mail: bool, paths: ProjectPaths):
     if open_pdf:
         try:
-            execute_command(["xdg-open", str(result.pdf_path)])
+            subprocess.run(["xdg-open", str(result.pdf_path)], check=True)
         except (FileNotFoundError, subprocess.CalledProcessError) as e:
             logger.warning(f"Could not open PDF viewer: {e}")
 
@@ -127,7 +121,7 @@ def _handle_post_generation(result: InvoiceResult, dry_run: bool, open_pdf: bool
         thunderbird_command = get_thunderbird()
         if thunderbird_command:
             try:
-                execute_command(
+                subprocess.run(
                     compose_email(
                         result.invoice,
                         result.config,
@@ -135,13 +129,13 @@ def _handle_post_generation(result: InvoiceResult, dry_run: bool, open_pdf: bool
                         thunderbird_command,
                         result.pdf_path,
                         result.xml_path,
-                        dry_run,
-                    )
+                    ),
+                    check=True,
                 )
             except (FileNotFoundError, subprocess.CalledProcessError) as e:
                 logger.warning(f"Could not open email client: {e}")
 
-    if not dry_run and confirm("Did everything look good and do you want to archive the invoice?"):
+    if typer.confirm("Did everything look good and do you want to archive the invoice?"):
         archive_invoice(result.output_file, result.invoice.date.year, paths.out_dir, paths.data_dir)
         store_invoice_parameter(result.invoice, paths.invoice_history_file)
         logger.info("Invoice archived and invoice number saved.")
@@ -215,7 +209,7 @@ def invoice_command(
     for result in results:
         if not dry_run:
             try:
-                _handle_post_generation(result, dry_run, open_pdf=open_pdf, open_mail=open_mail, paths=paths)
+                _handle_post_generation(result, open_pdf=open_pdf, open_mail=open_mail, paths=paths)
             except OSError as e:
                 logger.error(f"Post-generation failed for {result.output_file}: {e}")
         else:
@@ -233,10 +227,8 @@ def print_customer_command(
         file = paths.invoice_customer_file
 
     try:
-        with file.open("r", encoding="utf-8-sig") as f:
-            parsed_file = csv.DictReader(f)
-            for customer in parsed_file:
-                print(f"{customer['name']}: {customer['customer_id']}")
-    except (OSError, csv.Error, KeyError) as e:
+        for customer_id, customer in utils.load_customers(file).items():
+            print(f"{customer.address.name}: {customer_id}")
+    except ValueError as e:
         logger.error(f"Failed to read customer file {file}: {e}")
         sys.exit(1)

@@ -1,5 +1,3 @@
-"""Invoice Toolkit — generate invoices and letters from templates."""
-
 from invoice_toolkit.invoice.template import InvoiceResult, create_invoice, create_invoices
 from invoice_toolkit.letter.template import create_letter
 from invoice_toolkit.models import Config

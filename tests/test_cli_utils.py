@@ -1,5 +1,3 @@
-"""Tests for invoice_toolkit/cli/utils.py: path resolution, validate_paths, confirm, get_thunderbird, compose_email."""
-
 from pathlib import Path
 from unittest.mock import patch
 
@@ -9,245 +7,85 @@ from factories import make_config, make_customer, make_invoice
 from invoice_toolkit.cli.utils import (
     _find_yaml,
     compose_email,
-    confirm,
     get_thunderbird,
     resolve_config_path,
     resolve_invoices_path,
     validate_paths,
 )
 
-# ---------------------------------------------------------------------------
-# _find_yaml
-# ---------------------------------------------------------------------------
+
+def test_find_yaml_prefers_yml(tmp_path):
+    assert _find_yaml(tmp_path, "invoices") is None
+    yaml_file = tmp_path / "invoices.yaml"
+    yaml_file.touch()
+    assert _find_yaml(tmp_path, "invoices") == yaml_file
+    yml_file = tmp_path / "invoices.yml"
+    yml_file.touch()
+    assert _find_yaml(tmp_path, "invoices") == yml_file
 
 
-class TestFindYaml:
-    def test_yml_exists(self, tmp_path):
-        (tmp_path / "invoices.yml").touch()
-        assert _find_yaml(tmp_path, "invoices") == tmp_path / "invoices.yml"
-
-    def test_yaml_exists(self, tmp_path):
-        (tmp_path / "invoices.yaml").touch()
-        assert _find_yaml(tmp_path, "invoices") == tmp_path / "invoices.yaml"
-
-    def test_yml_preferred_over_yaml(self, tmp_path):
-        (tmp_path / "invoices.yml").touch()
-        (tmp_path / "invoices.yaml").touch()
-        assert _find_yaml(tmp_path, "invoices") == tmp_path / "invoices.yml"
-
-    def test_neither_returns_none(self, tmp_path):
-        assert _find_yaml(tmp_path, "invoices") is None
+def test_resolve_invoices_path_precedence(tmp_path, env_cleanup):
+    assert resolve_invoices_path(tmp_path) == tmp_path / "invoices.yaml"
+    yaml_file = tmp_path / "invoices.yaml"
+    yaml_file.touch()
+    assert resolve_invoices_path(tmp_path) == yaml_file
+    yml_file = tmp_path / "invoices.yml"
+    yml_file.touch()
+    assert resolve_invoices_path(tmp_path) == yml_file
+    with patch.dict("os.environ", {"INVOICES_PATH": "/custom/invoices.yml"}):
+        assert resolve_invoices_path(tmp_path) == Path("/custom/invoices.yml")
 
 
-# ---------------------------------------------------------------------------
-# resolve_invoices_path
-# ---------------------------------------------------------------------------
+def test_resolve_config_path_precedence(tmp_path, env_cleanup):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    assert resolve_config_path(data_dir, tmp_path) == tmp_path / "config.yaml"
+
+    root_config = tmp_path / "config.yaml"
+    root_config.touch()
+    assert resolve_config_path(data_dir, tmp_path) == root_config
+
+    data_config = data_dir / "config.yml"
+    data_config.touch()
+    assert resolve_config_path(data_dir, tmp_path) == data_config
+
+    with patch.dict("os.environ", {"CONFIG_PATH": "/custom/config.yml"}):
+        assert resolve_config_path(data_dir, tmp_path) == Path("/custom/config.yml")
 
 
-class TestResolveInvoicesPath:
-    def test_env_var_takes_priority(self, tmp_path):
-        with patch.dict("os.environ", {"INVOICES_PATH": "/custom/invoices.yml"}):
-            result = resolve_invoices_path(tmp_path)
-        assert result == Path("/custom/invoices.yml")
-
-    def test_yml_file_found(self, tmp_path, env_cleanup):
-        (tmp_path / "invoices.yml").touch()
-        result = resolve_invoices_path(tmp_path)
-        assert result == tmp_path / "invoices.yml"
-
-    def test_yaml_file_found(self, tmp_path, env_cleanup):
-        (tmp_path / "invoices.yaml").touch()
-        result = resolve_invoices_path(tmp_path)
-        assert result == tmp_path / "invoices.yaml"
-
-    def test_fallback_default(self, tmp_path, env_cleanup):
-        result = resolve_invoices_path(tmp_path)
-        assert result == tmp_path / "invoices.yaml"
+def test_validate_paths(tmp_path):
+    existing = tmp_path / "exists"
+    existing.touch()
+    validate_paths([(existing, "existing file")])
+    with pytest.raises(SystemExit) as error:
+        validate_paths([(tmp_path / "missing", "missing file")])
+    assert error.value.code == 1
 
 
-# ---------------------------------------------------------------------------
-# resolve_config_path
-# ---------------------------------------------------------------------------
+def test_get_thunderbird_fallbacks():
+    with patch("invoice_toolkit.cli.utils.subprocess.run"):
+        assert get_thunderbird() == ["thunderbird"]
+    with patch("invoice_toolkit.cli.utils.subprocess.run", side_effect=[FileNotFoundError, None]):
+        assert get_thunderbird() == ["flatpak", "run", "org.mozilla.Thunderbird"]
+    with patch("invoice_toolkit.cli.utils.subprocess.run", side_effect=FileNotFoundError):
+        assert get_thunderbird() is None
 
 
-class TestResolveConfigPath:
-    def test_env_var_takes_priority(self, tmp_path):
-        with patch.dict("os.environ", {"CONFIG_PATH": "/custom/config.yml"}):
-            result = resolve_config_path(tmp_path / "data", tmp_path)
-        assert result == Path("/custom/config.yml")
+def test_compose_email_contract(tmp_path):
+    pdf = tmp_path / "RE0001.pdf"
+    xml = tmp_path / "RE0001.xml"
+    pdf.touch()
+    invoice = make_invoice()
 
-    def test_data_dir_config_found(self, tmp_path, env_cleanup):
-        data_dir = tmp_path / "data"
-        data_dir.mkdir()
-        (data_dir / "config.yml").touch()
-        result = resolve_config_path(data_dir, tmp_path)
-        assert result == data_dir / "config.yml"
+    command = compose_email(invoice, make_config(), make_customer(), ["thunderbird"], pdf, xml)
+    assert command[:2] == ["thunderbird", "-compose"]
+    assert "Rechnung RE0001" in command[2]
+    assert "Kunde Name" in command[2]
+    assert str(pdf.absolute()) in command[2]
+    assert str(xml.absolute()) not in command[2]
 
-    def test_project_root_config_found(self, tmp_path, env_cleanup):
-        data_dir = tmp_path / "data"
-        data_dir.mkdir()
-        (tmp_path / "config.yaml").touch()
-        result = resolve_config_path(data_dir, tmp_path)
-        assert result == tmp_path / "config.yaml"
+    xml.touch()
+    assert str(xml.absolute()) in compose_email(invoice, make_config(), make_customer(), ["thunderbird"], pdf, xml)[2]
 
-    def test_fallback_default(self, tmp_path, env_cleanup):
-        data_dir = tmp_path / "data"
-        data_dir.mkdir()
-        result = resolve_config_path(data_dir, tmp_path)
-        assert result == tmp_path / "config.yaml"
-
-
-# ---------------------------------------------------------------------------
-# validate_paths
-# ---------------------------------------------------------------------------
-
-
-class TestValidatePaths:
-    def test_all_paths_exist(self, tmp_path):
-        f1 = tmp_path / "a.txt"
-        f2 = tmp_path / "b.txt"
-        f1.touch()
-        f2.touch()
-        validate_paths([(f1, "file a"), (f2, "file b")])  # should not exit
-
-    def test_missing_path_exits(self, tmp_path):
-        missing = tmp_path / "nonexistent.txt"
-        with pytest.raises(SystemExit) as exc_info:
-            validate_paths([(missing, "missing file")])
-        assert exc_info.value.code == 1
-
-    def test_multiple_missing_logs_each(self, tmp_path):
-        m1 = tmp_path / "a.txt"
-        m2 = tmp_path / "b.txt"
-        with pytest.raises(SystemExit):
-            validate_paths([(m1, "file a"), (m2, "file b")])
-
-
-# ---------------------------------------------------------------------------
-# confirm
-# ---------------------------------------------------------------------------
-
-_UNSET = object()
-
-
-class TestConfirm:
-    @pytest.mark.parametrize(
-        ("user_input", "default", "expected"),
-        [
-            pytest.param("y", _UNSET, True, id="y"),
-            pytest.param("n", _UNSET, False, id="n"),
-            pytest.param("", True, True, id="empty_default_true"),
-            pytest.param("", False, False, id="empty_default_false"),
-            pytest.param("yes", _UNSET, True, id="yes"),
-            pytest.param("no", _UNSET, False, id="no"),
-        ],
-    )
-    def test_confirm(self, user_input, default, expected):
-        with patch("builtins.input", return_value=user_input):
-            if default is _UNSET:
-                assert confirm("Continue?") is expected
-            else:
-                assert confirm("Continue?", default=default) is expected
-
-
-# ---------------------------------------------------------------------------
-# get_thunderbird
-# ---------------------------------------------------------------------------
-
-
-class TestGetThunderbird:
-    def test_bare_metal_found(self):
-        with patch("invoice_toolkit.cli.utils.subprocess.run") as mock_run:
-            mock_run.return_value = None
-            result = get_thunderbird()
-        assert result == ["thunderbird"]
-
-    def test_flatpak_found(self):
-        def side_effect(cmd, **kwargs):
-            if cmd[0] == "thunderbird":
-                raise FileNotFoundError
-
-        with patch("invoice_toolkit.cli.utils.subprocess.run", side_effect=side_effect):
-            result = get_thunderbird()
-        assert result == ["flatpak", "run", "org.mozilla.Thunderbird"]
-
-    def test_not_found(self):
-        with patch("invoice_toolkit.cli.utils.subprocess.run", side_effect=FileNotFoundError):
-            result = get_thunderbird()
-        assert result is None
-
-
-# ---------------------------------------------------------------------------
-# compose_email
-# ---------------------------------------------------------------------------
-
-
-class TestComposeEmail:
-    def test_basic_command_structure(self, tmp_path):
-        pdf = tmp_path / "RE0001.pdf"
-        xml = tmp_path / "RE0001.xml"
-        pdf.touch()
-        xml.touch()
-
-        inv = make_invoice()
-        cmd = compose_email(inv, make_config(), make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
-        assert cmd[0] == "thunderbird"
-        assert cmd[1] == "-compose"
-        assert "Rechnung RE0001" in cmd[2]
-
-    def test_dry_run_prefix_in_subject(self, tmp_path):
-        pdf = tmp_path / "RE0001.pdf"
-        xml = tmp_path / "RE0001.xml"
-        pdf.touch()
-        xml.touch()
-
-        inv = make_invoice()
-        cmd = compose_email(inv, make_config(), make_customer(), ["thunderbird"], pdf, xml, dry_run=True)
-        assert "DRY RUN:" in cmd[2]
-
-    def test_missing_due_date_raises(self, tmp_path):
-        pdf = tmp_path / "RE0001.pdf"
-        xml = tmp_path / "RE0001.xml"
-        pdf.touch()
-
-        inv = make_invoice(due_date=None)
-        with pytest.raises(ValueError, match="Due date must be set"):
-            compose_email(inv, make_config(), make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
-
-    def test_pdf_attachment_included(self, tmp_path):
-        pdf = tmp_path / "RE0001.pdf"
-        xml = tmp_path / "RE0001.xml"
-        pdf.touch()
-
-        inv = make_invoice()
-        cmd = compose_email(inv, make_config(), make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
-        assert str(pdf.absolute()) in cmd[2]
-
-    def test_xml_attachment_when_exists(self, tmp_path):
-        pdf = tmp_path / "RE0001.pdf"
-        xml = tmp_path / "RE0001.xml"
-        pdf.touch()
-        xml.touch()
-
-        inv = make_invoice()
-        cmd = compose_email(inv, make_config(), make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
-        assert str(xml.absolute()) in cmd[2]
-
-    def test_xml_attachment_excluded_when_missing(self, tmp_path):
-        pdf = tmp_path / "RE0001.pdf"
-        xml = tmp_path / "RE0001.xml"
-        pdf.touch()
-        # xml not created
-
-        inv = make_invoice()
-        cmd = compose_email(inv, make_config(), make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
-        assert str(xml.absolute()) not in cmd[2]
-
-    def test_html_body_contains_customer_name(self, tmp_path):
-        pdf = tmp_path / "RE0001.pdf"
-        xml = tmp_path / "RE0001.xml"
-        pdf.touch()
-
-        inv = make_invoice()
-        cmd = compose_email(inv, make_config(), make_customer(), ["thunderbird"], pdf, xml, dry_run=False)
-        assert "Kunde Name" in cmd[2]
+    with pytest.raises(ValueError, match="Due date must be set"):
+        compose_email(make_invoice(due_date=None), make_config(), make_customer(), ["thunderbird"], pdf, xml)

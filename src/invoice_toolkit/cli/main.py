@@ -1,5 +1,3 @@
-"""Typer CLI entry point for invoice and letter generation."""
-
 from __future__ import annotations
 
 import logging
@@ -18,7 +16,6 @@ app = typer.Typer(help="Invoice Toolkit — generate invoices and letters from t
 def _config_logging(
     verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable debug logging.")] = False,
 ):
-    """Configure root logging level."""
     logging.basicConfig(
         level=logging.DEBUG if verbose else logging.INFO,
         format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",

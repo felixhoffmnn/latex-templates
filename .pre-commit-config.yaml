@@ -24,10 +24,8 @@ repos:
           - --wrap=no
         additional_dependencies:
           - mdformat-gfm # GitHub Flavored Markdown
-          - mdformat-tables # Better table formatting
           - mdformat-frontmatter # Support for YAML front matter
           - mdformat-footnote # Better footnote formatting
-          - mdformat-simple-breaks # Better handling thematic breaks
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.10.9
     hooks:

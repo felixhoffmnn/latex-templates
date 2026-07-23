@@ -1,7 +1,4 @@
-"""Shared utilities for configuration and template compilation."""
-
 import json
-import logging
 from importlib.resources import files
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -13,11 +10,8 @@ from pydantic import BaseModel
 if TYPE_CHECKING:
     from invoice_toolkit.models import Sender
 
-logger = logging.getLogger("invoice_toolkit")
-
 
 def bundled_template_dir() -> Path:
-    """Return the path to the templates bundled inside the installed package."""
     return Path(str(files("invoice_toolkit").joinpath("templates")))
 
 
@@ -41,26 +35,17 @@ def build_sender_data(sender: Sender) -> dict:
     keys, each mapping to a dict of plain string values (no Pydantic special
     types).
     """
-    phone = str(sender.phone).replace("tel:", "").replace("-", " ")
+    data = sender.model_dump(mode="json")
+    address = data["address"]
     return {
-        "sender": {
-            "name": sender.address.name,
-            "street": sender.address.street,
-            "zip": sender.address.zip,
-            "city": sender.address.city,
-            "phone": phone,
-            "email": str(sender.email),
-            "website": str(sender.website),
+        "sender": {key: address[key] for key in ("name", "street", "zip", "city")}
+        | {
+            "phone": data["phone"].removeprefix("tel:").replace("-", " "),
+            "email": data["email"],
+            "website": data["website"],
         },
-        "tax": {
-            "office": sender.tax.office,
-            "number": sender.tax.number,
-        },
-        "bank": {
-            "name": sender.bank.name,
-            "iban": sender.bank.iban,
-            "bic": sender.bank.bic,
-        },
+        "tax": {key: data["tax"][key] for key in ("office", "number")},
+        "bank": data["bank"],
     }
 
 

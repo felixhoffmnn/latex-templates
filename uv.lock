@@ -125,6 +125,7 @@ xrechnung = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "invoice-toolkit", extra = ["all"] },
     { name = "prek" },
     { name = "pytest" },
     { name = "ruff" },
@@ -162,6 +163,7 @@ provides-extras = ["cli", "letter", "xrechnung", "all"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "invoice-toolkit", extras = ["all"] },
     { name = "prek", specifier = ">=0.3.6" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "ruff", specifier = ">=0.7.2" },

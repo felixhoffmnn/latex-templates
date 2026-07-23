@@ -1,5 +1,3 @@
-"""XRechnung CII XML generation using the drafthorse library."""
-
 import logging
 from decimal import Decimal
 from typing import TYPE_CHECKING
@@ -25,7 +23,6 @@ UNIT_CODE_MAP = {
 
 
 def _set_seller(doc: Document, sender: Sender):
-    """Set seller (BG-4) trade party on the document."""
     from drafthorse.models.party import TaxRegistration
 
     seller = doc.trade.agreement.seller
@@ -45,7 +42,6 @@ def _set_seller(doc: Document, sender: Sender):
 
 
 def _set_buyer(doc: Document, customer: Customer):
-    """Set buyer (BG-7) trade party on the document."""
     buyer = doc.trade.agreement.buyer
     buyer.name = customer.company or customer.address.name
     buyer.address.line_one = customer.address.street
@@ -56,7 +52,6 @@ def _set_buyer(doc: Document, customer: Customer):
 
 
 def _add_line_item(doc: Document, idx: int, item: Item, vat_exempt: bool):
-    """Add a single line item to the document."""
     from drafthorse.models.tradelines import LineItem
 
     li = LineItem()
@@ -88,7 +83,6 @@ def _add_line_item(doc: Document, idx: int, item: Item, vat_exempt: bool):
 
 
 def _set_settlement(doc: Document, invoice: Invoice, sender: Sender, vat_exempt: bool):
-    """Set settlement: payment means, terms, tax summaries, and monetary summation."""
     from drafthorse.models.payment import PaymentMeans, PaymentTerms
 
     doc.trade.settlement.currency_code = "EUR"
@@ -119,7 +113,6 @@ def _set_settlement(doc: Document, invoice: Invoice, sender: Sender, vat_exempt:
 
 
 def _add_tax_summaries(doc: Document, invoice: Invoice, vat_exempt: bool):
-    """Add document-level tax summaries grouped by VAT rate."""
     from drafthorse.models.accounting import ApplicableTradeTax
 
     for rate, group in sorted(group_items_by_vat(invoice.items).items()):
@@ -144,7 +137,6 @@ def _add_tax_summaries(doc: Document, invoice: Invoice, vat_exempt: bool):
 
 
 def _set_monetary_summation(doc: Document, invoice: Invoice):
-    """Set the monetary summation totals (BG-22)."""
     net_total = Decimal(str(invoice.total))
     vat_total = Decimal(str(invoice.total_vat))
     gross_total = Decimal(str(invoice.total_gross))
@@ -163,26 +155,7 @@ def _set_monetary_summation(doc: Document, invoice: Invoice):
 def generate_xrechnung_xml(
     invoice: Invoice, customer: Customer, config: Config, output_path: Path, vat_exempt: bool = False
 ) -> Path:
-    """Generate an XRechnung CII XML file for the given invoice.
-
-    Parameters
-    ----------
-    invoice : Invoice
-        The invoice with computed totals and assigned invoice_number.
-    customer : Customer
-        The customer/buyer for this invoice.
-    config : Config
-        Application config with sender, bank, and tax details.
-    output_path : Path
-        The output XML file path.
-    vat_exempt : bool
-        Whether the sender is VAT-exempt (Kleinunternehmer §19 UStG).
-
-    Returns:
-    -------
-    Path
-        The path to the generated XML file.
-    """
+    """Generate XRechnung CII XML and return its path."""
     try:
         from drafthorse.models.document import Document
     except ImportError as e:

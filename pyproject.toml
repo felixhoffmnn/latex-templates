@@ -30,6 +30,7 @@ dev = [
     { include-group = "lint" },
     { include-group = "types" },
     { include-group = "test" },
+    "invoice-toolkit[all]",
 ]
 test = ["pytest>=8.0"]
 lint = ["prek>=0.3.6", "ruff>=0.7.2"]
@@ -55,10 +56,12 @@ docstring-code-format = true
 extend-select = [
     "B",   # flake8-bugbear
     "C",   # flake8-comprehensions
+    "D2",  # pydocstyle whitespace
+    "D3",  # pydocstyle quotes
+    "D4",  # pydocstyle content
     "ERA", # flake8-eradicate/eradicate
     "I",   # isort
     "N",   # pep8-naming
-    "D",   # pydocstyle
     "PL",  # Pylint
     "PTH", # flake8-use-pathlib
     "PIE", # flake8-pie
@@ -71,7 +74,7 @@ extend-select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D101", "D102", "D103", "PLR2004"]
+"tests/**" = ["PLR2004"]
 "src/invoice_toolkit/invoice/xrechnung.py" = ["PLC0415"]
 "src/invoice_toolkit/letter/utils.py" = ["PLC0415"]
 

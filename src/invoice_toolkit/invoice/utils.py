@@ -1,7 +1,4 @@
-"""Utilities for loading invoices and customers."""
-
 import csv
-import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -12,13 +9,9 @@ if TYPE_CHECKING:
 
     from invoice_toolkit.invoice.models.invoices import Item
 
-logger = logging.getLogger(__name__)
-
 
 @dataclass(frozen=True)
 class VatGroup:
-    """Aggregated basis and tax amount for a single VAT rate."""
-
     basis: float
     amount: float
 
@@ -64,7 +57,6 @@ def load_customers(file: Path) -> dict[int, Customer]:
 
 
 def load_customer(file: Path, customer_id: str | int) -> Customer:
-    """Load a single customer by id from a CSV file."""
     customers = load_customers(file)
     customer_id = int(customer_id)
 

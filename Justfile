@@ -1,14 +1,10 @@
 set dotenv-load := true
+set default-list
 
 CONTAINER_RUNTIME := env("CONTAINER_RUNTIME", "podman")
 OPEN_PDF := if env("OPEN_PDF", "true") == "true" {"--open-pdf"} else {"--no-open-pdf"}
 OPEN_MAIL := if env("OPEN_MAIL", "true") == "true" {"--open-mail"} else {"--no-open-mail"}
 VALIDATOR_IMAGE := "ghcr.io/felixhoffmnn/invoice-toolkit/xrechnung-validator:latest"
-
-# Print a list of available commands
-[private]
-@default:
-    just --list
 
 # Install dependencies, bootstrap config, and generate schemas
 [group("dev")]

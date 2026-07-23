@@ -5,12 +5,6 @@ recipient:
   street: Musterstraße 1
   zip: 12345
   city: Musterstadt
-place: Berlin
-location:
-  - key: Ihr Zeichen
-    value: 345
-  - key: Projekt
-    value: Musterprojekt
 subject: Beispielbrief
 ---
 

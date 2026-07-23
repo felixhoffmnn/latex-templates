@@ -1,50 +1,7 @@
-#import "base.typ": (
-  letter-base, require-keys, validate-config, validate-recipient,
-)
+#import "base.typ": letter-base
 #import "@preview/tiaoma:0.3.0"
 
 #let data = json(bytes(sys.inputs.at("data", default: bytes("{}"))))
-
-#{
-  require-keys(
-    data,
-    (
-      "config",
-      "invoice",
-      "recipient",
-      "additional",
-      "has_vat",
-      "vat_groups",
-      "display_total",
-    ),
-    "data",
-  )
-  validate-config(data.config)
-  validate-recipient(data.recipient)
-
-  let inv = data.invoice
-  require-keys(
-    inv,
-    (
-      "invoice_number",
-      "date",
-      "due_date",
-      "customer_id",
-      "items",
-      "total",
-      "total_gross",
-    ),
-    "invoice",
-  )
-  assert(type(inv.items) == array, message: "invoice.items: expected an array")
-  assert(inv.items.len() > 0, message: "invoice.items: must not be empty")
-  for (i, item) in inv.items.enumerate() {
-    let ctx = "invoice.items[" + str(i) + "]"
-    require-keys(item, ("name", "quantity", "unit", "price", "total"), ctx)
-  }
-
-  require-keys(data.additional, ("purpose",), "additional")
-}
 
 #let currency(value, locale: "de") = {
   let v = float(value)
@@ -90,42 +47,11 @@
 #let vat_groups = data.vat_groups
 #let display_total = float(data.display_total)
 
-#let recipient-dict = {
-  let d = (
-    name: recipient.name,
-    street: recipient.street,
-    zip: recipient.zip,
-    city: recipient.city,
-  )
-  if "company" in recipient and recipient.company != none {
-    d.insert("company", recipient.company)
-  }
-  if "extra" in recipient and recipient.extra != none {
-    d.insert("extra", recipient.extra)
-  }
-  d
-}
-
 #show: letter-base.with(
-  sender: (
-    name: config.sender.name,
-    street: config.sender.street,
-    zip: config.sender.zip,
-    city: config.sender.city,
-    phone: config.sender.phone,
-    email: config.sender.email,
-    website: config.sender.website,
-  ),
-  tax: (
-    office: config.tax.office,
-    number: config.tax.number,
-  ),
-  bank: (
-    name: config.bank.name,
-    iban: config.bank.iban,
-    bic: config.bank.bic,
-  ),
-  recipient: recipient-dict,
+  sender: config.sender,
+  tax: config.tax,
+  bank: config.bank,
+  recipient: recipient,
   subject: "Rechnung " + invoice.invoice_number,
   date: [#invoice.date],
   information-box: {

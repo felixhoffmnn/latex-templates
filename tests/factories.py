@@ -1,5 +1,3 @@
-"""Shared test factories for invoice-toolkit."""
-
 import datetime as dt
 
 from invoice_toolkit.invoice.models.customer import Customer

@@ -1,8 +1,5 @@
-"""Letter template rendering and PDF generation via Typst."""
-
 from __future__ import annotations
 
-import logging
 import shutil
 from typing import TYPE_CHECKING
 
@@ -14,8 +11,6 @@ if TYPE_CHECKING:
 
     from invoice_toolkit.models import Config
     from invoice_toolkit.settings import ProjectPaths
-
-logger = logging.getLogger(__name__)
 
 
 def create_letter(
@@ -45,14 +40,6 @@ def create_letter(
 
     sender_data = build_sender_data(config.sender)
 
-    recipient = {
-        "name": frontmatter.recipient.name,
-        "extra": frontmatter.recipient.extra,
-        "street": frontmatter.recipient.street,
-        "zip": frontmatter.recipient.zip,
-        "city": frontmatter.recipient.city,
-    }
-
     data = {
         "config": sender_data,
         "letter": {
@@ -60,7 +47,10 @@ def create_letter(
             "opening": frontmatter.opening,
             "closing": frontmatter.closing,
         },
-        "recipient": recipient,
+        "recipient": frontmatter.recipient.model_dump(
+            mode="json",
+            include={"name", "extra", "street", "zip", "city"},
+        ),
         "content": content,
     }
 
@@ -68,7 +58,7 @@ def create_letter(
 
     if output is not None:
         output.parent.mkdir(parents=True, exist_ok=True)
-        final_path = output.with_suffix(".pdf")
+        final_path = output.parent / f"{output.name}.pdf"
         shutil.move(str(generated_pdf_file), str(final_path))
         return final_path
 

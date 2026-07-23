@@ -1,5 +1,3 @@
-"""Utilities for loading letter files with YAML frontmatter."""
-
 from typing import TYPE_CHECKING
 
 import yaml

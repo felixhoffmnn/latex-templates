@@ -1,29 +1,5 @@
 #import "@preview/letter-pro:3.0.0": letter-simple
 
-#let require-keys(dict, keys, context_) = {
-  for key in keys {
-    assert(
-      key in dict,
-      message: context_ + ": missing required key '" + key + "'",
-    )
-  }
-}
-
-#let validate-config(config) = {
-  require-keys(config, ("sender", "tax", "bank"), "config")
-  require-keys(
-    config.sender,
-    ("name", "street", "zip", "city", "phone", "email", "website"),
-    "config.sender",
-  )
-  require-keys(config.tax, ("office", "number"), "config.tax")
-  require-keys(config.bank, ("name", "iban", "bic"), "config.bank")
-}
-
-#let validate-recipient(recipient) = {
-  require-keys(recipient, ("name", "street", "zip", "city"), "recipient")
-}
-
 #let letter-base(
   sender: (
     name: none,
@@ -92,13 +68,13 @@
     let parts = ()
     let company = recipient.at("company", default: "")
     let extra = recipient.at("extra", default: "")
-    if company != "" { parts += ([#company],) }
-    if company != "" {
+    if company != none and company != "" { parts += ([#company],) }
+    if company != none and company != "" {
       parts += ([z. Hd. #recipient.name],)
     } else {
       parts += ([#recipient.name],)
     }
-    if extra != "" { parts += ([#extra],) }
+    if extra != none and extra != "" { parts += ([#extra],) }
     parts += ([#recipient.street],)
     parts += ([#recipient.zip #recipient.city],)
     parts.join(linebreak())
