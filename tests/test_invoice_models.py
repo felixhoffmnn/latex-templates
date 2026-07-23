@@ -31,7 +31,7 @@ def test_invoice_totals_and_defaults():
         customer_id=10000,
         items=[item(price=100.0, vat_rate=19), item(price=50.0, vat_rate=7)],
     )
-    assert invoice.date == dt.date.today()
+    assert invoice.date == dt.date.today()  # noqa: DTZ011 - matches the model's local-date default
     assert (invoice.total, invoice.total_vat, invoice.total_gross) == (150.0, 22.5, 172.5)
 
 

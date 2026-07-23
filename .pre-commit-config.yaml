@@ -13,11 +13,11 @@ repos:
       - id: check-added-large-files
         args: [--maxkb=1024]
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.24.3
+    rev: v8.30.1
     hooks:
       - id: gitleaks
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.22
+    rev: 1.0.0
     hooks:
       - id: mdformat
         args:
@@ -26,18 +26,23 @@ repos:
           - mdformat-gfm # GitHub Flavored Markdown
           - mdformat-frontmatter # Support for YAML front matter
           - mdformat-footnote # Better footnote formatting
-  - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.10.9
-    hooks:
-      - id: uv-lock
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.5
-    hooks:
-      - id: ruff-check
-        args: [--fix]
-      - id: ruff-format
   - repo: local
     hooks:
+      - id: uv-lock
+        name: Lock dependencies with uv
+        entry: uv lock
+        language: system
+        pass_filenames: false
+      - id: ruff-check
+        name: Linting with ruff
+        entry: uv run ruff check .
+        language: system
+        pass_filenames: false
+      - id: ruff-format
+        name: Code formatting with ruff
+        entry: uv run ruff format .
+        language: system
+        pass_filenames: false
       - id: ty-typecheck
         name: Type checking with ty
         entry: uv run ty check .

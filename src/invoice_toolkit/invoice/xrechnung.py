@@ -62,7 +62,7 @@ def _add_line_item(doc: Document, idx: int, item: Item, vat_exempt: bool):
 
     unit_code = UNIT_CODE_MAP.get(item.unit, "C62")
     li.agreement.net.amount = Decimal(str(item.price))
-    li.agreement.net.basis_quantity = (Decimal("1"), unit_code)
+    li.agreement.net.basis_quantity = (Decimal(1), unit_code)
     li.delivery.billed_quantity = (Decimal(str(item.quantity)), unit_code)
 
     li.settlement.trade_tax.type_code = "VAT"
@@ -73,10 +73,10 @@ def _add_line_item(doc: Document, idx: int, item: Item, vat_exempt: bool):
         li.settlement.trade_tax.rate_applicable_percent = Decimal(str(item.vat_rate))
     elif vat_exempt:
         li.settlement.trade_tax.category_code = "E"
-        li.settlement.trade_tax.rate_applicable_percent = Decimal("0")
+        li.settlement.trade_tax.rate_applicable_percent = Decimal(0)
     else:
         li.settlement.trade_tax.category_code = "Z"
-        li.settlement.trade_tax.rate_applicable_percent = Decimal("0")
+        li.settlement.trade_tax.rate_applicable_percent = Decimal(0)
 
     li.settlement.monetary_summation.total_amount = Decimal(str(item.total))
     doc.trade.items.add(li)
@@ -126,12 +126,12 @@ def _add_tax_summaries(doc: Document, invoice: Invoice, vat_exempt: bool):
             tax.rate_applicable_percent = Decimal(str(rate))
         elif vat_exempt:
             tax.category_code = "E"
-            tax.rate_applicable_percent = Decimal("0")
+            tax.rate_applicable_percent = Decimal(0)
             tax.exemption_reason = "Kein Ausweis von Umsatzsteuer, da Kleinunternehmer gemäß §19 UStG."
             tax.exemption_reason_code = "vatex-eu-o"
         else:
             tax.category_code = "Z"
-            tax.rate_applicable_percent = Decimal("0")
+            tax.rate_applicable_percent = Decimal(0)
 
         doc.trade.settlement.trade_tax.add(tax)
 
