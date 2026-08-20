@@ -135,16 +135,16 @@ types = [
 [package.metadata]
 requires-dist = [
     { name = "drafthorse", marker = "extra == 'xrechnung'", specifier = ">=2025.2.0" },
-    { name = "email-validator", specifier = ">=2.2.0" },
+    { name = "email-validator", specifier = ">=2.2.0,<3" },
     { name = "invoice-toolkit", extras = ["cli"], marker = "extra == 'all'" },
     { name = "invoice-toolkit", extras = ["letter"], marker = "extra == 'all'" },
     { name = "invoice-toolkit", extras = ["xrechnung"], marker = "extra == 'all'" },
-    { name = "phonenumbers", specifier = ">=8.13.48" },
-    { name = "pydantic", specifier = ">=2.9.2" },
-    { name = "pydantic-extra-types", specifier = ">=2.9.0" },
-    { name = "pypandoc-binary", marker = "extra == 'letter'", specifier = ">=1.15" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "typer", marker = "extra == 'cli'", specifier = ">=0.15.0" },
+    { name = "phonenumbers", specifier = ">=8.13.48,<10" },
+    { name = "pydantic", specifier = ">=2.9.2,<3" },
+    { name = "pydantic-extra-types", specifier = ">=2.9.0,<3" },
+    { name = "pypandoc-binary", marker = "extra == 'letter'", specifier = ">=1.15,<2" },
+    { name = "pyyaml", specifier = ">=6.0.2,<7" },
+    { name = "typer", marker = "extra == 'cli'", specifier = ">=0.15.0,<0.28" },
     { name = "typst", specifier = "==0.15.0" },
 ]
 provides-extras = ["cli", "letter", "xrechnung", "all"]
