@@ -1,5 +1,3 @@
-"""Generate JSON schemas for pydantic models."""
-
 import json
 import logging
 import sys

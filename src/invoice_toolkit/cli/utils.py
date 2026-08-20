@@ -1,5 +1,3 @@
-"""CLI utilities: path resolution, validation, confirmations, Thunderbird detection, email composition."""
-
 import logging
 import os
 import subprocess
@@ -19,27 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# Command execution
-# ---------------------------------------------------------------------------
-
-
-def execute_command(command: list[str]):
-    """Run a command as subprocess.
-
-    Raises FileNotFoundError if the command binary is not found,
-    and subprocess.CalledProcessError if the command exits non-zero.
-    """
-    subprocess.run(command, check=True)
-    logger.info("Command executed successfully.")
-
-
-# ---------------------------------------------------------------------------
 # Path resolution helpers
 # ---------------------------------------------------------------------------
 
 
 def _find_yaml(directory: Path, stem: str) -> Path | None:
-    """Return the first existing YAML file matching *stem* (.yml then .yaml)."""
     for ext in (".yml", ".yaml"):
         candidate = directory / f"{stem}{ext}"
         if candidate.exists():
@@ -73,7 +55,6 @@ def resolve_config_path(data_dir: Path, project_root: Path) -> Path:
 
 
 def default_project_paths() -> ProjectPaths:
-    """Construct a ProjectPaths with CWD-based defaults."""
     project_root = Path.cwd().resolve()
     data_dir = Path(os.getenv("DATA_DIR", str(project_root / "data")))
     cwd_template_dir = project_root / "template"
@@ -82,7 +63,6 @@ def default_project_paths() -> ProjectPaths:
         project_root=project_root,
         data_dir=data_dir,
         out_dir=project_root / "out",
-        tmp_dir=project_root / "tmp",
         template_dir=template_dir,
         invoice_history_file=data_dir / "invoice.csv",
         invoice_customer_file=data_dir / "customer.csv",
@@ -103,28 +83,7 @@ def validate_paths(paths: list[tuple[Path, str]]):
         sys.exit(1)
 
 
-# ---------------------------------------------------------------------------
-# Interactive helpers
-# ---------------------------------------------------------------------------
-
-
-def confirm(prompt: str, default: bool = True) -> bool:
-    """Confirm prompt."""
-    valid_responses = {"yes": True, "y": True, "no": False, "n": False}
-    response_prompt = f"{prompt} [Y/n] " if default else f"{prompt} [y/N] "
-
-    while True:
-        choice = input(response_prompt).lower()
-        if choice == "":
-            return default
-        elif choice in valid_responses:
-            return valid_responses[choice]
-        else:
-            print("Please respond with 'yes' or 'no' (or 'y' or 'n').\n")
-
-
 def get_thunderbird() -> list[str] | None:
-    """Check if Thunderbird is installed."""
     candidates = [
         (["thunderbird"], "bare metal"),
         (["flatpak", "run", "org.mozilla.Thunderbird"], "flatpak"),
@@ -147,7 +106,6 @@ def compose_email(
     thunderbird_command: list[str],
     pdf_file: Path,
     xml_file: Path,
-    dry_run: bool,
 ) -> list[str]:
     """Compose the mail command.
 
@@ -156,9 +114,7 @@ def compose_email(
     if invoice.due_date is None:
         raise ValueError("Due date must be set.")
 
-    subject = (
-        f"{'DRY RUN: ' if dry_run else ''}Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}"
-    )
+    subject = f"Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}"
     inv_num = invoice.invoice_number
     inv_date = invoice.date.strftime("%d.%m.%Y")
     due_date = invoice.due_date.strftime("%d.%m.%Y")

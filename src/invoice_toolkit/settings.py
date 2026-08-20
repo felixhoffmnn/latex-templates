@@ -1,5 +1,3 @@
-"""Project path configuration."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -19,7 +17,6 @@ class ProjectPaths:
     project_root: Path
     data_dir: Path
     out_dir: Path
-    tmp_dir: Path
     template_dir: Path
     invoice_history_file: Path
     invoice_customer_file: Path

@@ -1,5 +1,3 @@
-"""Invoice and line-item data models with VAT calculation."""
-
 import datetime as dt
 from typing import Literal
 
@@ -20,7 +18,6 @@ class Item(BaseModel):
     gross_total: float = Field(0.0, ge=0)
 
     def __init__(self, **data):
-        """Initialize the item model."""
         super().__init__(**data)
         self.total = self.price * self.quantity
         effective_rate = self.vat_rate if self.vat_rate is not None else 0
@@ -46,7 +43,6 @@ class Invoice(BaseModel):
     total_gross: float = Field(0.0, ge=0)
 
     def __init__(self, **data):
-        """Initialize the invoice model."""
         super().__init__(**data)
 
         if not self.items:

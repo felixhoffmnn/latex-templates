@@ -1,5 +1,3 @@
-"""Tests for invoice_toolkit/cli/invoice.py: _parse_selection."""
-
 import pytest
 
 from invoice_toolkit.cli.invoice import _parse_selection

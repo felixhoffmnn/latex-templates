@@ -1,5 +1,3 @@
-"""Invoice generation workflow including rendering, PDF compilation, and archiving."""
-
 from __future__ import annotations
 
 import csv
@@ -30,8 +28,6 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class InvoiceResult:
-    """Result of a single invoice generation."""
-
     pdf_path: Path
     xml_path: Path
     invoice: Invoice
@@ -111,7 +107,6 @@ def store_invoice_parameter(invoice: Invoice, history_file: Path):
 
 
 def archive_invoice(output_file: str, year: int, out_dir: Path, data_dir: Path):
-    """Archive the invoice PDF and XML files."""
     invoice_out_dir = out_dir / "invoice"
     archive_dir = data_dir / "archive" / str(year)
     archive_dir.mkdir(parents=True, exist_ok=True)
@@ -152,7 +147,6 @@ def _resolve_vat(invoice: Invoice, vat_exempt: bool, default_vat_rate: Literal[0
 
 
 def _prepare_vat_context(invoice: Invoice, vat_exempt: bool) -> dict:
-    """Build template context for VAT display."""
     has_vat = not vat_exempt and any(i.vat_rate is not None and i.vat_rate > 0 for i in invoice.items)
 
     vat_groups: dict[int, dict[str, float]] = {}
@@ -168,50 +162,36 @@ def _prepare_vat_context(invoice: Invoice, vat_exempt: bool) -> dict:
 
 
 def _build_invoice_data(invoice: Invoice, config: Config, customer: Customer, vat_context: dict) -> dict:
-    """Serialize all template data to a JSON-serializable dict."""
     sender_data = build_sender_data(config.sender)
+    invoice_data = invoice.model_dump(
+        mode="json",
+        include={
+            "invoice_number",
+            "date",
+            "start_date",
+            "end_date",
+            "due_date",
+            "items",
+            "total",
+            "total_vat",
+            "total_gross",
+        },
+    )
+    for field in ("date", "start_date", "end_date", "due_date"):
+        value = getattr(invoice, field)
+        invoice_data[field] = value.strftime("%d.%m.%Y") if value else None
+    invoice_data["customer_id"] = customer.customer_id
 
-    items = [
-        {
-            "name": item.name,
-            "description": item.description,
-            "quantity": item.quantity,
-            "unit": item.unit,
-            "price": item.price,
-            "total": item.total,
-            "vat_rate": item.vat_rate,
-            "vat_amount": item.vat_amount,
-            "gross_total": item.gross_total,
-        }
-        for item in invoice.items
-    ]
-
-    # Convert vat_groups keys to strings for JSON serialization
     vat_groups = {str(k): v for k, v in vat_context["vat_groups"].items()}
-
-    recipient = {
-        "name": customer.address.name,
-        "company": customer.company,
-        "extra": customer.address.extra,
-        "street": customer.address.street,
-        "zip": customer.address.zip,
-        "city": customer.address.city,
-    }
+    recipient = customer.address.model_dump(
+        mode="json",
+        include={"name", "extra", "street", "zip", "city"},
+    )
+    recipient["company"] = customer.company
 
     return {
         "config": sender_data,
-        "invoice": {
-            "invoice_number": invoice.invoice_number,
-            "date": invoice.date.strftime("%d.%m.%Y"),
-            "start_date": invoice.start_date.strftime("%d.%m.%Y") if invoice.start_date else None,
-            "end_date": invoice.end_date.strftime("%d.%m.%Y") if invoice.end_date else None,
-            "due_date": invoice.due_date.strftime("%d.%m.%Y") if invoice.due_date else None,
-            "customer_id": customer.customer_id,
-            "items": items,
-            "total": invoice.total,
-            "total_vat": invoice.total_vat,
-            "total_gross": invoice.total_gross,
-        },
+        "invoice": invoice_data,
         "recipient": recipient,
         "additional": {"purpose": f"Rechnung {invoice.invoice_number} vom {invoice.date.strftime('%d.%m.%Y')}"},
         "has_vat": vat_context["has_vat"],
@@ -267,8 +247,8 @@ def create_invoice(
 
     if output is not None:
         output.parent.mkdir(parents=True, exist_ok=True)
-        final_pdf = output.with_suffix(".pdf")
-        final_xml = output.with_suffix(".xml")
+        final_pdf = output.parent / f"{output.name}.pdf"
+        final_xml = output.parent / f"{output.name}.xml"
         shutil.move(str(generated_pdf_file), str(final_pdf))
         if generated_xml_file.exists():
             shutil.move(str(generated_xml_file), str(final_xml))

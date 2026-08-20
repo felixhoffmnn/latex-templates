@@ -1,5 +1,3 @@
-"""Customer data model for CSV-based customer management."""
-
 from pydantic import BaseModel, EmailStr, HttpUrl
 from pydantic_extra_types.phone_numbers import PhoneNumber
 
@@ -19,7 +17,6 @@ class Customer(BaseModel):
 
     # address needs to be initialized manually
     def __init__(self, **data):
-        """Initialize the customer model."""
         data["address"] = {
             "name": data.get("name"),
             "street": data.get("street"),

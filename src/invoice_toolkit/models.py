@@ -1,5 +1,3 @@
-"""Core Pydantic models for application configuration."""
-
 import logging
 from typing import Literal
 
@@ -22,7 +20,6 @@ class Address(BaseModel):
     @field_validator("zip")
     @classmethod
     def normalize_zip(cls, v: str | int) -> str:
-        """Ensure zip is a zero-padded 5-digit string."""
         return str(v).zfill(5)
 
 
@@ -36,7 +33,6 @@ class Bank(BaseModel):
     @field_validator("iban", mode="before")
     @classmethod
     def normalize_iban(cls, v: str):
-        """Normalize IBAN by removing spaces first, then formatting in groups of 4."""
         clean_iban = v.replace(" ", "")
         return " ".join([clean_iban[i : i + 4] for i in range(0, len(clean_iban), 4)])
 
@@ -52,7 +48,6 @@ class Invoice(BaseModel):
 
     @model_validator(mode="after")
     def check_vat_exempt(self):
-        """Force ``default_vat_rate`` to 0 when ``vat_exempt`` is True."""
         if self.vat_exempt and self.default_vat_rate > 0:
             logger.warning(
                 f"vat_exempt is True but default_vat_rate is {self.default_vat_rate}. Resetting default_vat_rate to 0."

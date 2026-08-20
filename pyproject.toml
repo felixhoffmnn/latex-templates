@@ -7,17 +7,17 @@ readme = "README.md"
 license = { file = "COPYING" }
 requires-python = ">=3.14"
 dependencies = [
-    "email-validator>=2.2.0",
-    "phonenumbers>=8.13.48",
-    "pydantic>=2.9.2",
-    "pydantic-extra-types>=2.9.0",
-    "pyyaml>=6.0.2",
-    "typst==0.13.2",
+    "email-validator>=2.2.0,<3",
+    "phonenumbers>=8.13.48,<10",
+    "pydantic>=2.9.2,<3",
+    "pydantic-extra-types>=2.9.0,<3",
+    "pyyaml>=6.0.2,<7",
+    "typst==0.15.0",
 ]
 
 [project.optional-dependencies]
-cli = ["typer>=0.15.0"]
-letter = ["pypandoc-binary>=1.15"]
+cli = ["typer>=0.15.0,<0.28"]
+letter = ["pypandoc-binary>=1.15,<2"]
 xrechnung = ["drafthorse>=2025.2.0"]
 all = [
     "invoice-toolkit[cli]",
@@ -30,6 +30,7 @@ dev = [
     { include-group = "lint" },
     { include-group = "types" },
     { include-group = "test" },
+    "invoice-toolkit[all]",
 ]
 test = ["pytest>=8.0"]
 lint = ["prek>=0.3.6", "ruff>=0.7.2"]
@@ -39,7 +40,7 @@ types = ["ty>=0.0.20", "types-pyyaml>=6.0.12.20240917"]
 toolkit = "invoice_toolkit.cli.main:app"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1,<2"]
 build-backend = "hatchling.build"
 
 [tool.ruff]
@@ -55,10 +56,12 @@ docstring-code-format = true
 extend-select = [
     "B",   # flake8-bugbear
     "C",   # flake8-comprehensions
+    "D2",  # pydocstyle whitespace
+    "D3",  # pydocstyle quotes
+    "D4",  # pydocstyle content
     "ERA", # flake8-eradicate/eradicate
     "I",   # isort
     "N",   # pep8-naming
-    "D",   # pydocstyle
     "PL",  # Pylint
     "PTH", # flake8-use-pathlib
     "PIE", # flake8-pie
@@ -71,7 +74,7 @@ extend-select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D101", "D102", "D103", "PLR2004"]
+"tests/**" = ["PLR2004"]
 "src/invoice_toolkit/invoice/xrechnung.py" = ["PLC0415"]
 "src/invoice_toolkit/letter/utils.py" = ["PLC0415"]
 
@@ -82,7 +85,7 @@ max-args = 10
 runtime-evaluated-base-classes = ["pydantic.BaseModel"]
 
 [tool.ruff.lint.pydocstyle]
-convention = "google"
+convention = "pep257"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,5 +1,3 @@
-"""Letter subcommand."""
-
 import logging
 import subprocess
 import sys
@@ -10,7 +8,6 @@ import typer
 
 from invoice_toolkit.cli.utils import (
     default_project_paths,
-    execute_command,
     resolve_config_path,
     validate_paths,
 )
@@ -57,7 +54,7 @@ def letter_command(
 
     if not dry_run and open_pdf:
         try:
-            execute_command(["xdg-open", str(pdf_path)])
+            subprocess.run(["xdg-open", str(pdf_path)], check=True)
         except (FileNotFoundError, subprocess.CalledProcessError) as e:
             logger.warning(f"Could not open PDF viewer: {e}")
     elif dry_run:

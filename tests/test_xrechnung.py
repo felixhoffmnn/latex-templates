@@ -1,5 +1,3 @@
-"""Tests for XRechnung XML generation."""
-
 import datetime as dt
 from xml.etree import ElementTree as ET
 
@@ -58,7 +56,6 @@ def invoice():
 
 @pytest.fixture()
 def xrechnung_root(invoice, customer, config, tmp_path):
-    """Generate XRechnung XML and return the parsed root element."""
     output = tmp_path / "test.xml"
     result = generate_xrechnung_xml(invoice, customer, config, output, vat_exempt=False)
     assert result == output
@@ -74,44 +71,29 @@ NS = {
 }
 
 
-class TestXRechnungGeneration:
-    def test_generates_valid_xml(self, xrechnung_root):
-        assert xrechnung_root is not None
+def test_xrechnung_contract(xrechnung_root):
+    header_id = xrechnung_root.find(".//rsm:ExchangedDocument/ram:ID", NS)
+    seller_name = xrechnung_root.find(".//ram:ApplicableHeaderTradeAgreement/ram:SellerTradeParty/ram:Name", NS)
+    buyer_ref = xrechnung_root.find(".//ram:ApplicableHeaderTradeAgreement/ram:BuyerReference", NS)
+    line_items = xrechnung_root.findall(".//ram:IncludedSupplyChainTradeLineItem", NS)
 
-    def test_invoice_number_in_header(self, xrechnung_root):
-        header_id = xrechnung_root.find(".//rsm:ExchangedDocument/ram:ID", NS)
-        assert header_id is not None
-        assert header_id.text == "RE0001"
+    assert header_id is not None and header_id.text == "RE0001"
+    assert seller_name is not None and seller_name.text == "Seller GmbH"
+    assert buyer_ref is not None and buyer_ref.text == "LEITWEG-123"
+    assert len(line_items) == 2
 
-    def test_seller_name(self, xrechnung_root):
-        seller_name = xrechnung_root.find(".//ram:ApplicableHeaderTradeAgreement/ram:SellerTradeParty/ram:Name", NS)
-        assert seller_name is not None
-        assert seller_name.text == "Seller GmbH"
 
-    def test_buyer_reference(self, xrechnung_root):
-        buyer_ref = xrechnung_root.find(".//ram:ApplicableHeaderTradeAgreement/ram:BuyerReference", NS)
-        assert buyer_ref is not None
-        assert buyer_ref.text == "LEITWEG-123"
+def test_vat_exempt_xrechnung(customer, config, tmp_path):
+    invoice = Invoice(
+        customer_id=10000,
+        invoice_id=1,
+        invoice_number="RE0001",
+        date=dt.date(2025, 6, 15),
+        due_date=dt.date(2025, 6, 29),
+        items=[Item(name="Service", quantity=1, unit="Stunde", price=100.0, vat_rate=0)],
+    )
+    _resolve_vat(invoice, vat_exempt=True, default_vat_rate=0)
 
-    def test_line_items_count(self, xrechnung_root):
-        line_items = xrechnung_root.findall(".//ram:IncludedSupplyChainTradeLineItem", NS)
-        assert len(line_items) == 2
-
-    def test_vat_exempt_generates_xml(self, customer, config, tmp_path):
-        items = [Item(name="Service", quantity=1, unit="Stunde", price=100.0, vat_rate=0)]
-        inv = Invoice(
-            customer_id=10000,
-            invoice_id=1,
-            invoice_number="RE0001",
-            date=dt.date(2025, 6, 15),
-            due_date=dt.date(2025, 6, 29),
-            items=items,
-        )
-        _resolve_vat(inv, vat_exempt=True, default_vat_rate=0)
-
-        output = tmp_path / "test_exempt.xml"
-        generate_xrechnung_xml(inv, customer, config, output, vat_exempt=True)
-
-        assert output.exists()
-        tree = ET.parse(output)
-        assert tree.getroot() is not None
+    output = generate_xrechnung_xml(invoice, customer, config, tmp_path / "test_exempt.xml", vat_exempt=True)
+    assert output.exists()
+    assert ET.parse(output).getroot() is not None
